@@ -1,4 +1,0 @@
-/Users/daniel/Progetto/cmake-build-debug/CMakeFiles/rebuild_cache.dir
-/Users/daniel/Progetto/cmake-build-debug/CMakeFiles/edit_cache.dir
-/Users/daniel/Progetto/cmake-build-debug/CMakeFiles/Progetto.dir
-/Users/daniel/Progetto/cmake-build-debug/CMakeFiles/Server.c.dir
