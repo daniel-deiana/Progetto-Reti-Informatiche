@@ -16,6 +16,13 @@
 #define LOGIN_REQ_LEN 114
 #define LOGIN_MSG_SIZE 114
 
+struct clientsList
+{
+    int socket;
+    char username[50];
+    struct clientList *pointer;
+};
+
 struct clientcmd
 {
     char Command[20];

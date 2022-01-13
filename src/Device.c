@@ -25,6 +25,11 @@ int main(int argc, const char **argv)
     int isDestOnline = -1, isChatting = -1;
     // buffer che vengono usati per inviare i messaggi oppure per prendere in input dei comandi da terminale
     char buffer[1024 * 4 + HEADER_LEN], LogInCommand[20];
+    // Rubrica
+    char rubrica[3][50];
+    strcpy(rubrica[0], "user1");
+    strcpy(rubrica[1], "user2");
+    strcpy(rubrica[2], "user3");
     // stringa per le conversioni dei numeri di porta
     char Port[5];
     char portChat[5];
