@@ -175,11 +175,11 @@ int main(int argc, const char **argv)
                             printf("Sto per registrare un utente che mi ha passato il seguente buffer: %s\n", buffer);
                             // apro il file e ci sputo dentro i dati della registrazione con il formato username password
                             sscanf(buffer, "%s %s", MyCredentials.Username, MyCredentials.Password);
-                            LogPointer = fopen("files/Log.txt", "ab");
+                            LogPointer = fopen("Log.txt", "ab");
                             fwrite(&MyCredentials, sizeof(MyCredentials), 1, LogPointer);
                             fclose(LogPointer);
                             // Devo anche aggiungere un record nel file client_hystory dato che deve esserne presente uno per ogni utente che usa il servizio
-                            HistoryPointer = fopen("files/Client_History.txt", "ab"); // modalità append per non sovrascrivere i record precedenti
+                            HistoryPointer = fopen("Client_History.txt", "ab"); // modalità append per non sovrascrivere i record precedenti
                             // inizializzo la struttura dati sul registro che poi verra sovrascritta dal primo login in poi
                             strcpy(record.Username, MyCredentials.Username);
                             record.Port = 0;

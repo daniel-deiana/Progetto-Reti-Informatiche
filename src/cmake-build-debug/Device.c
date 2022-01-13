@@ -79,7 +79,7 @@ int main(int argc, const char **argv)
     */
 
     memset(&my_credentials, 0, sizeof(struct Credentials));
-    RegistrationLog = fopen("files/Registration.txt", "r");
+    RegistrationLog = fopen("Registration.txt", "r");
 
     // Controllo credenziali del device
     fread(&my_credentials, sizeof(my_credentials), 1, RegistrationLog);
@@ -96,7 +96,7 @@ int main(int argc, const char **argv)
     if ((strcmp("", my_credentials.Username) == 0) && (strcmp("", my_credentials.Password) == 0))
     {
         int msglen;
-        RegistrationLog = fopen("files/Registration.txt", "ab");
+        RegistrationLog = fopen("Registration.txt", "ab");
         // Vuol dire che non ho letto nulla e che quindi devo eseguire la registrazione
         printf("=======Registrazione======\n");
         // inserimento credenziali

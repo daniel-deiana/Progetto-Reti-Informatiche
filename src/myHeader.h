@@ -70,7 +70,7 @@ struct clientNode
 int LoginCheck(FILE *fileptr, struct Credentials *cl_credentials, int size)
 {
     struct Credentials MyCredentials;
-    fileptr = fopen("files/Log.txt", "rb");
+    fileptr = fopen("Log.txt", "rb");
     while (fread(&MyCredentials, size, 1, fileptr))
     {
         if (strcmp(MyCredentials.Username, cl_credentials->Username) == 0 && strcmp(MyCredentials.Password, cl_credentials->Password) == 0)
@@ -95,7 +95,7 @@ int isOnline(char *Username)
     // apro il file di history
     FILE *fptr;
     struct HistoryRecord fileRecord;
-    fptr = fopen("files/Client_history.txt", "rb");
+    fptr = fopen("Client_history.txt", "rb");
     while (fread(&fileRecord, sizeof(fileRecord), 1, fptr))
     {
         if (strcmp(fileRecord.Username, Username) == 0 && (fileRecord.timestamp_out == 0) && (fileRecord.Port != 0))
@@ -112,7 +112,7 @@ int historyUpdateLogin(FILE *fileptr, char *Username, char *port)
 {
     struct HistoryRecord record;
     time_t rawtime;
-    fileptr = fopen("files/Client_history.txt", "rb+");
+    fileptr = fopen("Client_history.txt", "rb+");
     while (fread(&record, sizeof(struct HistoryRecord), 1, fileptr))
     {
         if (strcmp(record.Username, Username) == 0)
@@ -137,7 +137,7 @@ void printHistory()
 {
     FILE *fptr;
     struct HistoryRecord record;
-    fptr = fopen("files/Client_History.txt", "rb");
+    fptr = fopen("Client_History.txt", "rb");
     while (fread(&record, sizeof(struct HistoryRecord), 1, fptr))
     {
         printf("Username: %s|timestampIN: %ld|timestampOUT: %ld|Porta: %d\n", record.Username, record.timestamp_in, record.timestamp_out, record.Port);
@@ -148,7 +148,7 @@ void bufferWrite(struct bufferedMessage *msg)
 {
     // SCRIVE NEL FILE DEI MESSAGGI BUFFERIZZATI
     time_t rawtime;
-    FILE *fileptr = fopen("files/Chat.txt", "ab+");
+    FILE *fileptr = fopen("Chat.txt", "ab+");
     // setto il timestamp del messaggio
     msg->timestamp = time(&rawtime);
     fwrite(msg, sizeof(struct bufferedMessage), 1, fileptr);
@@ -157,7 +157,7 @@ void bufferWrite(struct bufferedMessage *msg)
 void printfBuffer()
 {
     FILE *fptr;
-    fptr = fopen("files/Chat.txt", "rb");
+    fptr = fopen("Chat.txt", "rb");
 
     struct bufferedMessage record;
     while (fread(&record, sizeof(record), 1, fptr))
@@ -169,7 +169,7 @@ int countBuffered(char *dest, char *mitt)
 {
     int nmsg = 0;
     struct bufferedMessage msg;
-    FILE *fptr = fopen("files/Chat.txt", "rb");
+    FILE *fptr = fopen("Chat.txt", "rb");
     while (fread(&msg, sizeof(msg), 1, fptr))
     {
         if (strcmp(msg.sender, mitt) == 0 && strcmp(msg.receiver, dest) == 0)
