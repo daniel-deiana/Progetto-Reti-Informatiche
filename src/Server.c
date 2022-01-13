@@ -126,6 +126,10 @@ int main(int argc, const char **argv)
                         communicate = accept(i, (struct sockaddr *)&client_addr, (socklen_t *)&addrlen);
                         fdmax = (communicate > fdmax) ? communicate : fdmax;
                         FD_SET(communicate, &master);
+                        // quando accetto una connessione aggiungo un elemento alla lista clients
+                        // dato che quando l'utente farà logout dovrò settare il ts di uscita devo avere una lista dove salvo le coppie {socket,username}
+
+                        // addtolist
                         printf("Accettata richiesta di connesione da un client: \n");
                     }
                     else
@@ -306,6 +310,7 @@ int main(int argc, const char **argv)
                             // mi prendo l'username relativo al socket andandolo a cercare nella lista
                             // setto il timestamp di logout nel file clienthistory.txt relativo all'username che ho trovato
 
+                            // remove from list
                             printf("Ho chiuso la comunicazione con il socket: %d\n", i);
                         }
                     } // Fine listen/Comunicate
