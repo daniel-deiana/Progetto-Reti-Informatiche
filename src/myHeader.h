@@ -23,13 +23,11 @@ struct clientList
     char username[50];
     struct clientList *pointer;
 };
-
 struct clientcmd
 {
     char Command[20];
     char Argument1[50]; // qua prendo un username oppure il nome di un file (viene quindi definita la lunghezza massima che accetto)
 };
-
 struct bufferedMessage
 {
     char sender[50];        // mittente del messaggio
@@ -75,6 +73,10 @@ struct clientNode
 
 // ------------------FUNZIONI--------------------------------------
 // quando un utente cerca di loggarsi sul server, questa funzione controlla che tale utente sia presente fra gli utenti registrati
+int isRegistered()
+{
+}
+
 int LoginCheck(FILE *fileptr, struct Credentials *cl_credentials, int size)
 {
     struct Credentials MyCredentials;
@@ -216,7 +218,6 @@ int handlerFriends(char *srcUsername, char *destUsername)
     }
     return -1;
 }
-
 // Routine di logout: quando un utente si disconette aggiorna il campo timestamp_out al tempo corrente
 void logout(char *user)
 {
@@ -239,9 +240,7 @@ void logout(char *user)
         }
     }
 }
-
 // funzioni di utilità liste
-
 int pushUser(struct clientList **head, struct clientList *elem)
 {
     // il nodo puntato da elem è gia inzializzato quando chiamo la routine
@@ -255,7 +254,6 @@ int pushUser(struct clientList **head, struct clientList *elem)
 
     return 0;
 }
-
 // ritorna -1 se l'operazione non ha successo, 0 altrimenti
 // se ha successo scrive in un puntatore l'username dell'utente che si è disconnesso
 int deleteUser(struct clientList **head, int todelete, char *usernameToGet)
@@ -293,7 +291,6 @@ int deleteUser(struct clientList **head, int todelete, char *usernameToGet)
     temp->pointer = pun->pointer;
     return 0;
 }
-
 void printList(struct clientList *head)
 {
     if (head == NULL)

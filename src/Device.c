@@ -58,7 +58,7 @@ int main(int argc, const char **argv)
     cl_listen_addr.sin_port = htons(atoi(Port));
     inet_pton(AF_INET, "127.0.0.1", &cl_listen_addr.sin_addr);
 
-    // CREAZIONE SOCKET DI ASCOLTO PER COMUNICAZIONI CLIENT-CLIENT
+    // CREAZIONE SOCKET DI ASCOLTO PER COMUNICAZIONI CLIENT-CLIENT / SERVER/CLIENT
     listener = socket(AF_INET, SOCK_STREAM, 0);
     bind(listener, (struct sockaddr *)&cl_listen_addr, sizeof(cl_listen_addr));
     listen(listener, 50);
@@ -79,6 +79,7 @@ int main(int argc, const char **argv)
     fread(&my_credentials, sizeof(my_credentials), 1, RegistrationLog);
     fclose(RegistrationLog);
 
+    // chiamata al server
     printf("Sto chiamando il server\n");
     ret = connect(sv_communicate, (struct sockaddr *)&server_addr, sizeof(server_addr));
     if (ret < 0)

@@ -14,13 +14,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="dbba149a-cf7b-41d3-a919-6331f5130d69" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/src/CMakeLists.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Client_History.txt" beforeDir="false" afterPath="$PROJECT_DIR$/src/Client_History.txt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/Device.c" beforeDir="false" afterPath="$PROJECT_DIR$/src/Device.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Server.c" beforeDir="false" afterPath="$PROJECT_DIR$/src/Server.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/dev" beforeDir="false" afterPath="$PROJECT_DIR$/src/dev" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/serv" beforeDir="false" afterPath="$PROJECT_DIR$/src/serv" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -72,6 +66,7 @@
     <property name="full.screen.before.presentation.mode" value="false" />
     <property name="last_opened_file_path" value="$PROJECT_DIR$" />
     <property name="settings.editor.selected.configurable" value="reference.settingsdialog.IDE.editor.colors" />
+    <property name="structure.view.defaults.are.configured" value="true" />
   </component>
   <component name="RecentsManager">
     <key name="MoveFile.RECENT_KEYS">
