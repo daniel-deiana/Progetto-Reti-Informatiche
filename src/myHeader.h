@@ -219,18 +219,18 @@ int handlerFriends(char *srcUsername, char *destUsername)
 
 // funzioni di utilità liste
 
-void pushUser(struct clientList *head, struct clientList *elem)
+struct clientList *pushUser(struct clientList *head, struct clientList *elem)
 {
     // il nodo puntato da elem è gia inzializzato quando chiamo la routine
     if (head == NULL)
-    {
         head = elem;
-        return;
+    else
+    { // piazza elem in testa alla lista
+        elem->pointer = head;
+        head = elem;
     }
 
-    // piazza elem in testa alla lista
-    elem->pointer = head;
-    head = elem;
+    return head;
 }
 
 // ritorna -1 se l'operazione non ha successo, 0 altrimenti
@@ -269,4 +269,13 @@ int deleteUser(struct clientList *head, int todelete, char *usernameToGet)
     // elimino
     temp->pointer = pun->pointer;
     return 0;
+}
+
+void printList(struct clientList *head)
+{
+    if (head == NULL)
+        printf("lista vuota\n");
+    else
+        for (struct clientList *pun = head; pun != NULL; pun = pun->pointer)
+            printf("socket: %d username: %s\n", pun->socket, pun->username);
 }

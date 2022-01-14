@@ -1,14 +1,3 @@
-#include <stdio.h>
-#include <arpa/inet.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <string.h>
-#include <sys/time.h>
-#include <sys/types.h>
-#include <unistd.h>
-#include <time.h>
-#include <stdlib.h>
 #include "myHeader.h"
 
 // ---------- CODICE SERVER ----------
@@ -18,6 +7,9 @@ int main(int argc, const char **argv)
     struct sockaddr_in server_addr, client_addr;
     struct Credentials MyCredentials, cl_credentials;
     struct msg sv_message;
+
+    // lista utenti online
+    struct clientList *head = NULL;
 
     int Listener, communicate, ret, msglen, addrlen, fdmax, value;
     int client_ret;
@@ -127,10 +119,6 @@ int main(int argc, const char **argv)
                         communicate = accept(i, (struct sockaddr *)&client_addr, (socklen_t *)&addrlen);
                         fdmax = (communicate > fdmax) ? communicate : fdmax;
                         FD_SET(communicate, &master);
-                        // quando accetto una connessione aggiungo un elemento alla lista clients
-                        // dato che quando l'utente farà logout dovrò settare il ts di uscita devo avere una lista dove salvo le coppie {socket,username}
-
-                        // addtolist
                         printf("Accettata richiesta di connesione da un client: \n");
                     }
                     else
@@ -145,7 +133,20 @@ int main(int argc, const char **argv)
 
                         // RICEZIONE DEL MESSAGGIO (HEADER)
                         // ispezionamento dell'header
+                        // debug
                         ret = recv(i, (void *)masterHeader_string, HEADER_LEN, 0);
+                        if (ret == 0)
+                        {
+                            close(i);
+                            FD_CLR(i, &master);
+                            // devo eseguire l'operazione di logout, quindi andare a cercare nel log
+                            // mi prendo l'username relativo al socket andandolo a cercare nella lista
+                            // setto il timestamp di logout nel file clienthistory.txt relativo all'username che ho trovato
+
+                            // remove from list
+                            printf("Ho chiuso la comunicazione con il socket: %d\n", i);
+                            continue;
+                        }
                         sscanf(masterHeader_string, "%c%8s%5s", &masterHeader.RequestType, masterHeader.Options, masterHeader.PortNumber);
                         printf("La stringa che ho ricevuto dal client è %s\n", masterHeader_string);
                         printf("Il tipo della richiesta è: %c\n", masterHeader.RequestType);
@@ -157,10 +158,6 @@ int main(int argc, const char **argv)
 
                         /*
                         ==================GESTIONE RICHIESTE========================
-                        In questa parte vengono gestite le richieste dei clients verso il server
-                        I casi in cui un client contatta il server sono i seguenti e viene definita una struttura del messaggio
-                        dalla struttura ClientMessage. Segue una descrizione dei tipi di richiesta.
-
                             REQ_TYPE = A: Richiesta di registrazione sul server da parte del client.
                             REQ_TYPE = B: Richiesta di Login sul server da parte del client.
                             REQ_TYPE = C: Un client avvia una chat con un altro client
@@ -170,10 +167,8 @@ int main(int argc, const char **argv)
                         {
                         case 'A':
                         {
-                            // RICHIESTA DI REGISTRAZIONE AL SERVER
-                            /* devo aprire il file degli utenti registrati e ci devo scrivere
-                               nel payload trovo user e pass
-                            */
+                            // ================ REGISTRAZIONE ================
+
                             struct HistoryRecord record;
                             ret = recv(i, (void *)buffer, 100, 0);
                             printf("Sto per registrare un utente che mi ha passato il seguente buffer: %s\n", buffer);
@@ -195,8 +190,8 @@ int main(int argc, const char **argv)
                         }
                         break;
                         case 'B':
-                            // RICHIESTA DI LOGIN AL SERVER
-                            // RICEZIONE DEL MESSAGGIO DI LOGIN
+                            // ================ LOGIN ================
+
                             ret = recv(i, (void *)buffer, 100, 0);
                             printf("Ho ricevuto %d caratteri\n", ret);
                             buffer[ret] = '\0';
@@ -213,6 +208,15 @@ int main(int argc, const char **argv)
                                 if (historyUpdateLogin(HistoryPointer, cl_credentials.Username, masterHeader.PortNumber) == 0)
                                     printf("Sono riuscito ad aggiornare con successo i campi history di un utente\n");
                                 printHistory();
+
+                                // inserisco l'utente in lista online
+                                struct clientList *newclient = (struct clientList *)malloc(sizeof(struct clientList));
+                                // inizializzo la struttura
+                                newclient->socket = i;
+                                newclient->pointer = NULL;
+                                strcpy(newclient->username, cl_credentials.Username);
+                                head = pushUser(head, newclient);
+                                printList(head);
                             }
                             else
                             {
@@ -225,6 +229,7 @@ int main(int argc, const char **argv)
                             printf("Sto cercando di mandare la stringa di ack che è la seguente: %s\n", gpHeader_string);
                             client_ret = send(i, (void *)gpHeader_string, HEADER_LEN, 0);
                             memset(buffer, 0, sizeof(buffer));
+
                             break;
                         case 'C':
                             // Un client ha chiesto di avviare una chat con un altro utente del servizio
@@ -301,17 +306,6 @@ int main(int argc, const char **argv)
                             // ora devo mandare ad uno ad uno i messaggi bufferrizzati a quello che mi ha fatto la richiesta
                         }
                         break;
-                        }
-                        if (ret == 0)
-                        {
-                            close(i);
-                            FD_CLR(i, &master);
-                            // devo eseguire l'operazione di logout, quindi andare a cercare nel log
-                            // mi prendo l'username relativo al socket andandolo a cercare nella lista
-                            // setto il timestamp di logout nel file clienthistory.txt relativo all'username che ho trovato
-
-                            // remove from list
-                            printf("Ho chiuso la comunicazione con il socket: %d\n", i);
                         }
                     } // Fine listen/Comunicate
                 }     // FINE GESTIONE COMUNICAZIONI/STDIN
