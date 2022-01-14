@@ -125,7 +125,7 @@ int historyUpdateLogin(FILE *fileptr, char *Username, char *port)
     {
         if (strcmp(record.Username, Username) == 0)
         {
-            // ho trovato il record che cercavo e quindi ne aggiorno il campo timestamp_in4
+            // ho trovato il record che cercavo e quindi ne aggiorno il campo timestamp_in
             record.timestamp_in = time(&rawtime);
             record.timestamp_out = 0;
             record.Port = atoi(port);
@@ -198,7 +198,7 @@ int handlerFriends(char *srcUsername, char *destUsername)
     switch (srcUsername[4])
     {
     case '1':
-        if (strcmp(destUsername, "user2") == 0)
+        if (strcmp(destUsername, "user2") == 0 || strcmp(destUsername, "user1") == 0)
             return 0;
         else
             return -1;
@@ -215,6 +215,29 @@ int handlerFriends(char *srcUsername, char *destUsername)
         break;
     }
     return -1;
+}
+
+// Routine di logout: quando un utente si disconette aggiorna il campo timestamp_out al tempo corrente
+void logout(char *user)
+{
+    // prende in ingresso user e cerca una corrispondenza nel file degli utenti online e ne cambia il ts
+    FILE *fptr = fopen("Client_history.txt", "rb+");
+    struct HistoryRecord record;
+    time_t rawtime;
+
+    while (fread(&record, sizeof(struct HistoryRecord), 1, fptr))
+    {
+        if (strcmp(record.Username, user) == 0)
+        {
+            // ho trovato il record che cercavo e quindi ne aggiorno il campo timestamp_out
+            // modifico solo il timestamp
+            record.timestamp_out = time(&rawtime);
+            // scrivo sul relativo record nel file
+            fseek(fptr, -1 * sizeof(struct HistoryRecord), SEEK_CUR);
+            fwrite(&record, sizeof(struct HistoryRecord), 1, fptr);
+            fclose(fptr);
+        }
+    }
 }
 
 // funzioni di utilità liste

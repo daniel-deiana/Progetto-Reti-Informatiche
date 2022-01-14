@@ -138,15 +138,15 @@ int main(int argc, const char **argv)
                         if (ret == 0)
                         {
                             char logoutUser[50];
+                            // chiusura socket e aggiornamento file descriptor
                             close(i);
                             FD_CLR(i, &master);
-                            // devo eseguire l'operazione di logout, quindi andare a cercare nel log
-                            // mi prendo l'username relativo al socket andandolo a cercare nella lista
-                            // setto il timestamp di logout nel file clienthistory.txt relativo all'username che ho trovato
 
-                            // remove from list
+                            // rimozione dalla lista utenti online e logout dal server (setto il timestamp_out)
                             deleteUser(&head, i, logoutUser);
                             printList(head);
+                            logout(logoutUser);
+                            printHistory();
                             printf("Ho chiuso la comunicazione con il socket: %d\n", i);
                             continue;
                         }
