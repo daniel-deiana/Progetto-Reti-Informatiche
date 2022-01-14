@@ -219,23 +219,23 @@ int handlerFriends(char *srcUsername, char *destUsername)
 
 // funzioni di utilità liste
 
-struct clientList *pushUser(struct clientList *head, struct clientList *elem)
+int pushUser(struct clientList **head, struct clientList *elem)
 {
     // il nodo puntato da elem è gia inzializzato quando chiamo la routine
-    if (head == NULL)
-        head = elem;
+    if (*head == NULL)
+        *head = elem;
     else
     { // piazza elem in testa alla lista
-        elem->pointer = head;
-        head = elem;
+        elem->pointer = *head;
+        *head = elem;
     }
 
-    return head;
+    return 0;
 }
 
 // ritorna -1 se l'operazione non ha successo, 0 altrimenti
 // se ha successo scrive in un puntatore l'username dell'utente che si è disconnesso
-int deleteUser(struct clientList *head, int todelete, char *usernameToGet)
+int deleteUser(struct clientList **head, int todelete, char *usernameToGet)
 {
     struct clientList *pun;
 
@@ -243,11 +243,11 @@ int deleteUser(struct clientList *head, int todelete, char *usernameToGet)
         return -1;
 
     // todelete si trova in testa
-    if (head->socket == todelete)
+    if ((*head)->socket == todelete)
     {
-        strcpy(usernameToGet, head->username);
-        pun = head;
-        head = head->pointer;
+        strcpy(usernameToGet, (*head)->username);
+        pun = *head;
+        *head = (*head)->pointer;
         free(pun);
 
         return -1;
@@ -256,7 +256,7 @@ int deleteUser(struct clientList *head, int todelete, char *usernameToGet)
     // elemento in mezzo alla lista
 
     struct clientList *temp;
-    for (pun = head; pun != NULL; pun = pun->pointer, temp = pun)
+    for (pun = *head; pun != NULL; pun = pun->pointer, temp = pun)
         if (pun->socket == todelete)
             break;
 

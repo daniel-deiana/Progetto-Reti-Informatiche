@@ -137,6 +137,7 @@ int main(int argc, const char **argv)
                         ret = recv(i, (void *)masterHeader_string, HEADER_LEN, 0);
                         if (ret == 0)
                         {
+                            char logoutUser[50];
                             close(i);
                             FD_CLR(i, &master);
                             // devo eseguire l'operazione di logout, quindi andare a cercare nel log
@@ -144,6 +145,8 @@ int main(int argc, const char **argv)
                             // setto il timestamp di logout nel file clienthistory.txt relativo all'username che ho trovato
 
                             // remove from list
+                            deleteUser(&head, i, logoutUser);
+                            printList(head);
                             printf("Ho chiuso la comunicazione con il socket: %d\n", i);
                             continue;
                         }
@@ -215,7 +218,7 @@ int main(int argc, const char **argv)
                                 newclient->socket = i;
                                 newclient->pointer = NULL;
                                 strcpy(newclient->username, cl_credentials.Username);
-                                head = pushUser(head, newclient);
+                                pushUser(&head, newclient);
                                 printList(head);
                             }
                             else
