@@ -15,8 +15,9 @@
 #define HEADER_LEN 14
 #define LOGIN_REQ_LEN 114
 #define LOGIN_MSG_SIZE 114
+#define USERNAME_LEN 50
 
-struct clientsList
+struct clientList
 {
     int socket;
     char username[50];
@@ -191,4 +192,81 @@ int check(char *cmd)
         return 0;
     else
         return -1;
+}
+int handlerFriends(char *srcUsername, char *destUsername)
+{
+    switch (srcUsername[4])
+    {
+    case '1':
+        if (strcmp(destUsername, "user2") == 0)
+            return 0;
+        else
+            return -1;
+    case '2':
+        if (strcmp(destUsername, "user1") == 0 || strcmp(destUsername, "user3") == 0)
+            return 0;
+        else
+            return -1;
+    case '3':
+        if (strcmp(destUsername, "user2") == 0)
+            return 0;
+        else
+            return -1;
+        break;
+    }
+    return -1;
+}
+
+// funzioni di utilità liste
+
+void pushUser(struct clientList *head, struct clientList *elem)
+{
+    // il nodo puntato da elem è gia inzializzato quando chiamo la routine
+    if (head == NULL)
+    {
+        head = elem;
+        return;
+    }
+
+    // piazza elem in testa alla lista
+    elem->pointer = head;
+    head = elem;
+}
+
+// ritorna -1 se l'operazione non ha successo, 0 altrimenti
+// se ha successo scrive in un puntatore l'username dell'utente che si è disconnesso
+int deleteUser(struct clientList *head, int todelete, char *usernameToGet)
+{
+    struct clientList *pun;
+
+    if (head == NULL)
+        return -1;
+
+    // todelete si trova in testa
+    if (head->socket == todelete)
+    {
+        strcpy(usernameToGet, head->username);
+        pun = head;
+        head = head->pointer;
+        free(pun);
+
+        return -1;
+    }
+
+    // elemento in mezzo alla lista
+
+    struct clientList *temp;
+    for (pun = head; pun != NULL; pun = pun->pointer, temp = pun)
+        if (pun->socket == todelete)
+            break;
+
+    // non ho trovato nulla
+    if (pun == NULL)
+        return -1;
+
+    // l'elemento è stato trovato
+    strcpy(usernameToGet, pun->username);
+    // elimino
+    temp->pointer = pun->pointer;
+    return 0;
 }

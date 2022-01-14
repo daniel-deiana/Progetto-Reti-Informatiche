@@ -37,6 +37,9 @@ int main(int argc, const char **argv)
     char string[HEADER_LEN];
     char destUsername[50] = "";
 
+    // lista utenti connessi al server
+    struct clientList *head = NULL;
+
     fd_set master, readfds;
     FILE *RegistrationLog, *friends;
     // inizializzo i file descriptor
@@ -134,9 +137,8 @@ int main(int argc, const char **argv)
             printf("Connessione riuscita con successo\n");
     }
     else
-    {
         printf("Utente Precedentemente registrato al servizio\n");
-    }
+
     // COMANDO DI LOGIN
 
     printf("======= FASE DI LOGIN =======\n");
@@ -312,15 +314,13 @@ int main(int argc, const char **argv)
 
                             // controllo se possiedo il destinatario nella mia rubrica personale
 
-                            /*
-                            if (check_friend(friends, cmd.Argument1) == -1)
+                            if (handlerFriends(my_credentials.Username, cmd.Argument1) == -1)
                             {
-                                printf("Argomento passato all comando chat:
-                            <%s>\n", cmd.Argument1); printf("Non ho il
-                            destinatario nella rubrica, non posso inziare la
-                            chat:\n"); break;
+                                printf("Argomento passato all comando chat:<%s>\n", cmd.Argument1);
+                                printf("Non ho il destinatario nella rubrica, non posso inziare la chat:\n");
+                                break;
                             }
-                            */
+
                             strcpy(destUsername, cmd.Argument1);
                             make_header(&header, 'C', optionString, "0000", HEADER_LEN);
                             sprintf(sendbuffer, "%c%8s%5s%s", header.RequestType, header.Options, header.PortNumber, cmd.Argument1);

@@ -22,6 +22,7 @@ int main(int argc, const char **argv)
     int Listener, communicate, ret, msglen, addrlen, fdmax, value;
     int client_ret;
 
+    int Port;
     char buffer[1024 * 4 + HEADER_LEN];
     char ServerPort[5] = "4242";
     char Command[1024];
@@ -135,7 +136,6 @@ int main(int argc, const char **argv)
                     else
                     {
                         // Variabili per la ricezione del messaggio dal client
-                        int Port;
                         int client_ret;
                         struct msg_header masterHeader;      // master header di ogni richiesta che arriva al server
                         struct msg_header gpHeader;          // header che il server usa per inviare/ricevere dentro le richieste
