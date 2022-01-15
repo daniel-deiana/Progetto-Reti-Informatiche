@@ -298,7 +298,7 @@ int main(int argc, const char **argv)
                                                 // creazione indirizzo e socket
                                                 memset(&cl_addr, 0, sizeof(cl_addr));
                                                 cl_addr.sin_family = AF_INET;
-                                                cl_addr.sin_port = htons(1234);
+                                                cl_addr.sin_port = htons(atoi(portChat));
                                                 inet_pton(AF_INET, "127.0.0.1", &cl_listen_addr.sin_addr);
                                                 cl_socket = socket(AF_INET, SOCK_STREAM, 0);
                                                 // connessione con il destinatario
@@ -338,6 +338,7 @@ int main(int argc, const char **argv)
 
                                     if (ret == 0)
                                     {
+                                          printf("Connessione chiusa");
                                     }
                               }
                         }

@@ -14,7 +14,10 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="dbba149a-cf7b-41d3-a919-6331f5130d69" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/src/Client_History.txt" beforeDir="false" afterPath="$PROJECT_DIR$/src/Client_History.txt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/Device.c" beforeDir="false" afterPath="$PROJECT_DIR$/src/Device.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Log.txt" beforeDir="false" afterPath="$PROJECT_DIR$/src/Log.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/dev" beforeDir="false" afterPath="$PROJECT_DIR$/src/dev" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -105,57 +108,57 @@
       <breakpoints>
         <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
           <url>file://$PROJECT_DIR$/src/myHeader.h</url>
-          <line>80</line>
+          <line>79</line>
           <option name="timeStamp" value="6" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
           <url>file://$PROJECT_DIR$/src/myHeader.h</url>
-          <line>81</line>
+          <line>80</line>
           <option name="timeStamp" value="8" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
           <url>file://$PROJECT_DIR$/src/myHeader.h</url>
-          <line>82</line>
+          <line>81</line>
           <option name="timeStamp" value="10" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
           <url>file://$PROJECT_DIR$/src/myHeader.h</url>
-          <line>83</line>
+          <line>82</line>
           <option name="timeStamp" value="12" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
           <url>file://$PROJECT_DIR$/src/myHeader.h</url>
-          <line>84</line>
+          <line>83</line>
           <option name="timeStamp" value="13" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
           <url>file://$PROJECT_DIR$/src/myHeader.h</url>
-          <line>85</line>
+          <line>84</line>
           <option name="timeStamp" value="14" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
           <url>file://$PROJECT_DIR$/src/myHeader.h</url>
-          <line>86</line>
+          <line>85</line>
           <option name="timeStamp" value="16" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
           <url>file://$PROJECT_DIR$/src/myHeader.h</url>
-          <line>87</line>
+          <line>86</line>
           <option name="timeStamp" value="17" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
           <url>file://$PROJECT_DIR$/src/myHeader.h</url>
-          <line>88</line>
+          <line>87</line>
           <option name="timeStamp" value="18" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
           <url>file://$PROJECT_DIR$/src/myHeader.h</url>
-          <line>89</line>
+          <line>88</line>
           <option name="timeStamp" value="19" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
           <url>file://$PROJECT_DIR$/src/myHeader.h</url>
-          <line>74</line>
+          <line>72</line>
           <option name="timeStamp" value="20" />
         </line-breakpoint>
       </breakpoints>
