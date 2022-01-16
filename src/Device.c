@@ -1,4 +1,15 @@
 #include "myHeader.h"
+
+// riceve un messaggio dal socket sender_socket e lo copia nel buffer recv_buffer 
+
+/*
+int invia_header(char type, char *Options, char *portnumber, int dest_socket)
+{
+
+}
+ricevi_header(char type, char *Options, char *portnumber, int dest_socket)
+*/
+
 // =========== CODICE CLIENT ===========
 int main(int argc, const char **argv)
 {
@@ -234,9 +245,8 @@ int main(int argc, const char **argv)
                                           // io devo mandare al server una richiesta con un header del tipo "richiesta dei messaggi" dopo di che devo mandare un messaggio dove dico il mio username e l'username del tizio di cui voglio ricevere i messaggi
                                           struct msg_header header;
                                           char headerstring[HEADER_LEN];
-                                          int msglen;
-                                          int nmsg;
-
+                                          int num_msg = 2;
+                                          
                                           make_header(&header, 'D', "toreq", "0000", HEADER_LEN);
                                           // spedisco l'header
                                           sprintf(headerstring, "%c%7s%5s", header.RequestType, header.Options, header.PortNumber);
@@ -244,8 +254,18 @@ int main(int argc, const char **argv)
                                           // devo mandare mittente e destinatario della richiesta
                                           msglen = strlen(my_credentials.Username) + strlen(cmd.Argument1);
                                           sprintf(buffer, "%s %s", my_credentials.Username, cmd.Argument1);
-                                          ret = send(sv_communicate, (void *)buffer, msglen, 0);
+                                          printf("il buffer di invio della show è %s\n", buffer);
+                                          ret = send(sv_communicate, (void *)buffer, msglen + 1, 0);
                                           // ora mi aspetto il numero di messaggi da leggere dal server
+                                          ret = recv(sv_communicate, (void*)&num_msg, sizeof(int), 0);
+                                          printf("il server mi ha detto che %s mi ha inviato %d messsaggi\n", cmd.Argument1, num_msg);
+
+                                          for(int i = 0; i < num_msg; i++)
+                                                {
+                                                      char recvbuffer[4096] = "";
+                                                      ricevi_messaggio(recvbuffer,sv_communicate);
+                                                      printf("messaggio pendente ricevuto: %s", recvbuffer);
+                                                }
                                     }
                                     break;
 

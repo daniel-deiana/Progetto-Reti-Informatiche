@@ -168,9 +168,13 @@ void printfBuffer()
 }
 int countBuffered(char *dest, char *mitt)
 {
+
       int nmsg = 0;
       struct bufferedMessage msg;
       FILE *fptr = fopen("Chat.txt", "rb");
+
+      printf("sono dentro la count_buffered e mi hanno detto che devo cercare i messaggi inviati dal target %s al richiedente %s\n",mitt,dest);
+
       while (fread(&msg, sizeof(msg), 1, fptr))
       {
             if (strcmp(msg.sender, mitt) == 0 && strcmp(msg.receiver, dest) == 0)
@@ -324,4 +328,85 @@ void close_communications(struct clientList **head)
             close(pun->socket);
             printf("ho chiuso il socket: %d\n", pun->socket);
       }
+}
+
+
+
+// //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// ///////////////////////////////////////// GESTIONE MESSAGGI //////////////////////////////////////////////////////////////
+// //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+int invia_messaggi_pendenti(char *richiedente, char* target, int dest_socket)
+{
+      int msg_num;
+      struct bufferedMessage msg; // uso per fare il parsing dei messaggi nel file
+      FILE * fptr = fopen("Chat.txt","rb");
+
+      msg_num = countBuffered(richiedente,target);
+      printf("countBuffered ha restituito %d messaggi\n", msg_num);
+
+      if (send(dest_socket, (void*)&msg_num, sizeof(int), 0) < 0)
+            {
+                  perror("Nono sono riuscito a mandare il numero di messaggi pendenti\n");
+                  return -1;
+            }
+
+      // scorro i messaggi da target verso richiedente e li invio al richiedente
+      while (fread(&msg,sizeof(struct bufferedMessage), 1 , fptr))
+      {
+            if (strcmp(msg.receiver,richiedente) == 0 && strcmp(msg.sender,target) == 0) 
+            {            
+                  int msg_len;
+
+                  // invio dimensione del msg
+                  msg_len = strlen(msg.message);
+                  if (send(dest_socket,(void*)&msg_len, sizeof(int), 0) < 0 )
+                        perror("Non sono riuscito ad inviare la dimensione del messaggio\n");
+                        
+                  if (send(dest_socket,(void*)&msg.message,msg_len,0) < 0 )
+                        perror("Non sono riuscito ad inviare il messaggio bufferizzato\n");
+            }
+      }
+
+      fclose(fptr);
+      return 0;
+}     
+
+
+int invia_messaggio(char *send_buffer, int receiver_socket)
+{
+      int msg_len = strlen(send_buffer);
+
+      if (send(receiver_socket,(void*)&msg_len, sizeof(int), 0) < 0 )
+      {
+            perror("Non sono riuscito ad inviare la dimensione del messaggio");
+            return -1;
+      }
+
+      if(send(receiver_socket, (void*)send_buffer, msg_len, 0) < 0 )
+      {
+            perror("Non sono riuscito ad inviare il messaggio");
+            return -1;
+      }
+
+      return 0;
+}
+
+int ricevi_messaggio(char *recv_buffer, int sender_socket)
+{
+      int msg_len; 
+
+      // ricevo la dimensione
+      if (recv(sender_socket, (void*)&msg_len, sizeof(int), 0) < 0)
+            {
+                  perror("Non sono riuscito a riceve la dimensione del messaggio");
+                  return -1;
+            }
+      if(recv(sender_socket, (void*)recv_buffer, msg_len, 0) < 0)
+            {
+                  perror("Non sono riuscito a riceve il messaggio");
+                  return -1;
+            }
+
+      return 0 ;
 }
