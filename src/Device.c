@@ -1,8 +1,9 @@
 #include "myHeader.h"
-
 // =========== CODICE CLIENT ===========
 int main(int argc, const char **argv)
 {
+      // lista socket attivi
+      struct clientList *active_sockets_list_head = NULL;
       // strutture dati definite ad hoc
       struct msg ClientMessage;
       struct Credentials my_credentials;
@@ -152,6 +153,7 @@ int main(int argc, const char **argv)
       {
             // ri-inizalizzo la lista dei descrittori in lettura
             readfds = master;
+            printf("sto per chiamare select\n");
             select(fdmax + 1, &readfds, NULL, NULL, NULL);
             for (int i = 0; i <= fdmax; i++)
             {
@@ -169,6 +171,7 @@ int main(int argc, const char **argv)
                               memset(&cmd, 0, sizeof(cmd));
                               if (fgets(inputstring, 1024 - 1, stdin) == NULL)
                                     perror("Errore in lettura del comando\n");
+                              fflush(stdin);
 
                               if (isChatting == 0)
                               {
@@ -245,17 +248,27 @@ int main(int argc, const char **argv)
                                           // ora mi aspetto il numero di messaggi da leggere dal server
                                     }
                                     break;
+
                                     case 'h':
+                                    {
                                           // Comando hanging
                                           printf("primo comando in lista\n");
-                                          break;
+                                    }
+                                    break;
+
                                     case 'o':
-                                          // Comando out
-                                          printf(
-                                              "Chiusura della connesione con il server. . .\n");
+                                    {
+                                          // comando out
+
+                                          // chiudo le comunicazioni con tutti i socket
                                           close(sv_communicate);
+
+                                          printList(active_sockets_list_head);
+                                          close_communications(&active_sockets_list_head);
                                           exit(1);
-                                          break;
+                                    }
+                                    break;
+
                                     case 'c':
                                     {
                                           // comando chat username
@@ -271,48 +284,48 @@ int main(int argc, const char **argv)
                                                 break;
                                           }
 
+                                          // richiesta di chat al server per vedere se il destinatario è online
                                           strcpy(destUsername, cmd.Argument1);
                                           make_header(&header, 'C', optionString, "0000", HEADER_LEN);
                                           sprintf(sendbuffer, "%c%8s%5s%s", header.RequestType, header.Options, header.PortNumber, cmd.Argument1);
                                           printf("sto mandando la richiesta di chat che è: %s \n", sendbuffer);
-                                          // mando header del tipo richiesta chat e username destinatario nel payload
+
                                           ret = send(sv_communicate, (void *)sendbuffer, 56, 0);
                                           if (ret < 0)
                                                 perror("Non sono riuscito ad avviare una chat con l'user\n");
-                                          // ora mi aspetto una risposta dal server che mi dica se il dest è online e la sua porta Scelgo di farmi passare sempre la porta in portNumber e di farmi dire se è online nel campo options
+
+                                          // risposta del server
                                           memset(&buffer, 0, sizeof(buffer));
                                           ret = recv(sv_communicate, (void *)buffer, HEADER_LEN, 0);
                                           if (ret < 0)
                                                 printf("Il server non mi ha detto nulla\n");
-                                          // deserializzo il buffer
+
                                           sscanf(buffer, "%c%8s%5s", &header.RequestType, header.Options, header.PortNumber);
                                           printf("il server mi ha mandato un header con la porta del dest che è la seguente\nPorta: %s\n", header.PortNumber);
-                                          // copio il contenuto della porta nella variabile globale portChat
                                           strcpy(portChat, header.PortNumber);
-                                          // nel campo options trovo se l'utente è online oppure no, nel campo porta la porta l'ultima porta registrata decido di passare sempre per il server
 
-                                          // qua devo aprire una connesione se il client è online creo indirizzo destinatario
-
+                                          // destinatario online
                                           if (strcmp("ON", header.Options) == 0)
                                           {
-                                                // creazione indirizzo e socket
+                                                // creazione indirizzo e socket e connessione al destinatario
                                                 memset(&cl_addr, 0, sizeof(cl_addr));
+
                                                 cl_addr.sin_family = AF_INET;
                                                 cl_addr.sin_port = htons(atoi(portChat));
                                                 inet_pton(AF_INET, "127.0.0.1", &cl_listen_addr.sin_addr);
                                                 cl_socket = socket(AF_INET, SOCK_STREAM, 0);
-                                                // connessione con il destinatario
+
                                                 ret = connect(cl_socket, (struct sockaddr *)&cl_addr, sizeof(cl_addr));
                                                 if (ret < 0)
                                                       printf("Non sono riuscito a iniziare la chat con il destinatario\n");
+
+                                                FD_SET(cl_socket, &master);
+                                                FD_SET(cl_socket, &readfds);
                                                 isDestOnline = 0;
-                                                printf("dest online\n");
+                                                // gestione lista socket attivi
+                                                pushUser(&active_sockets_list_head, cmd.Argument1, cl_socket);
                                           }
-
-                                          // quindi ora devo settare un flag che mi dica se sto chattando per discriminare quali comandi controllare
                                           isChatting = 0;
-
-                                          // devo anche capire, quando chatto. a chi devo mandare i messaggi tra server e client
                                           printf("=========== CHAT ===========\n");
                                           printf("Ogni messaggio che viene digitato su terminale e seguito dal tasto INVIO viene inviato al destinatario della chat\n");
                                     }
@@ -325,21 +338,37 @@ int main(int argc, const char **argv)
                               if (i == listener)
                               {
                                     int addrlen = sizeof(gp_addr);
+
                                     communicate = accept(i, (struct sockaddr *)&gp_addr, (socklen_t *)&addrlen);
                                     fdmax = (communicate > fdmax) ? communicate : fdmax;
                                     FD_SET(communicate, &master);
+                                    pushUser(&active_sockets_list_head, "non_saved_name", i);
+
                                     printf("Un client sta provando a connettersi\n");
                               }
                               else
                               {
                                     char bufferChatMessage[1024] = "";
                                     ret = recv(i, (void *)bufferChatMessage, 1024, 0);
-                                    printf("Ho ricevuto %d byte da un altro utente ---> messaggio: %s\n", ret, bufferChatMessage);
 
                                     if (ret == 0)
                                     {
-                                          printf("Connessione chiusa");
+                                          char User_logged_out[50];
+                                          // gestione disconnesioni altri clients
+                                          printf("Connessione chiusa con il socket: %d\n", i);
+
+                                          // check se è l'utente con cui sto chattando
+                                          isDestOnline = (i == cl_socket) ? -1 : 0;
+                                          FD_CLR(i, &master);
+                                          close(i);
+
+                                          // gestione lista
+                                          deleteUser(&active_sockets_list_head, i, User_logged_out);
+
+                                          continue;
                                     }
+
+                                    printf("Ho ricevuto %d byte da un altro utente ---> messaggio: %s\n", ret, bufferChatMessage);
                               }
                         }
                   }

@@ -1,7 +1,0 @@
-cmake_minimum_required(VERSION 3.21)
-project(Progetto)
-set(CMAKE_C_STANDARD 11)
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "../bin")
-add_custom_target(Server.c)
-add_executable(Progetto Server.c)
-configure_file("Device.c" "${CMAKE_CURRENT_BINARY_DIR}/")

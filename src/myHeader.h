@@ -64,12 +64,6 @@ struct chatMsg
       char receiver[50];
       char message[1024 * 4];
 };
-struct clientNode
-{
-      char Username[50];
-      int socket;
-      struct clientNode *pointer;
-};
 
 // ------------------FUNZIONI--------------------------------------
 // quando un utente cerca di loggarsi sul server, questa funzione controlla che tale utente sia presente fra gli utenti registrati
@@ -237,16 +231,25 @@ void logout(char *user)
             }
       }
 }
-// funzioni di utilità liste
-int pushUser(struct clientList **head, struct clientList *elem)
+
+/*
+      ================= LISTA =====================
+*/
+
+int pushUser(struct clientList **head, char *Username, int socket)
 {
+      struct clientList *node = (struct clientList *)malloc(sizeof(struct clientList));
+      node->pointer = NULL;
+      node->socket = socket;
+      strcpy(node->username, Username);
+
       // il nodo puntato da elem è gia inzializzato quando chiamo la routine
       if (*head == NULL)
-            *head = elem;
+            *head = node;
       else
       { // piazza elem in testa alla lista
-            elem->pointer = *head;
-            *head = elem;
+            node->pointer = *head;
+            *head = node;
       }
 
       return 0;
@@ -310,4 +313,15 @@ int isClientRegistered(char *username)
       }
 
       return -1;
+}
+
+// chiude la connessione con tutti i socket degli elementi presenti nella lista
+void close_communications(struct clientList **head)
+{
+      struct clientList *pun;
+      for (pun = *head; pun != NULL; pun = pun->pointer)
+      {
+            close(pun->socket);
+            printf("ho chiuso il socket: %d\n", pun->socket);
+      }
 }

@@ -1,5 +1,4 @@
 #include "myHeader.h"
-
 // ---------- CODICE SERVER ----------
 int main(int argc, const char **argv)
 {
@@ -224,13 +223,8 @@ int main(int argc, const char **argv)
                                                       printf("Sono riuscito ad aggiornare con successo i campi history di un utente\n");
                                                 printHistory();
 
-                                                // inserisco l'utente in lista online
-                                                struct clientList *newclient = (struct clientList *)malloc(sizeof(struct clientList));
-                                                // inizializzo la struttura
-                                                newclient->socket = i;
-                                                newclient->pointer = NULL;
-                                                strcpy(newclient->username, cl_credentials.Username);
-                                                pushUser(&head, newclient);
+                                                // gestione lista utenti online
+                                                pushUser(&head, cl_credentials.Username, i);
                                                 printList(head);
                                           }
                                           else
@@ -299,8 +293,8 @@ int main(int argc, const char **argv)
                                           sscanf(messagebuffer, "%s %s %[^\t]", tobuffer.sender, tobuffer.receiver, tobuffer.message);
                                           printf("ho ricevuto %d byte, sender: %s\nreceiver:%s \n", numbyte, tobuffer.sender, tobuffer.receiver);
                                           printf("Il messaggio che ho ricevuto dal client è:%s \n", tobuffer.message);
-                                          printfBuffer();
                                           bufferWrite(&tobuffer);
+                                          printfBuffer();
                                     }
                                     break;
 
