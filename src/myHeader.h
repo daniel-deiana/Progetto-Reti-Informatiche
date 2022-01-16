@@ -372,7 +372,6 @@ int invia_messaggi_pendenti(char *richiedente, char* target, int dest_socket)
       return 0;
 }     
 
-
 int invia_messaggio(char *send_buffer, int receiver_socket)
 {
       int msg_len = strlen(send_buffer);
@@ -409,4 +408,56 @@ int ricevi_messaggio(char *recv_buffer, int sender_socket)
             }
 
       return 0 ;
+}
+
+
+// invia un header che ha la seguente struttura - req_type:options:portnumber
+int invia_header(int receiver_socket, char req_type, char* options, char * port_number)
+{
+      char buf[1024];
+      int msg_len;
+
+      memset(buf, 0 , sizeof(buf));
+      sprintf(buf,"%c:%s:%s",req_type, options, port_number);
+
+      // mando la dimensione dell'header
+      msg_len = strlen(buf);
+      if ( send (receiver_socket, (void*)&msg_len, sizeof(int), 0) < 0)
+      {
+            perror("Non sono riuscito a mandare la lunghezza dell' header: ");
+            return -1;
+      }        
+
+      if ( send(receiver_socket, (void*)buf, msg_len, 0) < 0) 
+      {
+            perror("Non sono riuscito a mandare il messaggio di header");
+            return -1;
+      }
+
+      return 0;
+}
+
+// riceve i dati di un header proveniente dal socket sender_socket e ne fa il parsing sulla struttra header
+int ricevi_header(int sender_socket, struct msg_header * header)
+{     
+      int msg_len; // ci salvo la dimensione dell'header che sta arrivando
+      char buf[1024]; // buffer su cui ricevo l'header
+
+      memset(buf,0,sizeof(buf));
+
+      if (recv(sender_socket, (void*)&msg_len, sizeof(int), 0) < 0)
+      {
+            perror("errore nella ricezione della dimensione dell'header");
+            return -1;
+      }
+      
+      if (recv(sender_socket,(void*)buf, msg_len, 0) < 0 )
+      {
+            perror("nono sono riuscito a ricevere l'header");
+            return -1;
+      }
+
+      // faccio il parsing sulla struttura header
+      sscanf(buf,"%c:%s:%s",&header->RequestType,header->Options,header->PortNumber);
+      return 0;
 }
