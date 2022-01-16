@@ -265,6 +265,7 @@ int main(int argc, const char **argv)
 
                                           printList(active_sockets_list_head);
                                           close_communications(&active_sockets_list_head);
+
                                           exit(1);
                                     }
                                     break;
@@ -319,8 +320,10 @@ int main(int argc, const char **argv)
                                                 if (ret < 0)
                                                       printf("Non sono riuscito a iniziare la chat con il destinatario\n");
 
+                                                // aggiorno descriptor list
                                                 FD_SET(cl_socket, &master);
-                                                FD_SET(cl_socket, &readfds);
+                                                fdmax = (cl_socket > fdmax)? cl_socket : fdmax;
+
                                                 isDestOnline = 0;
                                                 // gestione lista socket attivi
                                                 pushUser(&active_sockets_list_head, cmd.Argument1, cl_socket);
