@@ -1,16 +1,5 @@
 #include "myHeader.h"
-
-// riceve un messaggio dal socket sender_socket e lo copia nel buffer recv_buffer 
-
-/*
-int invia_header(char type, char *Options, char *portnumber, int dest_socket)
-{
-
-}
-ricevi_header(char type, char *Options, char *portnumber, int dest_socket)
-*/
-
-// =========== CODICE CLIENT ===========
+// =========== CODICE CLIENT =========
 int main(int argc, const char **argv)
 {
       // lista socket attivi
@@ -100,26 +89,30 @@ int main(int argc, const char **argv)
             printf("stampo i comandi passati in input: first: %s, second: %s, third %s\n", first, second, third);
             if (strcmp(cmd, "signup") == 0)
             {
-                  make_header(&header, 'A', "reg", Port, HEADER_LEN);
+                  // make_header(&header, 'A', "reg", Port, HEADER_LEN);
+                  invia_header(sv_communicate,'A',"reg",Port);
                   sprintf(sendbuffer, "%s %s", first, second);
             }
             else if (strcmp(cmd, "in") == 0)
             {
-                  make_header(&header, 'B', "login", Port, HEADER_LEN);
+                  // make_header(&header, 'B', "login", Port, HEADER_LEN);
+                  invia_header(sv_communicate,'B',"login",Port);
                   strcpy(my_credentials.Username, second);
                   strcpy(my_credentials.Password, third);
                   sprintf(sendbuffer, "%s %s", second, third);
             }
 
             // invio header
-            sprintf(headerBuffer, "%c%7s%5s", header.RequestType, header.Options, header.PortNumber);
-            printf("L'header di richiesta di signup/in è %s\n", headerBuffer);
+            // sprintf(headerBuffer, "%c%7s%5s", header.RequestType, header.Options, header.PortNumber);
+            // printf("L'header di richiesta di signup/in è %s\n", headerBuffer);
 
+            /*
             ret = send(sv_communicate, (void *)headerBuffer, HEADER_LEN, 0);
             if (ret < 0)
                   printf("Non sono riuscito a mandare l'header\n");
+            */
 
-            printf("send buffer -->%s\n", sendbuffer);
+            printf("send buffer -->%s, caratteri che sto mandando sono %lu \n", sendbuffer, strlen(sendbuffer));
             ret = send(sv_communicate, (void *)sendbuffer, strlen(sendbuffer), 0);
             if (ret < 0)
                   printf("Non sono riuscito a mandare il buffer\n");
