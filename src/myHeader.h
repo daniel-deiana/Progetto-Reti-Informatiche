@@ -418,7 +418,7 @@ int invia_header(int receiver_socket, char req_type, char* options, char * port_
       int msg_len;
 
       memset(buf, 0 , sizeof(buf));
-      sprintf(buf,"%c:%s:%s",req_type, options, port_number);
+      sprintf(buf,"%c %s %s",req_type, options, port_number);
 
       // mando la dimensione dell'header
       msg_len = strlen(buf);
@@ -458,6 +458,6 @@ int ricevi_header(int sender_socket, struct msg_header * header)
       }
 
       // faccio il parsing sulla struttura header
-      sscanf(buf,"%c:%s:%s",&header->RequestType,header->Options,header->PortNumber);
+      sscanf(buf,"%c %s %s",&header->RequestType,header->Options,header->PortNumber);
       return 0;
 }

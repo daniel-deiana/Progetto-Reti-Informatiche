@@ -133,8 +133,8 @@ int main(int argc, const char **argv)
                                     // RICEZIONE DEL MESSAGGIO (HEADER)
                                     // ispezionamento dell'header
                                     // debug
-                                    ret = recv(i, (void *)masterHeader_string, HEADER_LEN, 0);
-                                    if (ret == 0)
+
+                                    if (ricevi_header(i,&masterHeader) < 0 )
                                     {
                                           char logoutUser[50];
                                           // chiusura socket e aggiornamento file descriptor
@@ -149,8 +149,8 @@ int main(int argc, const char **argv)
                                           printf("Ho chiuso la comunicazione con il socket: %d\n", i);
                                           continue;
                                     }
-                                    sscanf(masterHeader_string, "%c%8s%5s", &masterHeader.RequestType, masterHeader.Options, masterHeader.PortNumber);
-                                    printf("La stringa che ho ricevuto dal client è %s\n", masterHeader_string);
+                                    //sscanf(masterHeader_string, "%c%8s%5s", &masterHeader.RequestType, masterHeader.Options, masterHeader.PortNumber);
+                                    //printf("La stringa che ho ricevuto dal client è %s\n", masterHeader_string);
                                     printf("Il tipo della richiesta è: %c\n", masterHeader.RequestType);
                                     printf("Il contenuto del campo options è: %s\n", masterHeader.Options);
                                     printf("Il contenuto del campo PortNumber è: %s\n", masterHeader.PortNumber);
