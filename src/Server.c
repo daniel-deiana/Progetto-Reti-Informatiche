@@ -281,10 +281,9 @@ int main(int argc, const char **argv)
                                           /*
                                           Un client sta mandando un messaggio ad un destinatario che ha trovato OFFLINE, quindi se mi invia un pacchetto
                                           con header del TIPO "E" vuol dire che devo bufferizzare un messaggio nel registro del server.
-                                          devo però capire chi è il destinatario e chi me lo sta mandando
                                           */
-                                          // decido di progettare il protocollo in questo modo: se ricevo un header del tipo E allora vuol dire che i primi 100 byte
-                                          // del payload contengono username del sender e del receiver
+
+                                          // device mi sta mandando il suo nome e il nome del destinatario
                                           memset(messagebuffer, 0, sizeof(messagebuffer));
                                           numbyte = recv(i, (void *)messagebuffer, 1024, 0);
 
@@ -299,25 +298,14 @@ int main(int argc, const char **argv)
                                     break;
 
                                     case 'D':
-                                    {
-                                          int msgnum; // numero di messaggi pendenti da inviare al client
-                                          char msgnumstring[8] = "";
-                                          struct bufferedMessage msg;
-                                          FILE *fptr;
-                                          // mi è arrivata una richiesta di show username
+                                    {     
                                           char userTarget[50];     // argomento della show eseguita dal client
                                           char userRequesting[50]; // client che ha fatto la richiesta
-                                          ret = recv(i, (void *)buffer, 101, 0);
+                                          
+                                          // client mi dice da chi vuole i messaggi pendenti
+                                          ret = recv(i, (void *)buffer, 102, 0);
                                           sscanf(buffer, "%s %s", userRequesting, userTarget);
-                                          // ora devo usare questi valori per cercare nel registro delle chat bufferizzate tutti i messaggi da requesting verso target pendenti
-                                          // posso decidere di inviare i messaggi pendenti uno ad uno e mettere nell'intestazione del messaggio il fatto che mandero x mess al destinatario
-                                          msgnum = countBuffered(userTarget, userRequesting); //
-                                          // conversione da int a stringa del numero di messaggi
-                                          sprintf(msgnumstring, "%d", msgnum);
-                                          // mando il numero di messaggi che si aspetta di ricevere
-                                          make_header(&gpHeader, 'D', msgnumstring, "0000", sizeof(gpHeader));
-                                          ret = send(i, (void *)gpHeader_string, HEADER_LEN, 0);
-                                          // ora devo mandare ad uno ad uno i messaggi bufferrizzati a quello che mi ha fatto la richiesta
+                                          invia_messaggi_pendenti(userRequesting, userTarget, i);                                          
                                     }
                                     break;
                                     }
@@ -327,3 +315,10 @@ int main(int argc, const char **argv)
             }                   // FINE for1
       }                         // FINE for0
 } // FINE main()
+
+
+
+
+
+
+
