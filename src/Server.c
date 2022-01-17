@@ -102,6 +102,7 @@ int main(int argc, const char **argv)
                               case '3':
                                     // esc
                                     printf("------------------ chiusura del server ------------------\n");
+
                                     close(Listener);
                                     exit(1);
                                     break;
@@ -128,7 +129,7 @@ int main(int argc, const char **argv)
                                     char portString[5];                  
                                     
                                     // client mi sta inviando l'header
-                                    if (ricevi_header(i,&masterHeader) == 0 )
+                                    if ( ricevi_header(i,&masterHeader) == 0 )
                                     {
                                           // mi è stato mandato un messaggio di "close()"
                                           char logout_user[50];
@@ -234,7 +235,7 @@ int main(int argc, const char **argv)
                                           ricevi_messaggio(buffer, i);
                                           printf("Ho ricevuto la richiesta di una chat con l'utente <%s>\n", buffer);
 
-                                          Port = isOnline(buffer);
+                                          Port = check_username_online(buffer);
                                           if (Port == 0)
                                                 printf("Port sta a zero\n");
 
@@ -282,8 +283,40 @@ int main(int argc, const char **argv)
                                           ricevi_messaggio(buffer, i);
                                           sscanf(buffer, "%s %s", userRequesting, userTarget);
                                           invia_messaggi_pendenti(userRequesting, userTarget, i);                                          
+                                          
+                                          // devo notificare l'user target che "userRequesting ha letto i messaggi"
+                                          // devo inviare il nome di chi ha letto i messaggi --> userRequesting
+
                                     }
                                     break;
+
+                                    case 'U':
+                                    {
+                                          // ---------------------- routine chat di gruppo -----------------------
+
+                                          int porta;
+                                          // invio sringa che contiene username utenti online
+                                          
+                                          copia_username_utenti_online(buffer);
+                                          invia_messaggio(buffer,i);
+                                          
+                                          // device mi manda l'utente che vuole aggiungere alla chat
+                                          pulisci_buffer(buffer,sizeof(buffer));
+                                          ricevi_messaggio(buffer, i);
+
+                                          // invio al device la porta su cui è attivo il client
+                                          // invio "failed" se l'utente cercato non è online
+                                          porta = porta_da_username(buffer);
+
+                                          // serializzo il numero di porta sul buffer
+                                          pulisci_buffer(buffer,sizeof(buffer));
+                                          sprintf(buffer,"%d",porta);
+                                          // invio porta del dest al client
+                                          invia_messaggio(buffer, i);
+                                          
+                                          
+
+                                    }
                                     }
                               } 
                         }       

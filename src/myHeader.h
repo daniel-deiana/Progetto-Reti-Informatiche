@@ -66,6 +66,14 @@ struct chatMsg
 };
 
 // //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// //////////////////////////////////////////// GENERICHE ///////////////////////////////////////////////////////////////////
+// //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void pulisci_buffer(char * buffer, int buf_len) {memset(buffer, 0 , buf_len);}
+
+
+
+// //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // ///////////////////////////////////////// FUNZIONI DI STAMPA ////////////////////////////////////////////////////////////////
 // //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -88,6 +96,25 @@ void stampa_comandi_device()
 // //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // ///////////////////////////////////////// GESTIONE FILES  ////////////////////////////////////////////////////////////////
 // //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+int porta_da_username(char * username)
+{
+      int port = 0; 
+      struct HistoryRecord record;
+      FILE * fptr = fopen("Client_History.txt","rb");
+
+      while(fread(&record, sizeof(record), 1 , fptr ))
+      {
+            if ( strcmp(username, record.Username) == 0 && record.timestamp_out == 0)
+                  {
+                        // utente trovato, ed è anche online quindi restituisco la porta
+                        port = record.Port;
+                        break;
+                  } 
+      }
+
+      return port; 
+}
 
 int LoginCheck(FILE *fileptr, struct Credentials *cl_credentials, int size)
 {
@@ -112,12 +139,13 @@ void make_header(struct msg_header *header, char Type, char *Options, char *Port
       strcpy(header->PortNumber, PortNumber);
       return;
 }
-int isOnline(char *Username)
+int check_username_online(char *Username)
 {
       // apro il file di history
       FILE *fptr;
       struct HistoryRecord fileRecord;
       fptr = fopen("Client_history.txt", "rb");
+      
       while (fread(&fileRecord, sizeof(fileRecord), 1, fptr))
       {
             if (strcmp(fileRecord.Username, Username) == 0 && (fileRecord.timestamp_out == 0) && (fileRecord.Port != 0))
@@ -130,6 +158,7 @@ int isOnline(char *Username)
       fclose(fptr);
       return -1;
 }
+
 int historyUpdateLogin(FILE *fileptr, char *Username, char *port)
 {
       struct HistoryRecord record;
@@ -524,4 +553,28 @@ int ricevi_header(int sender_socket, struct msg_header * header)
       // faccio il parsing sulla struttura header
       sscanf(buf,"%c %s %s",&header->RequestType,header->Options,header->PortNumber);
       return ret;
+}
+
+// copia nella stringa "buffer" gli username degli utenti online separati dal carattere '\n'
+int copia_username_utenti_online(char *buffer)
+{
+      FILE * fptr = fopen("Client_History.txt","rb");
+      struct HistoryRecord record;
+      // tengo il conto di dove mi trovo nella stringa 
+      int buf_index = 0; 
+
+      while(fread(&record,sizeof(record),1,fptr))
+      {     
+            if (record.timestamp_out == 0)
+                  {
+                        // copia della stringa nel record in quella da spedire
+                        for ( int i = 0; i < strlen(record.Username); i++, buf_index++)
+                              buffer[buf_index] = record.Username[i];
+                        // aggiungo il carattere di newline per distinguere le stringhe 
+                        buffer[buf_index++] = '\n';
+                  }
+      }
+
+      fclose(fptr);
+      return buf_index;
 }
