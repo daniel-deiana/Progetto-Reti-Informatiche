@@ -94,13 +94,13 @@ int main(int argc, const char **argv)
                               switch (Command[0])
                               {
                               case '1':
-                                    // Stampo una breve descrizione dei comandi
+                                    // show
                                     break;
                               case '2':
-                                    // Devo stampare la lista dei dispositivi connessi al server con numero di messs bufferizzati e timestamp del mess più recente
+                                    // list
                                     break;
                               case '3':
-                                    // Chiudo il server
+                                    // esc
                                     printf("------------------ chiusura del server ------------------\n");
                                     close(Listener);
                                     exit(1);
@@ -117,6 +117,7 @@ int main(int argc, const char **argv)
                                     communicate = accept(i, (struct sockaddr *)&client_addr, (socklen_t *)&addrlen);
                                     fdmax = (communicate > fdmax) ? communicate : fdmax;
                                     FD_SET(communicate, &master);                                   
+                                    
                                     printf("Accettata richiesta di connesione da un client: \n");
                               }
                               else
@@ -127,8 +128,9 @@ int main(int argc, const char **argv)
                                     char portString[5];                  
                                     
                                     // client mi sta inviando l'header
-                                    if (ricevi_header(i,&masterHeader) < 0 )
+                                    if (ricevi_header(i,&masterHeader) == 0 )
                                     {
+                                          // mi è stato mandato un messaggio di "close()"
                                           char logout_user[50];
 
                                           close(i);
@@ -139,11 +141,13 @@ int main(int argc, const char **argv)
                                     
                                           logout(logout_user);
                                           stampa_history_utenti();
-                  
+
+                                          // debug
                                           printf("Ho chiuso la comunicazione con il socket: %d\n", i);
                                           continue;
                                     }
-                 
+                                    
+                                    // debug
                                     printf("Il tipo della richiesta è: %c\n", masterHeader.RequestType);
                                     printf("Il contenuto del campo options è: %s\n", masterHeader.Options);
                                     printf("Il contenuto del campo PortNumber è: %s\n", masterHeader.PortNumber);
@@ -161,6 +165,7 @@ int main(int argc, const char **argv)
                                           
                                           ricevi_messaggio(buffer,i);
 
+                                          // debug
                                           printf("Sto per registrare un utente che mi ha passato il seguente buffer: %s\n", buffer);
                                     
                                           sscanf(buffer, "%s %s", MyCredentials.Username, MyCredentials.Password);
@@ -199,6 +204,7 @@ int main(int argc, const char **argv)
 
                                           if (LoginCheck(LogPointer, &cl_credentials, sizeof(cl_credentials)) == 0)
                                           {
+                                                // debug
                                                 printf("Sto mandando l'ack positivo\n");
 
                                                 invia_header(i, 'B', "ok","8000");
@@ -214,6 +220,7 @@ int main(int argc, const char **argv)
                                           }
                                           else
                                           {
+                                                // debug
                                                 printf("Non ho trovato le credenziali nel registro del server\n");
                                                 invia_header(i,'B',"noreg","8000");
                                           }
@@ -230,7 +237,8 @@ int main(int argc, const char **argv)
                                           Port = isOnline(buffer);
                                           if (Port == 0)
                                                 printf("Port sta a zero\n");
-                                          sprintf(portString, "%d", Port); // converto da intero a stringa per passare la porta nell'header
+
+                                          sprintf(portString, "%d", Port); 
                                           if (Port == -1)
                                                 invia_header(i, 'C' , "OFF", portString);
                                           else
@@ -246,7 +254,7 @@ int main(int argc, const char **argv)
 
                                           struct bufferedMessage tobuffer;
                                           int numbyte;
-                                          char messagebuffer[4096 + 100];
+                                          char messagebuffer[4096];
                                           memset(&tobuffer, 0, sizeof(tobuffer));
 
                                           // device mi sta mandando il suo nome e il nome del destinatario

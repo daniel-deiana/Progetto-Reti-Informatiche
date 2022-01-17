@@ -300,16 +300,17 @@ int main(int argc, const char **argv)
                                                 // gestione lista socket attivi
                                                 inserisci_utente(&active_sockets_list_head, cmd.Argument1, cl_socket);
                                           }
+
                                           isChatting = 0;
-                                          printf("=========== CHAT ===========\n");
-                                          printf("Ogni messaggio che viene digitato su terminale e seguito dal tasto INVIO viene inviato al destinatario della chat\n");
+                                          printf("--------------------- chat -------------------------\n");
+                                          printf("\nDigita un messaggio: \n");
                                     }
                                     }
                               }
                         }
                         else
                         {
-                              // SOCKET DI LISTEN, COMUNICAZIONE
+                              // nuova comunicazione
                               if (i == listener)
                               {
                                     int addrlen = sizeof(gp_addr);
@@ -325,9 +326,8 @@ int main(int argc, const char **argv)
                               {
                                     char bufferChatMessage[1024] = "";
                                    
-                                     ricevi_messaggio(bufferChatMessage,i);
-                                    
-                                    if (ret == 0)
+                                    // mi sta arrivando un messaggio                                   
+                                    if ( ricevi_messaggio(bufferChatMessage,i) == 0)
                                     {
                                           char User_logged_out[50];
                                           // gestione disconnesioni altri clients
@@ -344,7 +344,7 @@ int main(int argc, const char **argv)
                                           continue;
                                     }
 
-                                    printf("Ho ricevuto %d byte da un altro utente ---> messaggio: %s\n", ret, bufferChatMessage);
+                                    printf("messaggio ricevuto: %s\n", bufferChatMessage);
                               }
                         }
                   }
