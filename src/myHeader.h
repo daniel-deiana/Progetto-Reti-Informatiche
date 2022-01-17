@@ -65,8 +65,9 @@ struct chatMsg
       char message[1024 * 4];
 };
 
-// ------------------FUNZIONI--------------------------------------
-// quando un utente cerca di loggarsi sul server, questa funzione controlla che tale utente sia presente fra gli utenti registrati
+// //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// ///////////////////////////////////////// GESTIONE FILES  ////////////////////////////////////////////////////////////////
+// //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 int LoginCheck(FILE *fileptr, struct Credentials *cl_credentials, int size)
 {
@@ -134,7 +135,7 @@ int historyUpdateLogin(FILE *fileptr, char *Username, char *port)
       fclose(fileptr);
       return -1;
 }
-void printHistory()
+void stampa_history_utenti()
 {
       FILE *fptr;
       struct HistoryRecord record;
@@ -145,7 +146,7 @@ void printHistory()
       }
       fclose(fptr);
 }
-void bufferWrite(struct bufferedMessage *msg)
+void bufferizza_msg(struct bufferedMessage *msg)
 {
       // SCRIVE NEL FILE DEI MESSAGGI BUFFERIZZATI
       time_t rawtime;
@@ -155,7 +156,7 @@ void bufferWrite(struct bufferedMessage *msg)
       fwrite(msg, sizeof(struct bufferedMessage), 1, fileptr);
       fclose(fileptr);
 }
-void printfBuffer()
+void stampa_msg_bufferizzati()
 {
       FILE *fptr;
       fptr = fopen("Chat.txt", "rb");
@@ -236,11 +237,11 @@ void logout(char *user)
       }
 }
 
-/*
-      ================= LISTA =====================
-*/
+// //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// ///////////////////////////////////////// GESTIONE LISTA /////////////////////////////////////////////////////////////////
+// //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-int pushUser(struct clientList **head, char *Username, int socket)
+int inserisci_utente(struct clientList **head, char *Username, int socket)
 {
       struct clientList *node = (struct clientList *)malloc(sizeof(struct clientList));
       node->pointer = NULL;
@@ -260,7 +261,7 @@ int pushUser(struct clientList **head, char *Username, int socket)
 }
 // ritorna -1 se l'operazione non ha successo, 0 altrimenti
 // se ha successo scrive in un puntatore l'username dell'utente che si è disconnesso
-int deleteUser(struct clientList **head, int todelete, char *usernameToGet)
+int rimuovi_utente(struct clientList **head, int todelete, char *usernameToGet)
 {
       struct clientList *pun;
 
@@ -295,7 +296,7 @@ int deleteUser(struct clientList **head, int todelete, char *usernameToGet)
       temp->pointer = pun->pointer;
       return 0;
 }
-void printList(struct clientList *head)
+void stampa_lista_utenti(struct clientList *head)
 {
       if (head == NULL)
             printf("lista vuota\n");
@@ -319,8 +320,13 @@ int isClientRegistered(char *username)
       return -1;
 }
 
+
+// //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// ///////////////////////////////////////// GESTIONE SOCKET ////////////////////////////////////////////////////////////////
+// //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 // chiude la connessione con tutti i socket degli elementi presenti nella lista
-void close_communications(struct clientList **head)
+void chiudi_connesioni_attive(struct clientList **head)
 {
       struct clientList *pun;
       for (pun = *head; pun != NULL; pun = pun->pointer)
@@ -411,7 +417,7 @@ int ricevi_messaggio(char *recv_buffer, int sender_socket)
 }
 
 
-// invia un header che ha la seguente struttura - req_type:options:portnumber
+// invia un header che ha la seguente struttura - req_type_options_portnumber
 int invia_header(int receiver_socket, char req_type, char* options, char * port_number)
 {
       char buf[1024];
