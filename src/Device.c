@@ -199,17 +199,37 @@ int main(int argc, const char **argv)
                                           // dico al server che voglio la lista degli utenti online
                                           invia_header(sv_communicate,'U',"group","0000");
                                           
-                                          /* debug */ printf("lista utenti online:\n");
                                           // risposta server
                                           ricevi_messaggio(buffer, sv_communicate);
-                                          printf("%s",buffer);
+                                          printf("Lista utenti online:\n%s",buffer);
                                           
                                           // -----------------  comando "\a username + "INVIO" ------------------
 
+                                          char username[50], cmd;
+                              riprova:    scanf("%c %s", &cmd,username);                                          
+                                          
+                                          if (cmd != 'a')
+                                                goto riprova;
+
                                           // mando l'username dell'utente che voglio aggiungere
+                                          invia_messaggio(username, sv_communicate);
 
                                           // risposta server, se positiva allora aggiungo il numero di porta e l'username alla lista della chat 
-                  
+                                          pulisci_buffer(buffer,sizeof(buffer));
+                                          ricevi_messaggio(buffer,sv_communicate);
+
+                                          if (strcmp(buffer,"0") == 0)
+                                                {
+                                                      printf("l'utente che volevog aggiungere alla chat non è online\n");
+                                                      break;
+                                                }
+
+                                          printf("l'utente con il numero di porta <%s> è stato aggiunto con successo alla chat\n",buffer);
+
+                                          
+
+                                          // creo indirizzo destinatario e lo aggiungo ai socket della chat
+
                                     }
                               }
                               else

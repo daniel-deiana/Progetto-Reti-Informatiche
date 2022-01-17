@@ -294,10 +294,27 @@ int main(int argc, const char **argv)
                                     {
                                           // ---------------------- routine chat di gruppo -----------------------
 
+                                          int porta;
                                           // invio sringa che contiene username utenti online
                                           
                                           copia_username_utenti_online(buffer);
                                           invia_messaggio(buffer,i);
+                                          
+                                          // device mi manda l'utente che vuole aggiungere alla chat
+                                          pulisci_buffer(buffer,sizeof(buffer));
+                                          ricevi_messaggio(buffer, i);
+
+                                          // invio al device la porta su cui è attivo il client
+                                          // invio "failed" se l'utente cercato non è online
+                                          porta = porta_da_username(buffer);
+
+                                          // serializzo il numero di porta sul buffer
+                                          pulisci_buffer(buffer,sizeof(buffer));
+                                          sprintf(buffer,"%d",porta);
+                                          // invio porta del dest al client
+                                          invia_messaggio(buffer, i);
+                                          
+                                          
 
                                     }
                                     }
