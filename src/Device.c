@@ -1,46 +1,45 @@
 #include "myHeader.h"
-// =========== CODICE CLIENT =========
+
+// //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// ///////////////////////////////////////// NET CLIENT /////////////////////////////////////////////////////////////////////
+// //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 int main(int argc, const char **argv)
 {
-      // lista socket attivi
       struct clientList *active_sockets_list_head = NULL;
-      // strutture dati definite ad hoc
       struct msg ClientMessage;
       struct Credentials my_credentials;
-      // strutture dati indirizzo
       struct sockaddr_in server_addr, cl_addr, cl_listen_addr, gp_addr;
-      // per la creazione dei socket e i valori di return delle system call di rete
+      
       int sv_communicate, communicate, cl_socket, listener, ret, msglen, fdmax = 0;
-      // flag per la chat con un destinatario
       int isDestOnline = -1, isChatting = -1;
-      // buffer che vengono usati per inviare i messaggi oppure per prendere in input dei comandi da terminale
+      
+      char Port[5] ,portChat[5], headerChat_string[HEADER_LEN] = "", string[HEADER_LEN];
       char buffer[1024 * 4 + HEADER_LEN], LogInCommand[20];
-      // Rubrica
+      char destUsername[50] = "";      
       char rubrica[3][50];
+      
+
       strcpy(rubrica[0], "user1");
       strcpy(rubrica[1], "user2");
       strcpy(rubrica[2], "user3");
       // stringa per le conversioni dei numeri di porta
-      char Port[5];
-      char portChat[5];
-      char headerChat_string[HEADER_LEN] = "";
-      char string[HEADER_LEN];
-      char destUsername[50] = "";
-
+      
       fd_set master, readfds;
       FILE *RegistrationLog, *friends;
-      // inizializzo i file descriptor
+    
       FD_ZERO(&master);
       FD_ZERO(&readfds);
 
-      // ------ Creazione indirizzo del server ------
+      // --------------------- indirizzo server ---------------------
       memset(&server_addr, 0, sizeof(server_addr));
       server_addr.sin_family = AF_INET;
       server_addr.sin_port = htons(4242);
       inet_pton(AF_INET, "127.0.0.1", &server_addr.sin_addr);
 
-      // CREAZIONE DEL SOCKET COMUNICAZIONI CLIENT-SERVER
+      // socket server
       sv_communicate = socket(AF_INET, SOCK_STREAM, 0);
+      
       // aggiungo il socket di comunincazione con il server tra i monitorati dall select
       FD_SET(STDIN, &master);
 
@@ -53,20 +52,19 @@ int main(int argc, const char **argv)
       strcpy(Port, argv[1]);
       printf("\n%s\n", Port);
 
-      // indirizzo socket di listen
+      // ---------------------- indirizzo device --------------------
       memset(&cl_addr, 0, sizeof(cl_addr));
       cl_listen_addr.sin_family = AF_INET;
       cl_listen_addr.sin_port = htons(atoi(Port));
       inet_pton(AF_INET, "127.0.0.1", &cl_listen_addr.sin_addr);
 
-      // CREAZIONE SOCKET DI ASCOLTO PER COMUNICAZIONI CLIENT-CLIENT / SERVER/CLIENT
+      // socket client -> client : server -> client
       listener = socket(AF_INET, SOCK_STREAM, 0);
       bind(listener, (struct sockaddr *)&cl_listen_addr, sizeof(cl_listen_addr));
       listen(listener, 50);
 
       FD_SET(listener, &master);
       fdmax = listener;
-
 
       // faccio la connect al server
       if (connect(sv_communicate, (struct sockaddr *)&server_addr, sizeof(server_addr)))
@@ -127,14 +125,8 @@ int main(int argc, const char **argv)
             }
       }
 
-      // STAMPO I COMANDI DISPONIBILI DOPO IL LOGIN
-      printf("        ======== COMANDI DEVICE ========\n");
-      printf("I comandi disponibili per il client sono i seguenti:\n");
-      printf("1-->hanging: Mostra a video i client che mi hanno mandato messaggi mentre ero offline.\n");
-      printf("2-->show <username>: Riceve i messaggi pendenti dall'utente <username> \n");
-      printf("3-->chat <username>: Avvia una chat con il client <username> dove viene mostrata la cronologia dei messaggi precedenti.\n");
-      printf("4-->share <file_name>: Permette di condividere con l'utente/i con cui si sta chattando un file presente nella current directory.\n");
-      printf("5-->out: Il client disconnette dal servizio.\n");
+      // stampo comandi device
+      stampa_comandi_device();
 
       fflush(stdin);
       // GESTIONE DEGLI INPUT DA STDIN E DEI SOCKET TRAMITE SELECT
@@ -173,6 +165,7 @@ int main(int argc, const char **argv)
                                           {
                                                 // invio messaggio direttamente al dest
                                                 invia_messaggio(inputstring,cl_socket);
+
                                           }
                                           else
                                           {
@@ -277,14 +270,10 @@ int main(int argc, const char **argv)
                                           invia_messaggio(sendbuffer,sv_communicate);                                     
                         
                                           printf("sto mandando la richiesta di chat che è: %s \n", sendbuffer);
-                                          
-                                          
-                                          memset(&buffer, 0, sizeof(buffer));
-                                          
+                                                            
+                                          // risposta server: destinatario online/offline
                                           ricevi_header(sv_communicate, &header);
 
-
-                                          sscanf(buffer, "%c%8s%5s", &header.RequestType, header.Options, header.PortNumber);
                                           printf("il server mi ha mandato un header con la porta del dest che è la seguente\nPorta: %s\n", header.PortNumber);
                                           strcpy(portChat, header.PortNumber);
 

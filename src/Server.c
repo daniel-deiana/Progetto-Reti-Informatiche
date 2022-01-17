@@ -1,5 +1,9 @@
 #include "myHeader.h"
-// ---------- CODICE SERVER ----------
+
+// //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// ///////////////////////////////////////// NET SERVER /////////////////////////////////////////////////////////////////////
+// //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 int main(int argc, const char **argv)
 {
 
@@ -34,9 +38,9 @@ int main(int argc, const char **argv)
       printf("La porta selezionata è %s \n", ServerPort);
 
       // Stampo la parte iniziale
-      printf("**************SERVER STARTED**************\n");
-      printf("Digita un comando: \n\n");
-      printf("1--> HELP: Mostra una breve descrizione dei comandi a schermo\n2--> LIST: Mostro la lista degli utenti connessi\n3--> ESC: Chiusura del Server\n");
+      printf("------------------ server online ------------------\n\n");
+      printf("Comandi disponibili\n\n");
+      printf("1 <help>\n2 <list>\n3 <esc>\n\n");
 
       memset(&cl_credentials, 0, sizeof(MyCredentials));
       memset(&MyCredentials, 0, sizeof(MyCredentials));
@@ -44,13 +48,13 @@ int main(int argc, const char **argv)
       FD_ZERO(&readfds);
       FD_SET(0, &master);
 
-      // Devo inizializzare l'indirizzo del server
+      // ------------------ indirizzo server ----------------------
       memset(&server_addr, 0, sizeof(server_addr));
       server_addr.sin_family = AF_INET;
       server_addr.sin_port = htons(4242);
-      inet_pton(AF_INET, "127.0.0.1", &server_addr.sin_addr); // Metto l'indirizzo del localhost
+      inet_pton(AF_INET, "127.0.0.1", &server_addr.sin_addr); 
 
-      // Apro il socket di Listener del server, le comunicazioni fra client e server seguono il protoccolo di trasposto TCP
+      // socket di listen
       Listener = socket(AF_INET, SOCK_STREAM, 0);
       ret = bind(Listener, (struct sockaddr *)&server_addr, sizeof(server_addr));
       ret = listen(Listener, 50); // Metto una coda di 50 possibili richieste di connesione al server
@@ -58,21 +62,21 @@ int main(int argc, const char **argv)
       FD_SET(Listener, &master);
       fdmax = Listener;
 
-      // Gestione degli input con la select()
       for (;;)
       {
             readfds = master;
             fflush(stdin);
+            
+            // gestione input da tastiera e da sockets tramite io multiplexing
             select(fdmax + 1, &readfds, NULL, NULL, NULL);
 
             for (int i = 0; i <= fdmax; i++)
             {
-                  // ho trovato un descrittor
                   if (FD_ISSET(i, &readfds))
                   {
-                        // Qualcuno ha digitato un comando da terminale
                         if (i == STDIN)
                         {
+             
                               // Check della correttezza del comando sullo stdin
                               fscanf(stdin, "%s", Command);
                               if (strlen(Command) > 1)
@@ -85,7 +89,8 @@ int main(int argc, const char **argv)
                                     printf("Hai inserito un indice relativo ad un comando non esistente/valido\n");
                                     break;
                               }
-                              // Ora devo gestire i comandi che il server mette a disposizione
+
+                              // ------------------ switching comandi server -------------------
                               switch (Command[0])
                               {
                               case '1':
@@ -96,7 +101,7 @@ int main(int argc, const char **argv)
                                     break;
                               case '3':
                                     // Chiudo il server
-                                    printf("***********CHIUSURA DEL SERVER***********");
+                                    printf("------------------ chiusura del server ------------------\n");
                                     close(Listener);
                                     exit(1);
                                     break;
@@ -116,15 +121,10 @@ int main(int argc, const char **argv)
                               }
                               else
                               {
-                                    // Variabili per la ricezione del messaggio dal client
-            
-                                    int client_ret;
-                                    struct msg_header masterHeader;      // master header di ogni richiesta che arriva al server
-                                    struct msg_header gpHeader;          // header che il server usa per inviare/ricevere dentro le richieste
-                                    char masterHeader_string[1024] = ""; // stringa su cui ricevo il master header
-                                    char gpHeader_string[1024] = "";     // stringa su cui ricevo il general purpose header
-                                    char portString[5];                  // stringa che uso per conversione da int a char* del numero di porta
+                                    // socket di comunicazione 
 
+                                    struct msg_header masterHeader;     
+                                    char portString[5];                  
                                     
                                     // client mi sta inviando l'header
                                     if (ricevi_header(i,&masterHeader) < 0 )
@@ -155,7 +155,7 @@ int main(int argc, const char **argv)
                                     {
                                     case 'A':
                                     {
-                                          // ================ REGISTRAZIONE ================
+                                          // ----------------------- routine di registrazione ---------------------------
 
                                           struct HistoryRecord record;
                                           
@@ -190,10 +190,11 @@ int main(int argc, const char **argv)
 
                                     case 'B':
                                     { 
-                                          ricevi_messaggio(buffer,i);
-                                          printf("SONO NEL CASO B: CREDENZIALI RICEVUTE -> %s\n",buffer);
+                                          //-------------------------- routine di login -------------------------------
                                           
-                        
+                                          // client mi sta mandando credenziali di login
+                                          ricevi_messaggio(buffer,i);
+                                          
                                           sscanf(buffer, "%s %s", cl_credentials.Username, cl_credentials.Password);
 
                                           if (LoginCheck(LogPointer, &cl_credentials, sizeof(cl_credentials)) == 0)
@@ -221,6 +222,8 @@ int main(int argc, const char **argv)
 
                                     case 'C':
                                     {
+                                          // ---------------------------- routine chat ------------------------------
+
                                           ricevi_messaggio(buffer, i);
                                           printf("Ho ricevuto la richiesta di una chat con l'utente <%s>\n", buffer);
 
@@ -239,6 +242,8 @@ int main(int argc, const char **argv)
 
                                     case 'E':
                                     {
+                                          // -------------- routine messaggio pendente da salvare -----------------
+
                                           struct bufferedMessage tobuffer;
                                           int numbyte;
                                           char messagebuffer[4096 + 100];
@@ -261,6 +266,8 @@ int main(int argc, const char **argv)
 
                                     case 'D':
                                     {     
+                                          // ---------------- routine messaggi pendenti da inviare ---------------
+
                                           char userTarget[50];     // argomento della show eseguita dal client
                                           char userRequesting[50]; // client che ha fatto la richiesta
                                           
