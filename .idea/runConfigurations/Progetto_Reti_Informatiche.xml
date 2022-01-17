@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Progetto Reti Informatiche" type="CMakeRunConfiguration" factoryName="Application" singleton="false" PROGRAM_PARAMS="4224" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" WORKING_DIR="file://$PROJECT_DIR$/src" PASS_PARENT_ENVS_2="true" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="Progetto" RUN_TARGET_NAME="Progetto" EXPLICIT_BUILD_TARGET_NAME="all">
+  <configuration default="false" name="Progetto Reti Informatiche" type="CMakeRunConfiguration" factoryName="Application" singleton="false" PROGRAM_PARAMS="1234" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" WORKING_DIR="file://$PROJECT_DIR$/src" PASS_PARENT_ENVS_2="true" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="Progetto" RUN_TARGET_NAME="Progetto" EXPLICIT_BUILD_TARGET_NAME="all">
     <method v="2">
       <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
     </method>

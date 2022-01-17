@@ -1,5 +1,9 @@
 #include "myHeader.h"
-// ---------- CODICE SERVER ----------
+
+// //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// ///////////////////////////////////////// NET SERVER /////////////////////////////////////////////////////////////////////
+// //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 int main(int argc, const char **argv)
 {
 
@@ -22,11 +26,7 @@ int main(int argc, const char **argv)
       fd_set master, readfds;
       FILE *LogPointer, *ChatBuffer, *HistoryPointer;
 
-      // Come prima cosa devo prendere dallo stdin un comando che faccia partire il server
-      // Il formato del comando è del tipo ./serv [port] dove port è la porta del server
-
-      // argc deve essere 2 perchè il programma all'avvio prende 2 ingressi in linea di comando
-      // il primo è il nome del programma mentre il secondo è il valore della porta passato in ingresso
+      // parsing degli argomenti da linea di comando
       if (argc != 2)
       {
             perror("Sto passando piu di un argomento in linea di comando");
@@ -38,9 +38,9 @@ int main(int argc, const char **argv)
       printf("La porta selezionata è %s \n", ServerPort);
 
       // Stampo la parte iniziale
-      printf("**************SERVER STARTED**************\n");
-      printf("Digita un comando: \n\n");
-      printf("1--> HELP: Mostra una breve descrizione dei comandi a schermo\n2--> LIST: Mostro la lista degli utenti connessi\n3--> ESC: Chiusura del Server\n");
+      printf("------------------ server online ------------------\n\n");
+      printf("Comandi disponibili\n\n");
+      printf("1 <help>\n2 <list>\n3 <esc>\n\n");
 
       memset(&cl_credentials, 0, sizeof(MyCredentials));
       memset(&MyCredentials, 0, sizeof(MyCredentials));
@@ -48,13 +48,13 @@ int main(int argc, const char **argv)
       FD_ZERO(&readfds);
       FD_SET(0, &master);
 
-      // Devo inizializzare l'indirizzo del server
+      // ------------------ indirizzo server ----------------------
       memset(&server_addr, 0, sizeof(server_addr));
       server_addr.sin_family = AF_INET;
       server_addr.sin_port = htons(4242);
-      inet_pton(AF_INET, "127.0.0.1", &server_addr.sin_addr); // Metto l'indirizzo del localhost
+      inet_pton(AF_INET, "127.0.0.1", &server_addr.sin_addr); 
 
-      // Apro il socket di Listener del server, le comunicazioni fra client e server seguono il protoccolo di trasposto TCP
+      // socket di listen
       Listener = socket(AF_INET, SOCK_STREAM, 0);
       ret = bind(Listener, (struct sockaddr *)&server_addr, sizeof(server_addr));
       ret = listen(Listener, 50); // Metto una coda di 50 possibili richieste di connesione al server
@@ -62,21 +62,21 @@ int main(int argc, const char **argv)
       FD_SET(Listener, &master);
       fdmax = Listener;
 
-      // Gestione degli input con la select()
       for (;;)
       {
             readfds = master;
             fflush(stdin);
+            
+            // gestione input da tastiera e da sockets tramite io multiplexing
             select(fdmax + 1, &readfds, NULL, NULL, NULL);
 
             for (int i = 0; i <= fdmax; i++)
             {
-                  // ho trovato un descrittor
                   if (FD_ISSET(i, &readfds))
                   {
-                        // Qualcuno ha digitato un comando da terminale
                         if (i == STDIN)
                         {
+             
                               // Check della correttezza del comando sullo stdin
                               fscanf(stdin, "%s", Command);
                               if (strlen(Command) > 1)
@@ -89,18 +89,19 @@ int main(int argc, const char **argv)
                                     printf("Hai inserito un indice relativo ad un comando non esistente/valido\n");
                                     break;
                               }
-                              // Ora devo gestire i comandi che il server mette a disposizione
+
+                              // ------------------ switching comandi server -------------------
                               switch (Command[0])
                               {
                               case '1':
-                                    // Stampo una breve descrizione dei comandi
+                                    // show
                                     break;
                               case '2':
-                                    // Devo stampare la lista dei dispositivi connessi al server con numero di messs bufferizzati e timestamp del mess più recente
+                                    // list
                                     break;
                               case '3':
-                                    // Chiudo il server
-                                    printf("***********CHIUSURA DEL SERVER***********");
+                                    // esc
+                                    printf("------------------ chiusura del server ------------------\n");
                                     close(Listener);
                                     exit(1);
                                     break;
@@ -108,88 +109,80 @@ int main(int argc, const char **argv)
                         }
                         else
                         {
-                              // Se sono qui vuol dire fondamentalmente ho un socket pronto in lettura (dei client hanno quindi inviato dei messaggi al server)
-                              // Devo discriminare se i client mi hanno contattato sul socket di comunicazione oppure su quello di ascolto
                               if (i == Listener)
                               {
-                                    // SOCKET DI ASCOLTO
-                                    //  Sono stato contattato sul socket di ascolto, devo aprire una nuova connessione con i clients
+                                    // socket di listen
+            
                                     addrlen = sizeof(client_addr);
                                     communicate = accept(i, (struct sockaddr *)&client_addr, (socklen_t *)&addrlen);
                                     fdmax = (communicate > fdmax) ? communicate : fdmax;
-                                    FD_SET(communicate, &master);
+                                    FD_SET(communicate, &master);                                   
+                                    
                                     printf("Accettata richiesta di connesione da un client: \n");
                               }
                               else
                               {
-                                    // Variabili per la ricezione del messaggio dal client
-                                    int client_ret;
-                                    struct msg_header masterHeader;      // master header di ogni richiesta che arriva al server
-                                    struct msg_header gpHeader;          // header che il server usa per inviare/ricevere dentro le richieste
-                                    char masterHeader_string[1024] = ""; // stringa su cui ricevo il master header
-                                    char gpHeader_string[1024] = "";     // stringa su cui ricevo il general purpose header
-                                    char portString[5];                  // stringa che uso per conversione da int a char* del numero di porta
+                                    // socket di comunicazione 
 
-                                    // RICEZIONE DEL MESSAGGIO (HEADER)
-                                    // ispezionamento dell'header
-                                    // debug
-
-                                    if (ricevi_header(i,&masterHeader) < 0 )
+                                    struct msg_header masterHeader;     
+                                    char portString[5];                  
+                                    
+                                    // client mi sta inviando l'header
+                                    if (ricevi_header(i,&masterHeader) == 0 )
                                     {
-                                          char logoutUser[50];
-                                          // chiusura socket e aggiornamento file descriptor
+                                          // mi è stato mandato un messaggio di "close()"
+                                          char logout_user[50];
+
                                           close(i);
                                           FD_CLR(i, &master);
 
-                                          // rimozione dalla lista utenti online e logout dal server (setto il timestamp_out)
-                                          deleteUser(&head, i, logoutUser);
-                                          printList(head);
-                                          logout(logoutUser);
-                                          printHistory();
+                                          rimuovi_utente(&head, i, logout_user);
+                                          stampa_lista_utenti(head);
+                                    
+                                          logout(logout_user);
+                                          stampa_history_utenti();
+
+                                          // debug
                                           printf("Ho chiuso la comunicazione con il socket: %d\n", i);
                                           continue;
                                     }
-                                    //sscanf(masterHeader_string, "%c%8s%5s", &masterHeader.RequestType, masterHeader.Options, masterHeader.PortNumber);
-                                    //printf("La stringa che ho ricevuto dal client è %s\n", masterHeader_string);
+                                    
+                                    // debug
                                     printf("Il tipo della richiesta è: %c\n", masterHeader.RequestType);
                                     printf("Il contenuto del campo options è: %s\n", masterHeader.Options);
                                     printf("Il contenuto del campo PortNumber è: %s\n", masterHeader.PortNumber);
 
-                                    // SOCKET DI COMUNICAZIONE
-                                    // conversione del messaggio da stringa verso struttura ClientMessage
-
-                                    /*
-                                    ==================GESTIONE RICHIESTE========================
-                                        REQ_TYPE = A: Richiesta di registrazione sul server da parte del client.
-                                        REQ_TYPE = B: Richiesta di Login sul server da parte del client.
-                                        REQ_TYPE = C: Un client avvia una chat con un altro client
-                                    */
+                                    // pulizia buffer messaggi
+                                    memset(buffer, 0, sizeof(buffer));
 
                                     switch (masterHeader.RequestType)
                                     {
                                     case 'A':
                                     {
-                                          // ================ REGISTRAZIONE ================
+                                          // ----------------------- routine di registrazione ---------------------------
 
                                           struct HistoryRecord record;
-                                          ret = recv(i, (void *)buffer, 100, 0);
+                                          
+                                          ricevi_messaggio(buffer,i);
+
+                                          // debug
                                           printf("Sto per registrare un utente che mi ha passato il seguente buffer: %s\n", buffer);
-                                          // apro il file e ci sputo dentro i dati della registrazione con il formato username password
+                                    
                                           sscanf(buffer, "%s %s", MyCredentials.Username, MyCredentials.Password);
 
-                                          // check se il client è gia registrato, se si invio solo un messaggio al client e non scrivo nulla su file
                                           if (isClientRegistered(MyCredentials.Username) == 0)
-                                                make_header(&gpHeader, 'A', "before", "0000", HEADER_LEN);
+                                                invia_header(i,'A',"before","0000");
                                           else
                                           {
-                                                make_header(&gpHeader, 'A', "first", "0000", HEADER_LEN);
-                                                // prima volta che il client si registra, devo aggiungerlo al log
+                                                invia_header(i,'A',"first","0000");
+
+                                                // gestione log e history utenti
                                                 LogPointer = fopen("Log.txt", "ab");
                                                 fwrite(&MyCredentials, sizeof(MyCredentials), 1, LogPointer);
                                                 fclose(LogPointer);
-                                                // Devo anche aggiungere un record nel file client_hystory dato che deve esserne presente uno per ogni utente che usa il servizio
+                                                
                                                 HistoryPointer = fopen("Client_History.txt", "ab"); // modalità append per non sovrascrivere i record precedenti
-                                                // inizializzo la struttura dati sulla history del server
+                                                
                                                 strcpy(record.Username, MyCredentials.Username);
                                                 record.Port = 0;
                                                 record.timestamp_in = 0;
@@ -197,76 +190,59 @@ int main(int argc, const char **argv)
                                                 fwrite(&record, sizeof(struct HistoryRecord), 1, HistoryPointer);
                                                 fclose(HistoryPointer);
                                           }
-                                          // serializzo ed invio la risposta al client
-                                          sprintf(gpHeader_string, "%c%7s%5s", gpHeader.RequestType, gpHeader.Options, gpHeader.PortNumber);
-                                          ret = send(i, (void *)gpHeader_string, HEADER_LEN, 0);
                                     }
                                     break;
 
                                     case 'B':
-                                    { // ================ LOGIN ================
-
-                                          ret = recv(i, (void *)buffer, 100, 0);
-                                          printf("Ho ricevuto %d caratteri\n", ret);
-                                          buffer[ret] = '\0';
-                                          printf("%s\n", buffer);
-                                          // AUTENTICAZIONE DELLE CREDENZIALI PASSATE DAL CLIENT
+                                    { 
+                                          //-------------------------- routine di login -------------------------------
+                                          
+                                          // client mi sta mandando credenziali di login
+                                          ricevi_messaggio(buffer,i);
+                                          
                                           sscanf(buffer, "%s %s", cl_credentials.Username, cl_credentials.Password);
-                                          // Devo aprire il file di log degli utenti registrati e devo vedere se si è registrato in precedenza
-                                          value = LoginCheck(LogPointer, &cl_credentials, sizeof(cl_credentials));
-                                          if (value == 0)
+
+                                          if (LoginCheck(LogPointer, &cl_credentials, sizeof(cl_credentials)) == 0)
                                           {
+                                                // debug
                                                 printf("Sto mandando l'ack positivo\n");
-                                                make_header(&gpHeader, 'B', "ok", "8000", HEADER_LEN);
-                                                // Registrazione su file del momento in cui il client si è loggato
+
+                                                invia_header(i, 'B', "ok","8000");
+                                                
                                                 if (historyUpdateLogin(HistoryPointer, cl_credentials.Username, masterHeader.PortNumber) == 0)
                                                       printf("Sono riuscito ad aggiornare con successo i campi history di un utente\n");
-                                                printHistory();
+                                                
+                                                stampa_history_utenti();
 
                                                 // gestione lista utenti online
-                                                pushUser(&head, cl_credentials.Username, i);
-                                                printList(head);
+                                                inserisci_utente(&head, cl_credentials.Username, i);
+                                                stampa_lista_utenti(head);
                                           }
                                           else
                                           {
+                                                // debug
                                                 printf("Non ho trovato le credenziali nel registro del server\n");
-                                                make_header(&gpHeader, 'B', "noreg", "8000", HEADER_LEN);
+                                                invia_header(i,'B',"noreg","8000");
                                           }
-                                          printf("Header ha il valore del tipo: %c\n", gpHeader.RequestType);
-                                          sprintf(gpHeader_string, "%c%7s%5s", gpHeader.RequestType, gpHeader.Options, gpHeader.PortNumber);
-                                          // TODO: METTERE SEMPRE \n ALLA FINE DI OGNI PRINTF
-                                          printf("Sto cercando di mandare la stringa di ack che è la seguente: %s\n", gpHeader_string);
-                                          client_ret = send(i, (void *)gpHeader_string, HEADER_LEN, 0);
-                                          memset(buffer, 0, sizeof(buffer));
                                     }
                                     break;
 
                                     case 'C':
                                     {
-                                          // Un client ha chiesto di avviare una chat con un altro utente del servizio
-                                          // Devo controllare se il destinatario sia registrato al servizio
-                                          // ricezione del payload (so gia che se la richiesta è del tipo C la dim massima è 50)
-                                          ret = recv(i, (void *)buffer, 50, 0);
+                                          // ---------------------------- routine chat ------------------------------
+
+                                          ricevi_messaggio(buffer, i);
                                           printf("Ho ricevuto la richiesta di una chat con l'utente <%s>\n", buffer);
-                                          // deserializzo il buffer
-                                          // devo cercare l'usernmame passato in buffer nel file history, se trovo una corrispondenza
-                                          // devo vedere se il timestamp di logout è nullo, se lo è l'utente destinatario è online
+
                                           Port = isOnline(buffer);
                                           if (Port == 0)
                                                 printf("Port sta a zero\n");
-                                          sprintf(portString, "%d", Port); // converto da intero a stringa per passare la porta nell'header
-                                          if (Port == -1)
-                                                // devo dire al client che l'utente destinatario non è online
-                                                make_header(&gpHeader, 'C', "OFF", portString, HEADER_LEN);
-                                          else
-                                                // ho trovato il destinatario che l'utente stava cercando
-                                                make_header(&gpHeader, 'C', "ON", portString, HEADER_LEN);
 
-                                          // serializzazione dell'header
-                                          sprintf(gpHeader_string, "%c%8s%5s", gpHeader.RequestType, gpHeader.Options, gpHeader.PortNumber);
-                                          client_ret = send(i, (void *)gpHeader_string, HEADER_LEN, 0);
-                                          if (client_ret < 0)
-                                                printf("Non sono riuscito a comunicare al client se il destinatario fosse online\n");
+                                          sprintf(portString, "%d", Port); 
+                                          if (Port == -1)
+                                                invia_header(i, 'C' , "OFF", portString);
+                                          else
+                                                invia_header(i,'C',"ON",portString);
 
                                           printf("Ho inviato al client informazioni sul destinatario\n");
                                     }
@@ -274,47 +250,47 @@ int main(int argc, const char **argv)
 
                                     case 'E':
                                     {
+                                          // -------------- routine messaggio pendente da salvare -----------------
+
                                           struct bufferedMessage tobuffer;
                                           int numbyte;
-                                          char messagebuffer[4096 + 100];
+                                          char messagebuffer[4096];
                                           memset(&tobuffer, 0, sizeof(tobuffer));
-                                          /*
-                                          Un client sta mandando un messaggio ad un destinatario che ha trovato OFFLINE, quindi se mi invia un pacchetto
-                                          con header del TIPO "E" vuol dire che devo bufferizzare un messaggio nel registro del server.
-                                          */
 
                                           // device mi sta mandando il suo nome e il nome del destinatario
                                           memset(messagebuffer, 0, sizeof(messagebuffer));
-                                          numbyte = recv(i, (void *)messagebuffer, 1024, 0);
+                                          ricevi_messaggio(messagebuffer, i);
 
                                           printf("prima della de-serializzazione: %s\n", messagebuffer);
-                                          // deserializzazione contenuto msgbuffer che conterrà il nome del sender e del receiver ed il messaggio
+
                                           sscanf(messagebuffer, "%s %s %[^\t]", tobuffer.sender, tobuffer.receiver, tobuffer.message);
                                           printf("ho ricevuto %d byte, sender: %s\nreceiver:%s \n", numbyte, tobuffer.sender, tobuffer.receiver);
                                           printf("Il messaggio che ho ricevuto dal client è:%s \n", tobuffer.message);
-                                          bufferWrite(&tobuffer);
-                                          printfBuffer();
+                                          
+                                          bufferizza_msg(&tobuffer);
+                                          stampa_msg_bufferizzati();
                                     }
                                     break;
 
                                     case 'D':
                                     {     
+                                          // ---------------- routine messaggi pendenti da inviare ---------------
+
                                           char userTarget[50];     // argomento della show eseguita dal client
                                           char userRequesting[50]; // client che ha fatto la richiesta
                                           
-                                          // client mi dice da chi vuole i messaggi pendenti
-                                          ret = recv(i, (void *)buffer, 102, 0);
+                                          ricevi_messaggio(buffer, i);
                                           sscanf(buffer, "%s %s", userRequesting, userTarget);
                                           invia_messaggi_pendenti(userRequesting, userTarget, i);                                          
                                     }
                                     break;
                                     }
-                              } // Fine listen/Comunicate
-                        }       // FINE GESTIONE COMUNICAZIONI/STDIN
-                  }             // FINE IS_SET
-            }                   // FINE for1
-      }                         // FINE for0
-} // FINE main()
+                              } 
+                        }       
+                  }             
+            }                   
+      }                         
+}
 
 
 

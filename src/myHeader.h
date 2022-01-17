@@ -65,8 +65,29 @@ struct chatMsg
       char message[1024 * 4];
 };
 
-// ------------------FUNZIONI--------------------------------------
-// quando un utente cerca di loggarsi sul server, questa funzione controlla che tale utente sia presente fra gli utenti registrati
+// //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// ///////////////////////////////////////// FUNZIONI DI STAMPA ////////////////////////////////////////////////////////////////
+// //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void stampa_comandi_device()
+{
+      printf("-------------------- comandi device --------------------\n\n");
+      printf("1 <hanging>:\n");
+      printf("2 <show> <username>:\n");
+      printf("3 <chat> <username>:\n");
+      printf("4 <share> <file_name>: \n");
+      printf("5 <out>:\n");
+      printf("---------------------------------------------------------\n");
+}
+
+
+
+
+
+
+// //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// ///////////////////////////////////////// GESTIONE FILES  ////////////////////////////////////////////////////////////////
+// //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 int LoginCheck(FILE *fileptr, struct Credentials *cl_credentials, int size)
 {
@@ -134,7 +155,7 @@ int historyUpdateLogin(FILE *fileptr, char *Username, char *port)
       fclose(fileptr);
       return -1;
 }
-void printHistory()
+void stampa_history_utenti()
 {
       FILE *fptr;
       struct HistoryRecord record;
@@ -145,7 +166,7 @@ void printHistory()
       }
       fclose(fptr);
 }
-void bufferWrite(struct bufferedMessage *msg)
+void bufferizza_msg(struct bufferedMessage *msg)
 {
       // SCRIVE NEL FILE DEI MESSAGGI BUFFERIZZATI
       time_t rawtime;
@@ -155,7 +176,7 @@ void bufferWrite(struct bufferedMessage *msg)
       fwrite(msg, sizeof(struct bufferedMessage), 1, fileptr);
       fclose(fileptr);
 }
-void printfBuffer()
+void stampa_msg_bufferizzati()
 {
       FILE *fptr;
       fptr = fopen("Chat.txt", "rb");
@@ -236,11 +257,11 @@ void logout(char *user)
       }
 }
 
-/*
-      ================= LISTA =====================
-*/
+// //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// ///////////////////////////////////////// GESTIONE LISTA /////////////////////////////////////////////////////////////////
+// //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-int pushUser(struct clientList **head, char *Username, int socket)
+int inserisci_utente(struct clientList **head, char *Username, int socket)
 {
       struct clientList *node = (struct clientList *)malloc(sizeof(struct clientList));
       node->pointer = NULL;
@@ -260,7 +281,7 @@ int pushUser(struct clientList **head, char *Username, int socket)
 }
 // ritorna -1 se l'operazione non ha successo, 0 altrimenti
 // se ha successo scrive in un puntatore l'username dell'utente che si è disconnesso
-int deleteUser(struct clientList **head, int todelete, char *usernameToGet)
+int rimuovi_utente(struct clientList **head, int todelete, char *usernameToGet)
 {
       struct clientList *pun;
 
@@ -295,7 +316,7 @@ int deleteUser(struct clientList **head, int todelete, char *usernameToGet)
       temp->pointer = pun->pointer;
       return 0;
 }
-void printList(struct clientList *head)
+void stampa_lista_utenti(struct clientList *head)
 {
       if (head == NULL)
             printf("lista vuota\n");
@@ -319,8 +340,13 @@ int isClientRegistered(char *username)
       return -1;
 }
 
+
+// //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// ///////////////////////////////////////// GESTIONE SOCKET ////////////////////////////////////////////////////////////////
+// //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 // chiude la connessione con tutti i socket degli elementi presenti nella lista
-void close_communications(struct clientList **head)
+void chiudi_connesioni_attive(struct clientList **head)
 {
       struct clientList *pun;
       for (pun = *head; pun != NULL; pun = pun->pointer)
@@ -375,66 +401,95 @@ int invia_messaggi_pendenti(char *richiedente, char* target, int dest_socket)
 int invia_messaggio(char *send_buffer, int receiver_socket)
 {
       int msg_len = strlen(send_buffer);
+      int ret; 
 
-      if (send(receiver_socket,(void*)&msg_len, sizeof(int), 0) < 0 )
+      // dimensione
+      ret = send(receiver_socket,(void*)&msg_len, sizeof(int), 0);
+
+      // gestione disconnessione
+      if ( ret == 0)
+          return ret;
+
+      if ( ret < 0 )
       {
             perror("Non sono riuscito ad inviare la dimensione del messaggio");
-            return -1;
+            return ret;
       }
 
-      if(send(receiver_socket, (void*)send_buffer, msg_len, 0) < 0 )
+      // messaggio
+      ret = send(receiver_socket, (void*)send_buffer, msg_len, 0);
+      if(ret < 0 )
       {
             perror("Non sono riuscito ad inviare il messaggio");
-            return -1;
+            return ret;
       }
 
-      return 0;
+      return ret;
 }
 
 int ricevi_messaggio(char *recv_buffer, int sender_socket)
 {
       int msg_len; 
+      int ret;
 
-      // ricevo la dimensione
-      if (recv(sender_socket, (void*)&msg_len, sizeof(int), 0) < 0)
+      // dimensione
+      ret = recv(sender_socket, (void*)&msg_len, sizeof(int), 0);
+
+      // gestione disconnessione
+      if ( ret == 0)
+        return ret;
+
+      if (ret < 0)
             {
                   perror("Non sono riuscito a riceve la dimensione del messaggio");
-                  return -1;
+                  return ret;
             }
-      if(recv(sender_socket, (void*)recv_buffer, msg_len, 0) < 0)
+      
+      // messaggio
+      ret = recv(sender_socket, (void*)recv_buffer, msg_len, 0);
+      if (ret < 0)
             {
                   perror("Non sono riuscito a riceve il messaggio");
-                  return -1;
+                  return ret;
             }
 
-      return 0 ;
+      return ret;
 }
 
 
-// invia un header che ha la seguente struttura - req_type:options:portnumber
+// invia un headser che ha la seguente struttura - req_type_options_portnumber
 int invia_header(int receiver_socket, char req_type, char* options, char * port_number)
 {
       char buf[1024];
       int msg_len;
+      int ret;
 
       memset(buf, 0 , sizeof(buf));
       sprintf(buf,"%c %s %s",req_type, options, port_number);
 
-      // mando la dimensione dell'header
+      // dimensione header
       msg_len = strlen(buf);
-      if ( send (receiver_socket, (void*)&msg_len, sizeof(int), 0) < 0)
+      ret = send (receiver_socket, (void*)&msg_len, sizeof(int), 0);
+
+      // gestione disconnessione
+      if ( ret == 0)
+        return ret;
+
+      if ( ret < 0)
       {
             perror("Non sono riuscito a mandare la lunghezza dell' header: ");
-            return -1;
+            return ret;
       }        
 
-      if ( send(receiver_socket, (void*)buf, msg_len, 0) < 0) 
+      // invio header
+      ret = send(receiver_socket, (void*)buf, msg_len, 0);
+      if ( ret < 0)
       {
             perror("Non sono riuscito a mandare il messaggio di header");
-            return -1;
+            return ret;
       }
 
-      return 0;
+      return ret;
 }
 
 // riceve i dati di un header proveniente dal socket sender_socket e ne fa il parsing sulla struttra header
@@ -442,22 +497,31 @@ int ricevi_header(int sender_socket, struct msg_header * header)
 {     
       int msg_len; // ci salvo la dimensione dell'header che sta arrivando
       char buf[1024]; // buffer su cui ricevo l'header
+      int ret;
 
       memset(buf,0,sizeof(buf));
 
-      if (recv(sender_socket, (void*)&msg_len, sizeof(int), 0) < 0)
+      // dimensione
+      ret = recv(sender_socket, (void*)&msg_len, sizeof(int), 0); 
+
+      // gestione disconnessione
+      if ( ret == 0)
+        return ret;
+
+      if (ret < 0)
       {
             perror("errore nella ricezione della dimensione dell'header");
-            return -1;
+            return ret;
       }
       
-      if (recv(sender_socket,(void*)buf, msg_len, 0) < 0 )
+      ret = recv(sender_socket,(void*)buf, msg_len, 0);
+      if ( ret < 0 )
       {
             perror("nono sono riuscito a ricevere l'header");
-            return -1;
+            return ret;
       }
 
       // faccio il parsing sulla struttura header
       sscanf(buf,"%c %s %s",&header->RequestType,header->Options,header->PortNumber);
-      return 0;
+      return ret;
 }
