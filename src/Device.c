@@ -7,6 +7,8 @@
 int main(int argc, const char **argv)
 {
       struct clientList *active_sockets_list_head = NULL;
+      struct clientList *group_chat_sockets_head = NULL;
+
       struct msg ClientMessage;
       struct Credentials my_credentials;
       struct sockaddr_in server_addr, cl_addr, cl_listen_addr, gp_addr;
@@ -153,14 +155,17 @@ int main(int argc, const char **argv)
                               if (fgets(inputstring, 1024 - 1, stdin) == NULL)
                                     perror("Errore in lettura del comando\n");
                               fflush(stdin);
+                              
+                              
 
                               if (isChatting == 0)
                               {
-                                    // ------------------ comandi chat ----------------------
+                                    // ////////////////////////// comandi chat /////////////////////////////////
 
-                                    if (inputstring[0] != '/')
+                                    if (inputstring[0] != '\\')
                                     {
-                                          // allora input string è un messaggio
+                                          // ----------------------- invio messaggio -----------------------------
+                                               
                                           if (isDestOnline == 0)
                                           {
                                                 // invio messaggio direttamente al dest
@@ -180,31 +185,52 @@ int main(int argc, const char **argv)
                                                 invia_messaggio(premessage,sv_communicate);
                                           }
                                     }
-                                    else
-                                    {
-                                          // ------------ COMANDI \q + INVIO --------------------
+                                    else if (inputstring[1] == 'q')
+                                    {           
+                                          // -------------------- comando "\q + "INVIO" -------------------------
+                                          
                                           isChatting = -1;
                                           break;
+                                    }
+                                    else if (inputstring[1] == 'u')
+                                    {
+                                          // -------------------- comando "\u + "INVIO" -------------------------
+
+                                          // dico al server che voglio la lista degli utenti online
+                                          invia_header(sv_communicate,'U',"group","0000");
+                                          
+                                          /* debug */ printf("lista utenti online:\n");
+                                          // risposta server
+                                          ricevi_messaggio(buffer, sv_communicate);
+                                          printf("%s",buffer);
+                                          
+                                          // -----------------  comando "\a username + "INVIO" ------------------
+
+                                          // mando l'username dell'utente che voglio aggiungere
+
+                                          // risposta server, se positiva allora aggiungo il numero di porta e l'username alla lista della chat 
+                  
                                     }
                               }
                               else
                               {
-                                    // ----------- COMANDI DEL MENU ----------------------
+                                    // /////////////////////// comandi menu principale //////////////////////////
+                                    
                                     fflush(stdin);
-                                    sscanf(inputstring, "%20s %50s", cmd.Command, cmd.Argument1);
+                                    sscanf(inputstring, "%s %s", cmd.Command, cmd.Argument1);
                                     if (check(cmd.Command) == -1)
                                     {
                                           printf("Comando non valido:\n");
                                           break; // Ho passato un comando non valido
                                     }
 
-                                    // ------------ SWITCHING DEI COMANDI ----------------
+                                    //  ////////////////////////// switching comandi ///////////////////////////// 
 
                                     switch (cmd.Command[0])
                                     {
                                     case 's':
                                     {
-                                          // comando show username
+                                          // ------------------------ comando show -----------------------------
                                           int num_msg;
                         
                                           invia_header(sv_communicate,'D',"toreq","0000");                  
@@ -228,14 +254,15 @@ int main(int argc, const char **argv)
 
                                     case 'h':
                                     {
-                                          // Comando hanging
+                                          // ----------------------- comando hanging ----------------------------
                                           printf("primo comando in lista\n");
                                     }
                                     break;
 
                                     case 'o':
                                     {
-                                          // comando out
+                                          // -----------------------  comando out  -------------------------------
+                                          
                                           // chiudo le comunicazioni con tutti i socket
                                           close(sv_communicate);
 
@@ -247,7 +274,7 @@ int main(int argc, const char **argv)
 
                                     case 'c':
                                     {
-                                          // comando chat username
+                                          // -----------------------  comando chat  -----------------------------
                                           struct msg_header header;
                                           char optionString[8] = "NULLO";
                                           char sendbuffer[1024];
