@@ -19,6 +19,16 @@
 #define LOGIN_MSG_SIZE 114
 #define USERNAME_LEN 50
 
+// -------------------------------
+#define SENDING 0 
+#define RECEIVING 1
+
+#define RECEIVED 2 
+#define ONLY_SENDED 3 
+
+#define NO_MEAN 4
+// -------------------------------
+
 struct clientList
 {
       int socket;
@@ -598,12 +608,29 @@ int invia_messaggio_gruppo(char *buffer, struct clientList * head)
 }
 
 // scrive il messaggio contenuto nella stringa "messaggio" nel file della chat di un utente my_username con dest_username
-int scrivi_file_chat(char * my_username, char *dest_username, char * messaggio)
+int scrivi_file_chat(char * my_username, char *dest_username, char * messaggio, int user_side, int msg_state)
 {
       FILE * fptr;
       int ret;
-
       char file_path[100];
+
+
+      /* 
+      check di correttezza sulla variabile msg_state 
+      (che mi dice se devo scrivere riguardo a messaggi 
+      che sto mandado quando il dest è sicuramente online oppure quando lo sto bufferizzando e basta)
+      */     
+      
+      if (msg_state != RECEIVED && msg_state != ONLY_SENDED && msg_state != NO_MEAN)
+            return 0;
+      /* 
+      check di correttezza sulla variabile user_dest 
+      (che mi dice se devo scrivere riguardo a messaggi 
+      che sto mandado oppure rispetto a quelli che sto ricevendo)
+      */
+      
+      if (user_side != RECEIVING && user_side != SENDING)
+            return 0;
 
       mkdir(my_username,0777);
 
@@ -617,8 +644,73 @@ int scrivi_file_chat(char * my_username, char *dest_username, char * messaggio)
                   return -1;
             }
 
-      fprintf(fptr,"%s", messaggio);
+      if (user_side == SENDING)
+      {
+            if (msg_state == RECEIVED)
+                  fprintf(fptr,"--> %s > **\n",messaggio);
+            else if (msg_state == ONLY_SENDED)
+                  fprintf(fptr,"--> %s > *\n", messaggio);
+      }     
+      else
+            fprintf(fptr,"          <-- %s\n", messaggio);
 
       fclose(fptr);
       return 0;
+}
+
+
+// carica la chat di my_username con l'utente user_target
+// chiamo la carica_chat quando inizio una chat con l'utente user_target per caricare la cronologia
+// ritorna il numero di byte letti
+int carica_chat(char * my_username, char * dest_username)
+{
+      FILE * fptr;
+      int ret = 0; 
+      char toread;
+
+      char file_path[100];
+
+      mkdir(my_username,0777);
+
+      pulisci_buffer(file_path, sizeof(file_path));
+      sprintf(file_path,"%s//%s.txt", my_username,dest_username);
+      
+      fptr = fopen(file_path,"r");
+      if (fptr == NULL) 
+      {
+            printf("LOG: Errore nell'apertura del file\n");
+            return ret;
+      }
+      // leggo il file 
+
+      printf("////////////////////// chat con %s ////////////////////////\n",dest_username);
+      printf("--------------- inizio messaggi precedenti ----------------\n");
+      toread = fgetc(fptr);
+      for (; toread != EOF; )
+      {
+            ret++;
+            printf("%c",toread);
+            toread = fgetc(fptr);
+      } 
+      printf("\n---------------- fine messaggi precedenti -----------------\n");
+
+      return ret;
+}
+
+// prende in ingresso il socket di un utente e ne restituisce l'username associato 
+// copiandolo nella variabile passata in ingresso
+void  username_da_socket(int sender_socket, struct clientList * head, char * sender_username)
+{
+
+      struct clientList * pun;
+
+      for ( pun = head; pun != NULL; pun = pun->pointer)
+      {
+            if ( pun->socket == sender_socket)
+                  {
+                        strcpy(sender_username, pun->username);
+                        return;
+                  }
+      }
+return;
 }

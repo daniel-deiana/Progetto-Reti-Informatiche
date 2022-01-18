@@ -14,11 +14,19 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="dbba149a-cf7b-41d3-a919-6331f5130d69" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/.idea/codeStyles/Project.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/codeStyles/codeStyleConfig.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/cmake-build-debug/Testing/Temporary/LastTest.log" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/Testing/Temporary/LastTest.log" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Chat.txt" beforeDir="false" afterPath="$PROJECT_DIR$/src/Chat.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Client_History.txt" beforeDir="false" afterPath="$PROJECT_DIR$/src/Client_History.txt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/Device.c" beforeDir="false" afterPath="$PROJECT_DIR$/src/Device.c" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/Server.c" beforeDir="false" afterPath="$PROJECT_DIR$/src/Server.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/dev" beforeDir="false" afterPath="$PROJECT_DIR$/src/dev" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/myHeader.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/myHeader.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/serv" beforeDir="false" afterPath="$PROJECT_DIR$/src/serv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/user1/user2.txt" beforeDir="false" afterPath="$PROJECT_DIR$/src/user1/user2.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/user2/user1.txt" beforeDir="false" afterPath="$PROJECT_DIR$/src/user2/user1.txt" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -27,6 +35,7 @@
   </component>
   <component name="ClangdSettings">
     <option name="clangTidyViaClangd" value="false" />
+    <option name="formatViaClangd" value="false" />
   </component>
   <component name="ExecutionTargetManager" SELECTED_TARGET="CMakeBuildProfile:Debug" />
   <component name="Git.Settings">
@@ -79,13 +88,6 @@
       <recent name="$PROJECT_DIR$/src" />
     </key>
   </component>
-  <component name="RunManager">
-    <configuration default="true" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" PASS_PARENT_ENVS_2="true">
-      <method v="2">
-        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
-      </method>
-    </configuration>
-  </component>
   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
   <component name="VcsManagerConfiguration">
     <MESSAGE value="Creazione repository" />
@@ -96,7 +98,7 @@
       <breakpoints>
         <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
           <url>file://$PROJECT_DIR$/src/Device.c</url>
-          <line>362</line>
+          <line>412</line>
           <option name="timeStamp" value="56" />
         </line-breakpoint>
       </breakpoints>

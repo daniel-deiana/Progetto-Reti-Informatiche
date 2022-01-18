@@ -1,65 +1,65 @@
-#include "myHeader.h"
+	#include "myHeader.h"
 
-// //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// ///////////////////////////////////////// NET SERVER /////////////////////////////////////////////////////////////////////
-// //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// ///////////////////////////////////////// NET SERVER /////////////////////////////////////////////////////////////////////
+	// //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-int main(int argc, const char **argv)
-{
+	int main(int argc, const char **argv)
+	{
 
-	  struct sockaddr_in server_addr, client_addr;
-	  struct Credentials MyCredentials, cl_credentials;
-	  struct msg sv_message;
+		struct sockaddr_in server_addr, client_addr;
+		struct Credentials MyCredentials, cl_credentials;
+		struct msg sv_message;
 
-	  // lista utenti online
-	  struct clientList *head = NULL;
+		// lista utenti online
+		struct clientList *head = NULL;
 
-	  int Listener, communicate, ret, msglen, addrlen, fdmax, value;
-	  int client_ret;
+		int Listener, communicate, ret, msglen, addrlen, fdmax, value;
+		int client_ret;
 
-	  int Port;
-	  char buffer[1024 * 4 + HEADER_LEN];
-	  char ServerPort[5] = "4242";
-	  char Command[1024];
-	  char Options[8];
+		int Port;
+		char buffer[1024 * 4 + HEADER_LEN];
+		char ServerPort[5] = "4242";
+		char Command[1024];
+		char Options[8];
 
-	  fd_set master, readfds;
-	  FILE *LogPointer, *ChatBuffer, *HistoryPointer;
+		fd_set master, readfds;
+		FILE *LogPointer, *ChatBuffer, *HistoryPointer;
 
-	  // parsing degli argomenti da linea di comando
-	  if (argc != 2)
-	  {
-			perror("Sto passando piu di un argomento in linea di comando");
-			exit(1);
-	  }
+		// parsing degli argomenti da linea di comando
+		if (argc != 2)
+		{
+				perror("Sto passando piu di un argomento in linea di comando");
+				exit(1);
+		}
 
-	  // Assegno il valore passato a ServerPort
-	  strcpy(ServerPort, argv[1]);
-	  printf("La porta selezionata è %s \n", ServerPort);
+		// Assegno il valore passato a ServerPort
+		strcpy(ServerPort, argv[1]);
+		printf("La porta selezionata è %s \n", ServerPort);
 
-	  // Stampo la parte iniziale
-	  printf("------------------ server online ------------------\n\n");
-	  printf("Comandi disponibili\n\n");
-	  printf("1 <help>\n2 <list>\n3 <esc>\n\n");
+		// Stampo la parte iniziale
+		printf("------------------ server online ------------------\n\n");
+		printf("Comandi disponibili\n\n");
+		printf("1 <help>\n2 <list>\n3 <esc>\n\n");
 
-	  memset(&cl_credentials, 0, sizeof(MyCredentials));
-	  memset(&MyCredentials, 0, sizeof(MyCredentials));
-	  FD_ZERO(&master);
-	  FD_ZERO(&readfds);
-	  FD_SET(0, &master);
+		memset(&cl_credentials, 0, sizeof(MyCredentials));
+		memset(&MyCredentials, 0, sizeof(MyCredentials));
+		FD_ZERO(&master);
+		FD_ZERO(&readfds);
+		FD_SET(0, &master);
 
-	  // ------------------ indirizzo server ----------------------
-	  memset(&server_addr, 0, sizeof(server_addr));
-	  server_addr.sin_family = AF_INET;
-	  server_addr.sin_port = htons(4242);
-	  inet_pton(AF_INET, "127.0.0.1", &server_addr.sin_addr);
+		// ------------------ indirizzo server ----------------------
+		memset(&server_addr, 0, sizeof(server_addr));
+		server_addr.sin_family = AF_INET;
+		server_addr.sin_port = htons(4242);
+		inet_pton(AF_INET, "127.0.0.1", &server_addr.sin_addr);
 
-	  // socket di listen
-	  Listener = socket(AF_INET, SOCK_STREAM, 0);
-	  ret = bind(Listener, (struct sockaddr *)&server_addr, sizeof(server_addr));
-	  ret = listen(Listener, 50); // Metto una coda di 50 possibili richieste di connesione al server
+		// socket di listen
+		Listener = socket(AF_INET, SOCK_STREAM, 0);
+		ret = bind(Listener, (struct sockaddr *)&server_addr, sizeof(server_addr));
+		ret = listen(Listener, 50); // Metto una coda di 50 possibili richieste di connesione al server
 
-	  FD_SET(Listener, &master);
+		FD_SET(Listener, &master);
 	  fdmax = Listener;
 
 	  for (;;)
@@ -131,21 +131,21 @@ int main(int argc, const char **argv)
 									// client mi sta inviando l'header
 									if ( ricevi_header(i,&masterHeader) == 0 )
 									{
-										  // mi è stato mandato un messaggio di "close()"
-										  char logout_user[50];
+											// mi è stato mandato un messaggio di "close()"
+											char logout_user[50];
 
-										  close(i);
-										  FD_CLR(i, &master);
+											close(i);
+											FD_CLR(i, &master);
 
-										  rimuovi_utente(&head, i, logout_user);
-										  stampa_lista_utenti(head);
+											rimuovi_utente(&head, i, logout_user);
+											stampa_lista_utenti(head);
 
-										  logout(logout_user);
-										  stampa_history_utenti();
+											logout(logout_user);
+											stampa_history_utenti();
 
-										  // debug
-										  printf("Ho chiuso la comunicazione con il socket: %d\n", i);
-										  continue;
+											// debug
+											printf("Ho chiuso la comunicazione con il socket: %d\n", i);
+											continue;
 									}
 
 									// debug
@@ -160,16 +160,16 @@ int main(int argc, const char **argv)
 									{
 									case 'A':
 									{
-										  // ----------------------- routine di registrazione ---------------------------
+											// ----------------------- routine di registrazione ---------------------------
 
-										struct HistoryRecord record;
+											struct HistoryRecord record;
 
-										  ricevi_messaggio(buffer,i);
+											ricevi_messaggio(buffer,i);
 
-										  // debug
-										  printf("Sto per registrare un utente che mi ha passato il seguente buffer: %s\n", buffer);
+											// debug
+											printf("Sto per registrare un utente che mi ha passato il seguente buffer: %s\n", buffer);
 
-										  sscanf(buffer, "%s %s", MyCredentials.Username, MyCredentials.Password);
+											sscanf(buffer, "%s %s", MyCredentials.Username, MyCredentials.Password);
 
 										  if (isClientRegistered(MyCredentials.Username) == 0)
 												invia_header(i,'A',"before","0000");
@@ -196,12 +196,12 @@ int main(int argc, const char **argv)
 
 									case 'B':
 									{
-										  //-------------------------- routine di login -------------------------------
+											//-------------------------- routine di login -------------------------------
 
-										  // client mi sta mandando credenziali di login
-										  ricevi_messaggio(buffer,i);
+											// client mi sta mandando credenziali di login
+											ricevi_messaggio(buffer,i);
 
-										  sscanf(buffer, "%s %s", cl_credentials.Username, cl_credentials.Password);
+											sscanf(buffer, "%s %s", cl_credentials.Username, cl_credentials.Password);
 
 										  if (LoginCheck(LogPointer, &cl_credentials, sizeof(cl_credentials)) == 0)
 										  {
@@ -230,63 +230,62 @@ int main(int argc, const char **argv)
 
 									case 'C':
 									{
-										  // ---------------------------- routine chat ------------------------------
+											// ---------------------------- routine chat ------------------------------
 
-										  ricevi_messaggio(buffer, i);
-										  printf("Ho ricevuto la richiesta di una chat con l'utente <%s>\n", buffer);
+											ricevi_messaggio(buffer, i);
+											printf("Ho ricevuto la richiesta di una chat con l'utente <%s>\n", buffer);
 
-										  Port = check_username_online(buffer);
-										  if (Port == 0)
-												printf("Port sta a zero\n");
+											Port = check_username_online(buffer);
+											if (Port == 0)
+													printf("Port sta a zero\n");
 
-										  sprintf(portString, "%d", Port);
-										  if (Port == -1)
-												invia_header(i, 'C' , "OFF", portString);
-										  else
-												invia_header(i,'C',"ON",portString);
+											sprintf(portString, "%d", Port);
+											if (Port == -1)
+													invia_header(i, 'C' , "OFF", portString);
+											else
+													invia_header(i,'C',"ON",portString);
 
-										  printf("Ho inviato al client informazioni sul destinatario\n");
+											printf("Ho inviato al client informazioni sul destinatario\n");
 									}
 									break;
 
 									case 'E':
 									{
-										  // -------------- routine messaggio pendente da salvare -----------------
+											// -------------- routine messaggio pendente da salvare -----------------
 
-										  struct bufferedMessage tobuffer;
-										  int numbyte;
-										  char messagebuffer[4096];
-										  memset(&tobuffer, 0, sizeof(tobuffer));
+											struct bufferedMessage tobuffer;
+											int numbyte;
+											char messagebuffer[4096];
+											memset(&tobuffer, 0, sizeof(tobuffer));
 
-										  // device mi sta mandando il suo nome e il nome del destinatario
-										  memset(messagebuffer, 0, sizeof(messagebuffer));
-										  ricevi_messaggio(messagebuffer, i);
+											// device mi sta mandando il suo nome e il nome del destinatario
+											memset(messagebuffer, 0, sizeof(messagebuffer));
+											ricevi_messaggio(messagebuffer, i);
 
-										  printf("prima della de-serializzazione: %s\n", messagebuffer);
+											printf("prima della de-serializzazione: %s\n", messagebuffer);
 
-										  sscanf(messagebuffer, "%s %s %[^\t]", tobuffer.sender, tobuffer.receiver, tobuffer.message);
-										  printf("ho ricevuto %d byte, sender: %s\nreceiver:%s \n", numbyte, tobuffer.sender, tobuffer.receiver);
-										  printf("Il messaggio che ho ricevuto dal client è:%s \n", tobuffer.message);
+											sscanf(messagebuffer, "%s %s %[^\t]", tobuffer.sender, tobuffer.receiver, tobuffer.message);
+											printf("ho ricevuto %d byte, sender: %s\nreceiver:%s \n", numbyte, tobuffer.sender, tobuffer.receiver);
+											printf("Il messaggio che ho ricevuto dal client è:%s \n", tobuffer.message);
 
-										  bufferizza_msg(&tobuffer);
-										  stampa_msg_bufferizzati();
+											bufferizza_msg(&tobuffer);
+											stampa_msg_bufferizzati();
 									}
 									break;
 
 									case 'D':
 									{
-										  // ---------------- routine messaggi pendenti da inviare ---------------
+											// ---------------- routine messaggi pendenti da inviare ---------------
 
-										  char userTarget[50];     // argomento della show eseguita dal client
-										  char userRequesting[50]; // client che ha fatto la richiesta
+											char userTarget[50];     // argomento della show eseguita dal client
+											char userRequesting[50]; // client che ha fatto la richiesta
 
-										  ricevi_messaggio(buffer, i);
-										  sscanf(buffer, "%s %s", userRequesting, userTarget);
-										  invia_messaggi_pendenti(userRequesting, userTarget, i);
+											ricevi_messaggio(buffer, i);
+											sscanf(buffer, "%s %s", userRequesting, userTarget);
+											invia_messaggi_pendenti(userRequesting, userTarget, i);
 
-										  // devo notificare l'user target che "userRequesting ha letto i messaggi"
-										  // devo inviare il nome di chi ha letto i messaggi --> userRequesting
-
+											// devo notificare l'user target che "userRequesting ha letto i messaggi"
+											// devo inviare il nome di chi ha letto i messaggi --> userRequesting
 									}
 									break;
 
@@ -294,25 +293,25 @@ int main(int argc, const char **argv)
 									{
 										  // ---------------------- routine chat di gruppo -----------------------
 
-										  int porta;
-										  // invio sringa che contiene username utenti online
+											int porta;
+											// invio sringa che contiene username utenti online
+												
+											copia_username_utenti_online(buffer);
+											invia_messaggio(buffer,i);
 
-										  copia_username_utenti_online(buffer);
-										  invia_messaggio(buffer,i);
+											// device mi manda l'utente che vuole aggiungere alla chat
+											pulisci_buffer(buffer,sizeof(buffer));
+											ricevi_messaggio(buffer, i);
 
-										  // device mi manda l'utente che vuole aggiungere alla chat
-										  pulisci_buffer(buffer,sizeof(buffer));
-										  ricevi_messaggio(buffer, i);
+											// invio al device la porta su cui è attivo il client
+											// invio "failed" se l'utente cercato non è online
+											porta = porta_da_username(buffer);
 
-										  // invio al device la porta su cui è attivo il client
-										  // invio "failed" se l'utente cercato non è online
-										  porta = porta_da_username(buffer);
-
-										  // serializzo il numero di porta sul buffer
-										  pulisci_buffer(buffer,sizeof(buffer));
-										  sprintf(buffer,"%d",porta);
-										  // invio porta del dest al client
-										  invia_messaggio(buffer, i);
+											// serializzo il numero di porta sul buffer
+											pulisci_buffer(buffer,sizeof(buffer));
+											sprintf(buffer,"%d",porta);
+											// invio porta del dest al client
+											invia_messaggio(buffer, i);
 
 									}
 									}
