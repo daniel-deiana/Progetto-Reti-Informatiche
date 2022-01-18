@@ -5,9 +5,11 @@
 #include <netinet/in.h>
 #include <string.h>
 #include <sys/time.h>
-#include <sys/types.h>
-#include <unistd.h>
 #include <time.h>
+#include <stdlib.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <stdio.h>
 #include <stdlib.h>
 
 // ---------- COSTANTI ----------
@@ -577,4 +579,46 @@ int copia_username_utenti_online(char *buffer)
 
       fclose(fptr);
       return buf_index;
+}
+
+// invia il messaggio contenuto nel buffer a tutti i socket presenti nella lista puntata da head
+int invia_messaggio_gruppo(char *buffer, struct clientList * head)
+{
+      struct clientList * pun;
+      int ret; 
+
+      for ( pun = head; pun != NULL; pun = pun->pointer)
+            {     
+                  ret = invia_messaggio(buffer, pun->socket);
+                  if ( ret < 0 )
+                        return ret;
+            }
+
+      return ret;
+}
+
+// scrive il messaggio contenuto nella stringa "messaggio" nel file della chat di un utente my_username con dest_username
+int scrivi_file_chat(char * my_username, char *dest_username, char * messaggio)
+{
+      FILE * fptr;
+      int ret;
+
+      char file_path[100];
+
+      mkdir(my_username,0777);
+
+      pulisci_buffer(file_path, sizeof(file_path));
+      sprintf(file_path,"%s//%s.txt", my_username,dest_username);
+
+      fptr = fopen(file_path,"a+");
+      if (fptr == NULL)
+            {
+                  printf("LOG: errore nell'apertura del file di chat\n");
+                  return -1;
+            }
+
+      fprintf(fptr,"%s", messaggio);
+
+      fclose(fptr);
+      return 0;
 }
