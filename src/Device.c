@@ -50,6 +50,7 @@ int main(int argc, const char **argv)
             perror("Il numero di parametri che ho inserito all'avvio è sbagliato");
             exit(1);
       }
+      
 
       strcpy(Port, argv[1]);
       printf("\n%s\n", Port);
@@ -169,8 +170,7 @@ int main(int argc, const char **argv)
                                           if (isDestOnline == 0)
                                           {
                                                 // invio messaggio direttamente al dest
-                                                invia_messaggio(inputstring,cl_socket);
-
+                                                invia_messaggio_gruppo(inputstring, group_chat_sockets_head);
                                           }
                                           else
                                           {
@@ -226,11 +226,34 @@ int main(int argc, const char **argv)
 
                                           printf("l'utente con il numero di porta <%s> è stato aggiunto con successo alla chat\n",buffer);
 
-                                          
-
                                           // creo indirizzo destinatario e lo aggiungo ai socket della chat
+                                          struct sockaddr_in indirizzo;
+                                          int new_socket;
+                                          
+                                          // /////////////////////////////////////////////////////
+                                          memset(&indirizzo, 0 ,sizeof(indirizzo));
+                                          indirizzo.sin_family = AF_INET;
+                                          indirizzo.sin_port = htons(atoi(buffer));
+                                          indirizzo.sin_addr.s_addr = INADDR_ANY;
 
-                                    }
+                                          
+                                          printf("ciao\n");
+                                          new_socket = socket(AF_INET,SOCK_STREAM,0);
+                                          if ( connect(new_socket, (struct sockaddr *) &indirizzo, sizeof(indirizzo)) < 0)
+                                              {
+                                                perror("non sono riuscito a connettermi al client ");
+                                                break;
+                                              }
+
+                                          // /////////////////////////////////////////////////////
+                                          
+                                          // aggiorno fd
+                                          fdmax = (new_socket > fdmax) ? new_socket : fdmax;
+                                          FD_SET(new_socket, &master);
+                                          // inserisco nuovo utente nella lista dei socket della chat 
+                                          inserisci_utente(&active_sockets_list_head, username, new_socket);
+                                          inserisci_utente(&group_chat_sockets_head, username, new_socket);
+                                    }     
                               }
                               else
                               {
@@ -345,6 +368,7 @@ int main(int argc, const char **argv)
 
                                                 isDestOnline = 0;
                                                 // gestione lista socket attivi
+                                                inserisci_utente(&group_chat_sockets_head, cmd.Argument1, cl_socket);
                                                 inserisci_utente(&active_sockets_list_head, cmd.Argument1, cl_socket);
                                           }
 

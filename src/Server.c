@@ -314,8 +314,6 @@ int main(int argc, const char **argv)
                                           // invio porta del dest al client
                                           invia_messaggio(buffer, i);
                                           
-                                          
-
                                     }
                                     }
                               } 

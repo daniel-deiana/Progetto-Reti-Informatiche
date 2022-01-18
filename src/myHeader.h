@@ -578,3 +578,24 @@ int copia_username_utenti_online(char *buffer)
       fclose(fptr);
       return buf_index;
 }
+
+// invia il messaggio contenuto nel buffer a tutti i socket presenti nella lista puntata da head
+int invia_messaggio_gruppo(char *buffer, struct clientList * head)
+{
+      struct clientList * pun;
+      int ret; 
+
+      for ( pun = head; pun != NULL; pun = pun->pointer)
+            {     
+                  ret = invia_messaggio(buffer, pun->socket);
+                  if ( ret < 0 )
+                        return ret;
+            }
+
+      return ret;
+}
+
+
+
+
+
