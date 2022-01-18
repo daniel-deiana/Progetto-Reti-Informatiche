@@ -12,24 +12,24 @@ int main(int argc, const char **argv)
       struct msg ClientMessage;
       struct Credentials my_credentials;
       struct sockaddr_in server_addr, cl_addr, cl_listen_addr, gp_addr;
-      
+
       int sv_communicate, communicate, cl_socket, listener, ret, msglen, fdmax = 0;
       int isDestOnline = -1, isChatting = -1;
-      
+
       char Port[5] ,portChat[5], headerChat_string[HEADER_LEN] = "", string[HEADER_LEN];
       char buffer[1024 * 4 + HEADER_LEN], LogInCommand[20];
-      char destUsername[50] = "";      
+      char destUsername[50] = "";
       char rubrica[3][50];
-      
+      char new_user[50];
 
       strcpy(rubrica[0], "user1");
       strcpy(rubrica[1], "user2");
       strcpy(rubrica[2], "user3");
       // stringa per le conversioni dei numeri di porta
-      
+
       fd_set master, readfds;
       FILE *RegistrationLog, *friends;
-    
+
       FD_ZERO(&master);
       FD_ZERO(&readfds);
 
@@ -41,7 +41,7 @@ int main(int argc, const char **argv)
 
       // socket server
       sv_communicate = socket(AF_INET, SOCK_STREAM, 0);
-      
+
       // aggiungo il socket di comunincazione con il server tra i monitorati dall select
       FD_SET(STDIN, &master);
 
@@ -50,7 +50,7 @@ int main(int argc, const char **argv)
             perror("Il numero di parametri che ho inserito all'avvio è sbagliato");
             exit(1);
       }
-      
+
 
       strcpy(Port, argv[1]);
       printf("\n%s\n", Port);
@@ -104,7 +104,7 @@ int main(int argc, const char **argv)
             // invio credenziali utente
             printf("prima di invia_msg: sto mandando: %s", sendbuffer);
             invia_messaggio(sendbuffer, sv_communicate);
-            
+
             // risposta del server
             ricevi_header(sv_communicate,&header);
 
@@ -156,8 +156,8 @@ int main(int argc, const char **argv)
                               if (fgets(inputstring, 1024 - 1, stdin) == NULL)
                                     perror("Errore in lettura del comando\n");
                               fflush(stdin);
-                              
-                              
+
+
 
                               if (isChatting == 0)
                               {
@@ -166,19 +166,22 @@ int main(int argc, const char **argv)
                                     if (inputstring[0] != '\\')
                                     {
                                           // ----------------------- invio messaggio -----------------------------
-                                               
+
                                           if (isDestOnline == 0)
                                           {
-                                                // invio messaggio direttamente al dest
+                                                // invio messaggio ai destinatari oppure solo ad un utente
                                                 invia_messaggio_gruppo(inputstring, group_chat_sockets_head);
+                                                printf("mittente: %s, destinatario %s\n", my_credentials.Username, destUsername);
+                                                scrivi_file_chat (my_credentials.Username, destUsername ,inputstring);
+                              
                                           }
                                           else
                                           {
                                                 // devo mandare il messaggio al server perchè il destinatario è offline
                                                 char premessage[1024] = "";
-                                                
+
                                                 invia_header(sv_communicate,'E',"tosend",portChat);
-                                                
+
                                                 // invio sender e receiver del msg
                                                 sprintf(premessage, "%s %s %s", my_credentials.Username, destUsername, inputstring);
                                                 printf("sto inviando il premessage che contiene: %s\n", premessage);
@@ -186,9 +189,9 @@ int main(int argc, const char **argv)
                                           }
                                     }
                                     else if (inputstring[1] == 'q')
-                                    {           
+                                    {
                                           // -------------------- comando "\q + "INVIO" -------------------------
-                                          
+
                                           isChatting = -1;
                                           break;
                                     }
@@ -198,23 +201,23 @@ int main(int argc, const char **argv)
 
                                           // dico al server che voglio la lista degli utenti online
                                           invia_header(sv_communicate,'U',"group","0000");
-                                          
+
                                           // risposta server
                                           ricevi_messaggio(buffer, sv_communicate);
                                           printf("Lista utenti online:\n%s",buffer);
-                                          
+
                                           // -----------------  comando "\a username + "INVIO" ------------------
 
                                           char username[50], cmd;
-                              riprova:    scanf("%c %s", &cmd,username);                                          
-                                          
+                              riprova:    scanf("%c %s", &cmd,username);
+
                                           if (cmd != 'a')
                                                 goto riprova;
 
                                           // mando l'username dell'utente che voglio aggiungere
                                           invia_messaggio(username, sv_communicate);
 
-                                          // risposta server, se positiva allora aggiungo il numero di porta e l'username alla lista della chat 
+                                          // risposta server, se positiva allora aggiungo il numero di porta e l'username alla lista della chat
                                           pulisci_buffer(buffer,sizeof(buffer));
                                           ricevi_messaggio(buffer,sv_communicate);
 
@@ -230,13 +233,14 @@ int main(int argc, const char **argv)
                                           struct sockaddr_in indirizzo;
                                           int new_socket;
                                           
-                                          // /////////////////////////////////////////////////////
+                                          // ------------------creazione indirizzo -------------------
+                                          // ---------------------------------------------------------
                                           memset(&indirizzo, 0 ,sizeof(indirizzo));
                                           indirizzo.sin_family = AF_INET;
                                           indirizzo.sin_port = htons(atoi(buffer));
                                           indirizzo.sin_addr.s_addr = INADDR_ANY;
 
-                                          
+
                                           printf("ciao\n");
                                           new_socket = socket(AF_INET,SOCK_STREAM,0);
                                           if ( connect(new_socket, (struct sockaddr *) &indirizzo, sizeof(indirizzo)) < 0)
@@ -245,20 +249,21 @@ int main(int argc, const char **argv)
                                                 break;
                                               }
 
-                                          // /////////////////////////////////////////////////////
-                                          
+                                          // --------------------------------------------------------
+
                                           // aggiorno fd
                                           fdmax = (new_socket > fdmax) ? new_socket : fdmax;
                                           FD_SET(new_socket, &master);
-                                          // inserisco nuovo utente nella lista dei socket della chat 
+                                          // inserisco nuovo utente nella lista dei socket della chat
                                           inserisci_utente(&active_sockets_list_head, username, new_socket);
                                           inserisci_utente(&group_chat_sockets_head, username, new_socket);
-                                    }     
+
+                                    }
                               }
                               else
                               {
                                     // /////////////////////// comandi menu principale //////////////////////////
-                                    
+
                                     fflush(stdin);
                                     sscanf(inputstring, "%s %s", cmd.Command, cmd.Argument1);
                                     if (check(cmd.Command) == -1)
@@ -267,7 +272,7 @@ int main(int argc, const char **argv)
                                           break; // Ho passato un comando non valido
                                     }
 
-                                    //  ////////////////////////// switching comandi ///////////////////////////// 
+                                    //  ////////////////////////// switching comandi /////////////////////////////
 
                                     switch (cmd.Command[0])
                                     {
@@ -275,14 +280,14 @@ int main(int argc, const char **argv)
                                     {
                                           // ------------------------ comando show -----------------------------
                                           int num_msg;
-                        
-                                          invia_header(sv_communicate,'D',"toreq","0000");                  
-                                          
+
+                                          invia_header(sv_communicate,'D',"toreq","0000");
+
                                           sprintf(buffer, "%s %s", my_credentials.Username, cmd.Argument1);
                                           printf("il buffer di invio della show è %s\n", buffer);
-                                          
+
                                           invia_messaggio(buffer,sv_communicate);
-                                         
+
                                           ret = recv(sv_communicate, (void*)&num_msg, sizeof(int), 0);
                                           printf("il server mi ha detto che %s mi ha inviato %d messsaggi\n", cmd.Argument1, num_msg);
 
@@ -305,7 +310,7 @@ int main(int argc, const char **argv)
                                     case 'o':
                                     {
                                           // -----------------------  comando out  -------------------------------
-                                          
+
                                           // chiudo le comunicazioni con tutti i socket
                                           close(sv_communicate);
 
@@ -330,17 +335,17 @@ int main(int argc, const char **argv)
                                                 break;
                                           }
 
-                        
+
                                           invia_header(sv_communicate,'C',optionString,"0000");
 
-                                          strcpy(destUsername, cmd.Argument1);                                    
+                                          strcpy(destUsername, cmd.Argument1);
                                           sprintf(sendbuffer, "%s",cmd.Argument1);
-                                          
+
                                           // invio destinatario della chat al server
-                                          invia_messaggio(sendbuffer,sv_communicate);                                     
-                        
+                                          invia_messaggio(sendbuffer,sv_communicate);
+
                                           printf("sto mandando la richiesta di chat che è: %s \n", sendbuffer);
-                                                            
+
                                           // risposta server: destinatario online/offline
                                           ricevi_header(sv_communicate, &header);
 
@@ -356,11 +361,15 @@ int main(int argc, const char **argv)
                                                 cl_addr.sin_family = AF_INET;
                                                 cl_addr.sin_port = htons(atoi(portChat));
                                                 inet_pton(AF_INET, "127.0.0.1", &cl_listen_addr.sin_addr);
+
                                                 cl_socket = socket(AF_INET, SOCK_STREAM, 0);
 
                                                 ret = connect(cl_socket, (struct sockaddr *)&cl_addr, sizeof(cl_addr));
                                                 if (ret < 0)
                                                       printf("Non sono riuscito a iniziare la chat con il destinatario\n");
+
+                                                // invio il mio user al destinatario
+                                                invia_messaggio(my_credentials.Username,cl_socket);
 
                                                 // aggiorno descriptor list
                                                 FD_SET(cl_socket, &master);
@@ -389,15 +398,19 @@ int main(int argc, const char **argv)
                                     communicate = accept(i, (struct sockaddr *)&gp_addr, (socklen_t *)&addrlen);
                                     fdmax = (communicate > fdmax) ? communicate : fdmax;
                                     FD_SET(communicate, &master);
-                                    inserisci_utente(&active_sockets_list_head, "non_saved_name", i);
+
+                                    // chi mi chiede una connesione per prima cosa mi dice il suo nome
+                                    pulisci_buffer(new_user,sizeof(new_user));
+                                    ricevi_messaggio(new_user,communicate);
+                                    inserisci_utente(&active_sockets_list_head, new_user, i);
 
                                     printf("Un client sta provando a connettersi\n");
                               }
                               else
                               {
                                     char bufferChatMessage[1024] = "";
-                                   
-                                    // mi sta arrivando un messaggio                                   
+
+                                    // mi sta arrivando un messaggio
                                     if ( ricevi_messaggio(bufferChatMessage,i) == 0)
                                     {
                                           char User_logged_out[50];
@@ -410,9 +423,9 @@ int main(int argc, const char **argv)
                                           close(i);
 
                                           // gestione lista
+                                          
                                           rimuovi_utente(&active_sockets_list_head, i, User_logged_out);
-
-                                          continue;
+                                          continue;		
                                     }
 
                                     printf("messaggio ricevuto: %s\n", bufferChatMessage);
@@ -421,4 +434,6 @@ int main(int argc, const char **argv)
                   }
             }
       }
-}
+}                                
+
+
