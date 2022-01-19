@@ -6,13 +6,16 @@
 
 	int main(int argc, const char **argv)
 	{
-
+		
+	
 		struct sockaddr_in server_addr, client_addr;
 		struct Credentials MyCredentials, cl_credentials;
 		struct msg sv_message;
 
 		// lista utenti online
 		struct clientList *head = NULL;
+		// lista richieste di notify
+		struct notify_queue *notify_head = NULL;
 
 		int Listener, communicate, ret, msglen, addrlen, fdmax, value;
 		int client_ret;
@@ -291,7 +294,7 @@
 
 									case 'U':
 									{
-										  // ---------------------- routine chat di gruppo -----------------------
+										// ---------------------- routine chat di gruppo -----------------------
 
 											int porta;
 											// invio sringa che contiene username utenti online
@@ -314,6 +317,20 @@
 											invia_messaggio(buffer, i);
 
 									}
+									break;
+									case 'N': 
+									{
+										// ---------------------- routine richiesta di notify --------------------
+											char notify_target[50];
+											char notify_sender[50];
+											// ricevo il nome dell'utente da notificare 
+											ricevi_messaggio(buffer, i);
+											sscanf(buffer,"%s %s", notify_sender, notify_target);
+
+											notify_enqueue(&notify_head, notify_sender, notify_target);
+									}
+									break;
+
 									}
 							  }
 						}

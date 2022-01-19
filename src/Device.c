@@ -277,24 +277,7 @@
 										case 's':
 										{
 											// ------------------------ comando show -----------------------------
-											int num_msg;
-
-											invia_header(sv_communicate,'D',"toreq","0000");
-
-											sprintf(buffer, "%s %s", my_credentials.Username, cmd.Argument1);
-											printf("il buffer di invio della show è %s\n", buffer);
-
-											invia_messaggio(buffer,sv_communicate);
-
-											ret = recv(sv_communicate, (void*)&num_msg, sizeof(int), 0);
-											printf("il server mi ha detto che %s mi ha inviato %d messsaggi\n", cmd.Argument1, num_msg);
-
-											for(int i = 0; i < num_msg; i++)
-													{
-														char recvbuffer[4096] = "";
-														ricevi_messaggio(recvbuffer,sv_communicate);
-														printf("messaggio pendente ricevuto: %s", recvbuffer);
-													}
+											handler_comand_show(my_credentials.Username, cmd.Argument1, sv_communicate);
 										}
 										break;
 
@@ -379,9 +362,30 @@
 													inserisci_utente(&active_sockets_list_head, cmd.Argument1, cl_socket);
 											}
 											isChatting = 0;
-		
+
+											/*
+												prima di iniziare la chat devo chiedere per messaggi pendenti
+												rispetto all'utente con cui sto per iniziare la chat
+											*/
+											if ( handler_comand_show(my_credentials.Username, cmd.Argument1, sv_communicate) > 0)
+												{
+													// devo notificare il server che ho visualizzato i messaggi pendenti con la show
+													invia_header(sv_communicate,'N',"notify","0000");
+
+													char buf[256];
+
+													// invio il nome del client da notificare al server
+													pulisci_buffer(buf, sizeof(buf));
+													
+													sprintf(buf,"%s %s",my_credentials.Username,cmd.Argument1);
+													invia_messaggio(buf,sv_communicate);
+
+												}
+											
 											// carico i contenuti della chat su stdout
 											carica_chat(my_credentials.Username, destUsername);									  
+
+
 										}
 										}
 								}

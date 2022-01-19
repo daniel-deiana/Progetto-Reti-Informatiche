@@ -366,6 +366,45 @@ void stampa_lista_utenti(struct clientList *head)
                   printf("socket: %d username: %s\n", pun->socket, pun->username);
 }
 
+// //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// ///////////////////////////////////////// GESTIONE LISTA NOTIFY //////////////////////////////////////////////////////////
+// //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+int notify_enqueue(struct clientList **head, char *sender, char* target)
+{
+      struct clientList *node = (struct clientList *)malloc(sizeof(struct clientList));
+      node->pointer = NULL;
+      node->socket = socket;
+      strcpy(node->username, Username);
+
+      // il nodo puntato da elem è gia inzializzato quando chiamo la routine
+      if (*head == NULL)
+            *head = node;
+      else
+      { // piazza elem in testa alla lista
+            node->pointer = *head;
+            *head = node;
+      }
+
+      return 0;
+}
+
+
+
+
+
+
+
+
+
+// //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+
+
 // ritorna -1 se non trova user nel log dei registrati del server, 0 altrimenti
 int isClientRegistered(char *username)
 {
@@ -714,3 +753,48 @@ void  username_da_socket(int sender_socket, struct clientList * head, char * sen
       }
 return;
 }
+
+
+// //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// ///////////////////////////////////////// CLIENT HANDLERS  ///////////////////////////////////////////////////////////////
+// //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+int handler_comand_show(char my_username [],char target_username[], int server_socket)
+{
+	int num_msg, ret;
+	char buf[512];
+
+	// invio richiesta di show al server
+	invia_header(server_socket,'D',"toreq","0000");
+	
+	// serializzo buffer per l'invio
+	pulisci_buffer(buf, sizeof(buf));
+	sprintf(buf,"%s %s", my_username, target_username);
+	// invio al server
+	invia_messaggio(buf, server_socket);
+
+	// ricevo il numero di messaggi pendenti da aspettarmi
+	ret = recv(server_socket, (void*)&num_msg, sizeof(int), 0);
+	if(ret < 0)
+	{
+		printf("LOG: Non sono riuscito ad ottenere il numero di messaggi pendenti\n");
+		return ret;
+	}
+	printf("LOG: il server mi ha detto che %s mi ha inviato %d messaggi pendenti\n", target_username, num_msg);
+
+	for (int i = 0; i < num_msg; i++)
+	{
+		char recvbuf[1024];
+
+		// ricevo il messaggio pendente
+		pulisci_buffer(recvbuf,sizeof(recvbuf));
+		ricevi_messaggio(recvbuf, server_socket);
+		// scrivo il messaggio sul file della chat dell'utente my_username
+		scrivi_file_chat(my_username, target_username, recvbuf, RECEIVING, NO_MEAN);
+		printf("messaggio pendente ricevuto: %s\n", recvbuf);
+	}
+
+	return num_msg;
+}
+
