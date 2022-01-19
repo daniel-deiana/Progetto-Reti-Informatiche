@@ -14,19 +14,14 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="dbba149a-cf7b-41d3-a919-6331f5130d69" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/codeStyles/Project.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/codeStyles/codeStyleConfig.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/cmake-build-debug/Testing/Temporary/LastTest.log" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/Testing/Temporary/LastTest.log" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Chat.txt" beforeDir="false" afterPath="$PROJECT_DIR$/src/Chat.txt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/Client_History.txt" beforeDir="false" afterPath="$PROJECT_DIR$/src/Client_History.txt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/Device.c" beforeDir="false" afterPath="$PROJECT_DIR$/src/Device.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Server.c" beforeDir="false" afterPath="$PROJECT_DIR$/src/Server.c" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/dev" beforeDir="false" afterPath="$PROJECT_DIR$/src/dev" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/myHeader.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/myHeader.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/serv" beforeDir="false" afterPath="$PROJECT_DIR$/src/serv" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/user1/user2.txt" beforeDir="false" afterPath="$PROJECT_DIR$/src/user1/user2.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/user2/user1.txt" beforeDir="false" afterPath="$PROJECT_DIR$/src/user2/user1.txt" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
