@@ -248,6 +248,29 @@
 											else
 													invia_header(i,'C',"ON",portString);
 
+
+											
+											char user_target[50];
+
+											// mi prendo l'username dell'utente che ha avviato la chat
+											pulisci_buffer(user_target, sizeof(user_target));
+											username_da_socket(i, head, user_target);
+											// provo a cercare se l'utente che ha iniziato la chat ha messaggi pendenti dal dest
+											printf("prima delle modifiche, sto per mandare la notify, %s\n",buffer);
+											if (notify_dequeue(&notify_head, buffer, user_target) == 0)
+												{
+												pulisci_buffer(buffer,sizeof(buffer));
+												strcpy(buffer,"notify_ack");
+												}
+											else
+												{
+												pulisci_buffer(buffer,sizeof(buffer));
+												strcpy(buffer,"notify_nak");
+												}
+
+
+											invia_messaggio(buffer, i);
+
 											printf("Ho inviato al client informazioni sul destinatario\n");
 									}
 									break;

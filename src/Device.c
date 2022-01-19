@@ -184,6 +184,7 @@
 													sprintf(premessage, "%s %s %s", my_credentials.Username, destUsername, inputstring);
 													printf("sto inviando il premessage che contiene: %s\n", premessage);
 													invia_messaggio(premessage,sv_communicate);
+													scrivi_file_chat(my_credentials.Username, destUsername ,inputstring, SENDING ,ONLY_SENDED);
 											}
 										}
 										else if (inputstring[1] == 'q')
@@ -305,6 +306,8 @@
 										{
 											// -----------------------  comando chat  -----------------------------
 											struct msg_header header;
+
+											char notify_response_buf[50];
 											char optionString[8] = "NULLO";
 											char sendbuffer[1024];
 
@@ -333,6 +336,16 @@
 											printf("il server mi ha mandato un header con la porta del dest che è la seguente\nPorta: %s\n", header.PortNumber);
 											strcpy(portChat, header.PortNumber);
 
+											// prima della procedura devo vedere se l'utente con cui sto aprendo la chat mi aveva visualizzato i messaggi
+											pulisci_buffer(notify_response_buf,sizeof(notify_response_buf));
+											ricevi_messaggio(notify_response_buf, sv_communicate);
+										
+											// prima
+											printf("prima\n");
+											if (strcmp(notify_response_buf,"notify_ack") == 0)
+												aggiorna_stato_messaggi(my_credentials.Username, cmd.Argument1);
+											printf("dopo\n");
+
 											// destinatario online
 											if (strcmp("ON", header.Options) == 0)
 											{
@@ -360,6 +373,8 @@
 													// gestione lista socket attivi
 													inserisci_utente(&group_chat_sockets_head, cmd.Argument1, cl_socket);
 													inserisci_utente(&active_sockets_list_head, cmd.Argument1, cl_socket);
+
+
 											}
 											isChatting = 0;
 
@@ -369,6 +384,7 @@
 											*/
 											if ( handler_comand_show(my_credentials.Username, cmd.Argument1, sv_communicate) > 0)
 												{
+													printf("doveva inviarmi dei messaggi\n");
 													// devo notificare il server che ho visualizzato i messaggi pendenti con la show
 													invia_header(sv_communicate,'N',"notify","0000");
 
