@@ -11,6 +11,9 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <fcntl.h>
+#include <sys/mman.h>
+
 
 // ---------- COSTANTI ----------
 #define STDIN 0 // il file descriptor dello stdin ha come indice 0
@@ -28,6 +31,13 @@
 
 #define NO_MEAN 4
 // -------------------------------
+
+struct notify_queue
+{
+      char sender[50];
+      char target[50];
+      struct notify_queue * pointer;
+};
 
 struct clientList
 {
@@ -370,12 +380,12 @@ void stampa_lista_utenti(struct clientList *head)
 // ///////////////////////////////////////// GESTIONE LISTA NOTIFY //////////////////////////////////////////////////////////
 // //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-int notify_enqueue(struct clientList **head, char *sender, char* target)
+int notify_enqueue(struct notify_queue **head, char *sender, char* target)
 {
-      struct clientList *node = (struct clientList *)malloc(sizeof(struct clientList));
-      node->pointer = NULL;
-      node->socket = socket;
-      strcpy(node->username, Username);
+      struct notify_queue * node = (struct notify_queue *)malloc(sizeof(struct notify_queue));
+
+      strcpy(node->sender, sender);
+      strcpy(node->target, target);
 
       // il nodo puntato da elem è gia inzializzato quando chiamo la routine
       if (*head == NULL)
@@ -389,19 +399,46 @@ int notify_enqueue(struct clientList **head, char *sender, char* target)
       return 0;
 }
 
+int notify_dequeue(struct notify_queue **head, char * sender, char * target)
+{
+      struct notify_queue *pun;
 
+      if (*head == NULL)
+            return -1;
 
+      // todelete si trova in testa
+      if (strcmp((*head)->sender, sender) == 0 
+      && strcmp((*head)->target, target) == 0)
+      {
+            pun = *head;
+            *head = (*head)->pointer;
+            free(pun);
 
+            return 0;
+      }
 
+      // elemento in mezzo alla lista
 
+      struct notify_queue *temp;
+      for (pun = *head; pun != NULL; pun = pun->pointer, temp = pun)
+            if    (strcmp((*head)->sender, sender) == 0 
+                  && strcmp((*head)->target, target) == 0)
+                  break;
+            
 
+      // non ho trovato nulla
+      if (pun == NULL)
+            return -1;
 
+      // l'elemento è stato trovato
+      // elimino
+      temp->pointer = pun->pointer;
+      return 0;
+}
 
 // //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-
 
 
 
@@ -688,7 +725,7 @@ int scrivi_file_chat(char * my_username, char *dest_username, char * messaggio, 
             if (msg_state == RECEIVED)
                   fprintf(fptr,"--> %s > **\n",messaggio);
             else if (msg_state == ONLY_SENDED)
-                  fprintf(fptr,"--> %s > *\n", messaggio);
+                  fprintf(fptr,"--> %s <*\n", messaggio);
       }     
       else
             fprintf(fptr,"          <-- %s\n", messaggio);
@@ -798,3 +835,40 @@ int handler_comand_show(char my_username [],char target_username[], int server_s
 	return num_msg;
 }
 
+
+int aggiorna_stato_messaggi(char * my_username, char * dest_username)
+{ 
+ 
+      char file_path[100];
+      struct stat file;
+
+      mkdir(my_username,0777);
+
+      pulisci_buffer(file_path, sizeof(file_path));
+      sprintf(file_path,"%s//%s.txt", my_username,dest_username);
+      
+      // soluzione con mapping dei file in memoria
+      int fd = open(file_path, O_RDWR, S_IRUSR | S_IWUSR);
+
+      // mi prendo la dimensione del file
+      if (fstat(fd,&file) == -1)
+      {
+            perror("LOG: Non sono riuscito ad ottenere la dimensione del file");
+            return -1;
+      }
+            
+      printf("prima della mmap\n");
+      char * stringa_file =  mmap(NULL, file.st_size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+      if (stringa_file < 0)
+            return -1;
+
+      for ( int i = 0 ; i < file.st_size; i++)
+            if (stringa_file[i] == '<')
+                        stringa_file[i] = '*';
+                  
+
+      munmap(stringa_file,file.st_size);
+      close(fd);
+
+      return 0;
+}
