@@ -483,7 +483,7 @@ int invia_messaggi_pendenti(char *richiedente, char* target, int dest_socket)
 {
       int msg_num;
       struct bufferedMessage msg; // uso per fare il parsing dei messaggi nel file
-      FILE * fptr = fopen("Chat.txt","rb");
+      FILE * fptr = fopen("Chat.txt","rb+");
 
       msg_num = countBuffered(richiedente,target);
       printf("countBuffered ha restituito %d messaggi\n", msg_num);
@@ -508,6 +508,10 @@ int invia_messaggi_pendenti(char *richiedente, char* target, int dest_socket)
                         
                   if (send(dest_socket,(void*)&msg.message,msg_len,0) < 0 )
                         perror("Non sono riuscito ad inviare il messaggio bufferizzato\n");
+
+                  strcpy(msg.sender,"junk");
+                  fseek(fptr, -1 * sizeof(struct bufferedMessage), SEEK_CUR);
+                  fwrite(&msg, sizeof(struct bufferedMessage), 1 , fptr);
             }
       }
 
