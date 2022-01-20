@@ -25,6 +25,7 @@
 		char ServerPort[5] = "4242";
 		char Command[1024];
 		char Options[8];
+		char timestamp_string[TIMESTAMP_LEN];
 
 		fd_set master, readfds;
 		FILE *LogPointer, *ChatBuffer, *HistoryPointer;
@@ -212,6 +213,10 @@
 												printf("Sto mandando l'ack positivo\n");
 
 												invia_header(i, 'B', "ok","8000");
+
+												pulisci_buffer(timestamp_string,sizeof(timestamp_string));
+												ricevi_messaggio(timestamp_string, i);
+												printf("timestamp ultima disconnessione di %s : %s \n",cl_credentials.Username, timestamp_string);
 
 												if (historyUpdateLogin(HistoryPointer, cl_credentials.Username, masterHeader.PortNumber) == 0)
 													  printf("Sono riuscito ad aggiornare con successo i campi history di un utente\n");

@@ -17,7 +17,9 @@
 		int isDestOnline = -1, isChatting = -1;
 
 		char Port[5] ,portChat[5], headerChat_string[HEADER_LEN] = "", string[HEADER_LEN];
-		char buffer[1024 * 4 + HEADER_LEN], LogInCommand[20];
+		char buffer[4096], LogInCommand[20];
+		
+		char timestamp_string[TIMESTAMP_LEN];
 		char destUsername[50] = "";
 		char rubrica[3][50];
 		char new_user[50];
@@ -121,6 +123,10 @@
 					if (strcmp(header.Options, "ok") == 0)
 					{
 							printf("Utente loggato\n");
+							inserisci_utente(&active_sockets_list_head,"server",sv_communicate);
+							// invio l'istante di disconnessione salvato l'ultima volta
+							prendi_istante_disconnessione(my_credentials.Username,timestamp_string);
+							invia_messaggio(timestamp_string, sv_communicate);
 							break;
 					}
 				}
@@ -294,10 +300,13 @@
 											// -----------------------  comando out  -------------------------------
 
 											// chiudo le comunicazioni con tutti i socket
-											close(sv_communicate);
-
+											
+											// devo sempre salvare il mio istante di disconnessione su file
+										
+											
 											stampa_lista_utenti(active_sockets_list_head);
 											chiudi_connesioni_attive(&active_sockets_list_head);
+											salva_disconnessione(my_credentials.Username);
 											exit(1);
 										}
 										break;

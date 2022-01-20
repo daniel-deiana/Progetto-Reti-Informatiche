@@ -21,6 +21,7 @@
 #define LOGIN_REQ_LEN 114
 #define LOGIN_MSG_SIZE 114
 #define USERNAME_LEN 50
+#define TIMESTAMP_LEN 26
 
 // -------------------------------
 #define SENDING 0 
@@ -471,6 +472,8 @@ void chiudi_connesioni_attive(struct clientList **head)
             close(pun->socket);
             printf("ho chiuso il socket: %d\n", pun->socket);
       }
+
+
 }
 
 
@@ -875,4 +878,39 @@ int aggiorna_stato_messaggi(char * my_username, char * dest_username)
       close(fd);
 
       return 0;
+}
+
+void salva_disconnessione(char * my_username)
+{
+      FILE * fptr; 
+      time_t rawtime;
+      char buf[100];
+      char * time_string  = (char *) malloc(sizeof(char) * 26);
+
+      // buf in questo caso viene inizializzato con il path relativo
+      pulisci_buffer(buf, sizeof(buf));
+      sprintf(buf,"%s//%s_logout_info.txt",my_username,my_username);
+      fptr = fopen(buf,"w+");
+      // inizializzo timestamp
+      time(&rawtime);
+      time_string = ctime(&rawtime);
+      // debug
+      printf("%s %s",my_username, time_string);
+      // scrivo la coppia di stringhe: username_timestamp_logout
+      fprintf(fptr,"%s|",time_string);
+      fclose(fptr);
+}
+
+void prendi_istante_disconnessione(char * my_username, char * timestamp_to_get)
+{
+      char buf[100];
+      FILE * fptr; 
+
+      // inizializzo buf con il path del file da aprire (quello del log)
+      pulisci_buffer(buf, sizeof(buf));
+      sprintf(buf, "%s//%s_logout_info.txt", my_username,my_username);      
+      // apro il file e prendo il timestamp
+      fptr = fopen(buf, "r+");      
+      fscanf(fptr, "%[^\n]",timestamp_to_get);
+      fclose(fptr);
 }
