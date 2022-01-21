@@ -111,11 +111,6 @@ void stampa_comandi_device()
       printf("---------------------------------------------------------\n");
 }
 
-
-
-
-
-
 // //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // ///////////////////////////////////////// GESTIONE FILES  ////////////////////////////////////////////////////////////////
 // //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -863,8 +858,8 @@ int aggiorna_stato_messaggi(char * my_username, char * dest_username)
             perror("LOG: Non sono riuscito ad ottenere la dimensione del file");
             return -1;
       }
-            
-      printf("prima della mmap\n");
+
+      // mapping      
       char * stringa_file =  mmap(NULL, file.st_size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
       if (stringa_file < 0)
             return -1;
@@ -897,7 +892,7 @@ void salva_disconnessione(char * my_username)
       // debug
       printf("%s %s",my_username, time_string);
       // scrivo la coppia di stringhe: username_timestamp_logout
-      fprintf(fptr,"%s|",time_string);
+      fprintf(fptr,"%s",time_string);
       fclose(fptr);
 }
 
@@ -913,4 +908,207 @@ void prendi_istante_disconnessione(char * my_username, char * timestamp_to_get)
       fptr = fopen(buf, "r+");      
       fscanf(fptr, "%[^\n]",timestamp_to_get);
       fclose(fptr);
+}
+
+// ritorna 0 se il comando passato in ingresso ha la struttura share <filename>, -1 altrimenti
+int check_share_command(char * my_username, char * command_string)
+{
+      char cmd[20];
+      char file_name[50];
+      char file_path[100];
+      FILE * fptr;
+
+      pulisci_buffer(cmd,sizeof(cmd));
+      pulisci_buffer(file_name,sizeof(file_name));
+
+      sscanf(command_string,"%s %s\n",cmd,file_name);
+      printf("qua dentro");
+
+      if (strcmp(cmd,"share") != 0)
+            return -1;
+      
+      // controllo se il file passato in ingresso esiste
+      pulisci_buffer(file_path,sizeof(file_path));
+      sprintf(file_path,"%s//%s",my_username, file_name);
+      
+      fptr = fopen(file_path,"r");
+      if (fptr == NULL)
+            return -1;
+
+      fclose(fptr);
+      return 0;
+}
+
+
+
+
+
+
+
+
+// //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// ////////////////////////////////  FUNZIONI PER INVIO/RICEZIONE FILE  /////////////////////////////////////////////////////
+// //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+/*
+prende in ingresso il nome di un file (che deve essere presente nella directory "src" ) ed il socket a 
+cui lo si vuole inviare, e lo invia al destinatario frammentandolo in diversi segmenti TCP se necessario
+*/
+int invia_file(char * my_username,char *file_name, int dest_socket)
+{
+      char file_path[100];
+      struct stat file;
+      char * file_send_buffer;
+
+      // path del file
+      sprintf(file_path,"%s//%s",my_username,file_name);
+
+
+      if (invia_messaggio("***FILE***",dest_socket) < 0)
+      {
+            perror("LOG: dest non raggiungibile per l'invio del file");
+            return -1;
+      }
+
+      // se il mesaggio ****FILE**** è stato inviato con successo allora allora il destinatario è online
+
+      // ------------------ invio nome file ----------------------
+      invia_messaggio(file_name, dest_socket);
+
+      // soluzione mediante mapping del file in memoria
+      // uso come buffer di invio la porzione di memoria dove viene mappato il file della mmap 
+
+      int fd = open(file_path, O_RDWR, S_IRUSR | S_IWUSR);
+
+      if (fstat(fd,&file) == -1)
+      {
+            perror("LOG: non sono riuscito ad ottenere la dimensione del file per l'invio");
+            return -1;
+      }
+
+      int dim_file = file.st_size;
+      
+      // -------------- invio dimensione file ---------------
+      if (send(dest_socket, (void*)&dim_file, sizeof(int), 0) < 0)
+      {
+            perror("LOG: Errore nell'invio della dimensione del file");
+            return -1;
+      }
+      printf("LOG: la dimensione del file che sto mandando è %d\n", dim_file);      
+
+      file_send_buffer = (char *) mmap(NULL, file.st_size, PROT_WRITE | PROT_READ, MAP_SHARED, fd, 0);
+      
+      // ----------------- invio del file -------------------
+      int bytes_send, send_after;
+      
+      bytes_send = send(dest_socket, (void*)file_send_buffer, file.st_size, 0);
+      if (bytes_send < 0)
+      {
+            perror("LOG: errore all'inizio dell' invio del file");      
+            return bytes_send;
+      }
+      printf("LOG: il numero di byte mandati al primo invio è %d\n", bytes_send);      
+      
+
+      while( bytes_send < file.st_size )
+      {
+            send_after = send(dest_socket, (void*)&file_send_buffer[bytes_send], file.st_size - bytes_send, 0);
+            if (send_after < 0)
+            {
+                  perror("LOG: errore DURANTE l'invio del file");
+                  return send_after;
+            }
+            bytes_send += send_after;
+      }
+
+      munmap(file_send_buffer,file.st_size);
+      close(fd);
+
+      printf("********** fine invio file **********\n");
+
+      return bytes_send;
+}
+
+void alloca_dim_file(char * file_path, int dim_file)
+{
+      FILE * ptr = fopen(file_path,"w");
+      for(int i = 0 ; i < dim_file; i++) { fputc(' ',ptr); }
+      fclose(ptr);
+}
+// questa funzione riceve un file inviato dal device connesso sul socket sender_socket e lo salva nella directory personale del device
+int ricevi_file(char *my_username,int sender_socket)
+{
+      int dim_file;
+      int ret;
+      char file_name[50];
+      char file_path[100];
+      char * file_receive_buffer;
+      char init = 'C';
+
+      pulisci_buffer(file_name,sizeof(file_name));
+      
+      // ----------- ricezione nome file ---------------
+      if (ricevi_messaggio(file_name, sender_socket) < 0)
+      {
+            perror("LOG: erorre nella ricezione del file_name");
+            return -1;
+      }
+      
+
+      // ------------- ricezione dimensione file ------------
+      
+      ret = recv(sender_socket, (void*)&dim_file, sizeof(int), 0);
+      if (ret < 0)
+      {
+            perror("LOG: Errore nella ricezione della dimensione del file");
+            return ret;
+      }
+      printf("LOG: La dimensione del file che sto ricevendo è di %d byte\n", dim_file);
+      
+      // --- creazione file sulla macchina del destinatario -------
+      
+      pulisci_buffer(file_path,sizeof(file_path));
+      sprintf(file_path,"%s//%s", my_username,file_name);
+      
+      alloca_dim_file(file_path, dim_file);
+
+      int fd = open(file_path, O_RDWR | O_APPEND | O_CREAT, S_IRUSR | S_IWUSR);
+
+      // mapping 
+      file_receive_buffer = (char*) mmap(NULL, dim_file, PROT_WRITE | PROT_READ, MAP_SHARED , fd , 0);
+      if (file_receive_buffer == NULL)
+            {
+                  perror("LOG: errore con la map");
+                  return -1;
+            }
+      
+
+      // ------------- ricezione file ---------------
+      int bytes_read , read_after; 
+      bytes_read = recv(sender_socket, (void *)file_receive_buffer, 25, 0 );
+      
+      if (bytes_read < 0)
+      {
+            perror("LOG: errore durante l'inzio della ricezione del file");
+            return bytes_read;
+      }
+      
+      while(bytes_read < dim_file)
+      {
+            read_after = recv(sender_socket, (void*)&file_receive_buffer[bytes_read], dim_file - bytes_read, 0);
+            if (read_after < 0)
+            {
+                  perror("LOG: errore DURANTE la ricezione del file");
+                  return read_after;
+            }
+
+            bytes_read += read_after;
+      }
+      
+      munmap(file_receive_buffer, dim_file);
+      close(fd);
+
+      return bytes_read;
 }
