@@ -4,7 +4,7 @@
 	// ///////////////////////////////////////// NET CLIENT /////////////////////////////////////////////////////////////////////
 	// //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	int main(int argc, const char **argv)
+	int main(int argc, const char **argv) 
 	{
 		struct clientList *active_sockets_list_head = NULL;
 		struct clientList *group_chat_sockets_head = NULL;
@@ -113,7 +113,11 @@
 				{
 					// il server mi ha risposto in merito ad una richiesta di signup
 					if (strcmp(header.Options, "first") == 0)
-							printf("Client registrato correttamente al servizio\n");
+							{
+								printf("Client registrato correttamente al servizio\n");
+								// salvo istante disconnessione così quando vado a fare login non causa pagefault
+								salva_disconnessione(first);
+							}
 					else
 							printf("Client gia registrato al servizio\n");
 				}
@@ -166,8 +170,20 @@
 								if (isChatting == 0)
 								{
 										// ////////////////////////// comandi chat /////////////////////////////////
+										if (check_share_command(my_credentials.Username,inputstring) == 0)
+										{
+											// prima di fare tutti i controlli, vedo se è un comando del tipo share <filename> e se il file esiste
+											if (isDestOnline == 0)
+											{
+												
+												if (invia_file(my_credentials.Username,"user1_logout_info.txt",cl_socket) < 0)
+													printf("LOG: invia_file ha ritornato un errore ");
 
-										if (inputstring[0] != '\\')
+											}
+											else
+												printf("LOG: Sto cercando di inviare file ad un device offline\n");
+										}
+										else if (inputstring[0] != '\\')
 										{
 											// ----------------------- invio messaggio -----------------------------
 
@@ -417,7 +433,7 @@
 							}
 							else
 							{
-								// nuova comunicazione
+								// 		---------------------------- nuova connessione -----------------------------------------
 								if (i == listener)
 								{
 										int addrlen = sizeof(gp_addr);
@@ -435,9 +451,13 @@
 								}
 								else
 								{
-										char bufferChatMessage[1024] = "";
+										// ------------------------ messaggi in entrata ---------------------------------------
+
+										char bufferChatMessage[1024];
 										char sender_username[50];
 
+
+										pulisci_buffer(bufferChatMessage, sizeof(bufferChatMessage));
 										// mi sta arrivando un messaggio
 										if ( ricevi_messaggio(bufferChatMessage,i) == 0)
 										{
@@ -455,13 +475,25 @@
 											continue;		
 										}
 
-										// prendo l'username associato al socket che mi ha appena inviato un messaggio
-										pulisci_buffer(sender_username, sizeof(sender_username));
-										username_da_socket(i,active_sockets_list_head, sender_username);
-										printf("\nsto scrivendo nella chat che %s mi ha inviato un messaggio\n",sender_username);
-										scrivi_file_chat(my_credentials.Username,sender_username,bufferChatMessage, RECEIVING, NO_MEAN);
-
-										printf("messaggio ricevuto: %s\n", bufferChatMessage);
+											
+										if (strcmp(bufferChatMessage,"***FILE***") == 0)
+										{
+											// -------------------- controllo richiesta invio file -------------------------------
+											
+											// il sender mi vuole inviare un file 
+											printf("LOG: Sto ricevendo un file\n");
+											if (ricevi_file(my_credentials.Username, i))
+												printf("LOG: ricevi_file ha ritornato un errore");
+										}
+										else	
+										{
+											// -------------------- ricezione messaggio di una chat ------------------------------
+											pulisci_buffer(sender_username, sizeof(sender_username));
+											username_da_socket(i,active_sockets_list_head, sender_username);
+											printf("\nsto scrivendo nella chat che %s mi ha inviato un messaggio\n",sender_username);
+											scrivi_file_chat(my_credentials.Username,sender_username,bufferChatMessage, RECEIVING, NO_MEAN);
+											printf("messaggio ricevuto: %s\n", bufferChatMessage);
+										}
 								}
 							}
 					}
