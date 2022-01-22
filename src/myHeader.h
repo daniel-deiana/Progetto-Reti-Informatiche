@@ -882,9 +882,11 @@ void salva_disconnessione(char * my_username)
       char buf[100];
       char * time_string  = (char *) malloc(sizeof(char) * 26);
 
+      
       // buf in questo caso viene inizializzato con il path relativo
       pulisci_buffer(buf, sizeof(buf));
       sprintf(buf,"%s//%s_logout_info.txt",my_username,my_username);
+      mkdir(my_username,0777);
       fptr = fopen(buf,"w+");
       // inizializzo timestamp
       time(&rawtime);

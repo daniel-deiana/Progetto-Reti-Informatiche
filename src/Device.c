@@ -113,7 +113,11 @@
 				{
 					// il server mi ha risposto in merito ad una richiesta di signup
 					if (strcmp(header.Options, "first") == 0)
-							printf("Client registrato correttamente al servizio\n");
+							{
+								printf("Client registrato correttamente al servizio\n");
+								// salvo istante disconnessione così quando vado a fare login non causa pagefault
+								salva_disconnessione(first);
+							}
 					else
 							printf("Client gia registrato al servizio\n");
 				}
