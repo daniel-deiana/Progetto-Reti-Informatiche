@@ -860,8 +860,8 @@ int aggiorna_stato_messaggi(char * my_username, char * dest_username)
       }
 
       // mapping      
-      char * stringa_file =  mmap(NULL, file.st_size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
-      if (stringa_file < 0)
+      char * stringa_file =  (char *)mmap(NULL, file.st_size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+      if (stringa_file == NULL)
             return -1;
 
       for ( int i = 0 ; i < file.st_size; i++)
