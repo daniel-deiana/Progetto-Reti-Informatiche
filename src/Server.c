@@ -64,7 +64,7 @@
 		ret = listen(Listener, 50); // Metto una coda di 50 possibili richieste di connesione al server
 
 		FD_SET(Listener, &master);
-	  fdmax = Listener;
+		fdmax = Listener;
 
 	  for (;;)
 	  {
@@ -169,7 +169,7 @@
 											struct HistoryRecord record;
 
 											ricevi_messaggio(buffer,i);
-
+											
 											// debug
 											printf("Sto per registrare un utente che mi ha passato il seguente buffer: %s\n", buffer);
 
