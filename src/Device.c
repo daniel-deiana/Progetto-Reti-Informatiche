@@ -300,7 +300,24 @@
 										case 's':
 										{
 											// ------------------------ comando show -----------------------------
-											handler_comand_show(my_credentials.Username, cmd.Argument1, sv_communicate);
+	
+											if ( handler_comand_show(my_credentials.Username, cmd.Argument1, sv_communicate) > 0)
+												{
+													printf("doveva inviarmi dei messaggi\n");
+													// devo notificare il server che ho visualizzato i messaggi pendenti con la show
+													invia_header(sv_communicate,'N',"notify","0000");
+
+													char buf[256];
+
+													// invio il nome del client da notificare al server
+													pulisci_buffer(buf, sizeof(buf));
+													
+													sprintf(buf,"%s %s",my_credentials.Username,cmd.Argument1);
+													invia_messaggio(buf,sv_communicate);
+
+												}
+											
+								
 										}
 										break;
 
@@ -366,40 +383,47 @@
 											ricevi_messaggio(notify_response_buf, sv_communicate);
 										
 											// prima
-											printf("prima\n");
 											if (strcmp(notify_response_buf,"notify_ack") == 0)
 												aggiorna_stato_messaggi(my_credentials.Username, cmd.Argument1);
-											printf("dopo\n");
 
 											// destinatario online
 											if (strcmp("ON", header.Options) == 0)
 											{
-													// creazione indirizzo e socket e connessione al destinatario
-													memset(&cl_addr, 0, sizeof(cl_addr));
+													if (socket_da_username(active_sockets_list_head, cmd.Argument1) < 0)
+													{	
+														// creazione indirizzo e socket e connessione al destinatario
+														memset(&cl_addr, 0, sizeof(cl_addr));
 
-													cl_addr.sin_family = AF_INET;
-													cl_addr.sin_port = htons(atoi(portChat));
-													inet_pton(AF_INET, "127.0.0.1", &cl_listen_addr.sin_addr);
+														cl_addr.sin_family = AF_INET;
+														cl_addr.sin_port = htons(atoi(portChat));
+														inet_pton(AF_INET, "127.0.0.1", &cl_listen_addr.sin_addr);
 
-													cl_socket = socket(AF_INET, SOCK_STREAM, 0);
+														cl_socket = socket(AF_INET, SOCK_STREAM, 0);
 
-													ret = connect(cl_socket, (struct sockaddr *)&cl_addr, sizeof(cl_addr));
-													if (ret < 0)
-														printf("Non sono riuscito a iniziare la chat con il destinatario\n");
+														// connessione al peer
+														ret = connect(cl_socket, (struct sockaddr *)&cl_addr, sizeof(cl_addr));
+														if (ret < 0)
+															printf("Non sono riuscito a iniziare la chat con il destinatario\n");
 
-													// invio il mio user al destinatario
-													invia_messaggio(my_credentials.Username,cl_socket);
+														// invio il mio user al destinatario
+														invia_messaggio(my_credentials.Username,cl_socket);
 
-													// aggiorno descriptor list
-													FD_SET(cl_socket, &master);
-													fdmax = (cl_socket > fdmax)? cl_socket : fdmax;
-
+														// aggiorno descriptor list
+														FD_SET(cl_socket, &master);
+														fdmax = (cl_socket > fdmax)? cl_socket : fdmax;
+														
+														// aggiungo alla lista utenti con cui sto comunicando
+														inserisci_utente(&active_sockets_list_head, cmd.Argument1, cl_socket);
+														inserisci_utente(&group_chat_sockets_head, cmd.Argument1, cl_socket);
+													}
+													else
+													{
+														// ho gia il socket, mi basta inzializzare la variabile di riferimen
+														cl_socket = socket_da_username(active_sockets_list_head, cmd.Argument1);
+													}
+													
 													isDestOnline = 0;
-													// gestione lista socket attivi
-													inserisci_utente(&group_chat_sockets_head, cmd.Argument1, cl_socket);
-													inserisci_utente(&active_sockets_list_head, cmd.Argument1, cl_socket);
-
-
+													
 											}
 											isChatting = 0;
 

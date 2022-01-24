@@ -1114,3 +1114,51 @@ int ricevi_file(char *my_username,int sender_socket)
 
       return bytes_read;
 }
+
+
+
+// restituisce un socket associato all'username di un elemento in una clientList
+int socket_da_username(struct clientList * head, char * username)
+{
+      if (head == NULL)
+            return -1; 
+
+      for ( struct clientList * pun = head; pun != NULL; pun = pun->pointer)
+            if (strcmp(username, pun->username) == 0)
+                  return pun->socket;
+      
+      return -1;
+}
+
+// ritorna il numero di elementi presenti nella lista del tipo clientlist
+int conta_utenti_chat(struct clientList * head)
+{     
+      int i = 0;
+
+      if (head == NULL)
+            return i;
+      
+      for ( struct clientList * pun = head; pun != NULL; pun = pun->pointer, i++){};      
+
+      return i; 
+}
+
+// elimina tutti gli utenti dalla lista del tipo clientList, ritorna il numero di utenti eliminati
+elimina_utenti_lista(struct clientList * head)
+{
+      struct clientList * temp = head;
+      int i = 0;
+
+      if (head == NULL)
+            return 0;
+
+      while (head != NULL)
+      {
+            head = head->pointer;
+            free(temp);
+            temp = head;
+            i++;
+      }
+
+      return i;
+}
