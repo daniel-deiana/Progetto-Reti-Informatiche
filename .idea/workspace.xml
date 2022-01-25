@@ -23,12 +23,15 @@
       <change beforePath="$PROJECT_DIR$/src/Chat.txt" beforeDir="false" afterPath="$PROJECT_DIR$/src/Chat.txt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/Client_History.txt" beforeDir="false" afterPath="$PROJECT_DIR$/src/Client_History.txt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/Device.c" beforeDir="false" afterPath="$PROJECT_DIR$/src/Device.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Log.txt" beforeDir="false" afterPath="$PROJECT_DIR$/src/Log.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Server.c" beforeDir="false" afterPath="$PROJECT_DIR$/src/Server.c" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/dev" beforeDir="false" afterPath="$PROJECT_DIR$/src/dev" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/myHeader.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/myHeader.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/serv" beforeDir="false" afterPath="$PROJECT_DIR$/src/serv" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/user1/user1_logout_info.txt" beforeDir="false" afterPath="$PROJECT_DIR$/src/user1/user1_logout_info.txt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/user1/user2.txt" beforeDir="false" afterPath="$PROJECT_DIR$/src/user1/user2.txt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/user2/user1.txt" beforeDir="false" afterPath="$PROJECT_DIR$/src/user2/user1.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/user2/user2_logout_info.txt" beforeDir="false" afterPath="$PROJECT_DIR$/src/user2/user2_logout_info.txt" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -105,8 +108,58 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
           <url>file://$PROJECT_DIR$/src/Device.c</url>
-          <line>480</line>
-          <option name="timeStamp" value="58" />
+          <line>590</line>
+          <option name="timeStamp" value="67" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/src/Device.c</url>
+          <line>591</line>
+          <option name="timeStamp" value="68" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/src/Device.c</url>
+          <line>592</line>
+          <option name="timeStamp" value="69" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/src/Device.c</url>
+          <line>593</line>
+          <option name="timeStamp" value="70" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/src/Device.c</url>
+          <line>594</line>
+          <option name="timeStamp" value="71" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/src/Device.c</url>
+          <line>595</line>
+          <option name="timeStamp" value="72" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/src/Device.c</url>
+          <line>597</line>
+          <option name="timeStamp" value="74" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/src/Device.c</url>
+          <line>596</line>
+          <option name="timeStamp" value="75" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/src/Device.c</url>
+          <line>598</line>
+          <option name="timeStamp" value="76" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/src/Device.c</url>
+          <line>154</line>
+          <option name="timeStamp" value="77" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/src/Device.c</url>
+          <line>158</line>
+          <option name="timeStamp" value="78" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>

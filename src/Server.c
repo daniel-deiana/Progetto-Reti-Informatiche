@@ -64,7 +64,7 @@
 		ret = listen(Listener, 50); // Metto una coda di 50 possibili richieste di connesione al server
 
 		FD_SET(Listener, &master);
-	  fdmax = Listener;
+		fdmax = Listener;
 
 	  for (;;)
 	  {
@@ -169,7 +169,7 @@
 											struct HistoryRecord record;
 
 											ricevi_messaggio(buffer,i);
-
+											
 											// debug
 											printf("Sto per registrare un utente che mi ha passato il seguente buffer: %s\n", buffer);
 
@@ -358,7 +358,19 @@
 											notify_enqueue(&notify_head, notify_sender, notify_target);
 									}
 									break;
-
+									
+									case 'P': 
+									{
+										// ---------------------- routine richiesta di numero di porta utente -----------
+										
+										// ricevo il nome dell'utente di cui devo cercare il numero di porta
+										ricevi_messaggio(buffer,i);
+										
+										// mando la porta
+										int porta = check_username_online(buffer);
+										int ret = send(i, (void*)&porta, sizeof(int), 0);
+									}
+									break;
 									}
 							  }
 						}

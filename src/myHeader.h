@@ -97,7 +97,7 @@ void pulisci_buffer(char * buffer, int buf_len) {memset(buffer, 0 , buf_len);}
 
 
 // //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// ///////////////////////////////////////// FUNZIONI DI STAMPA ////////////////////////////////////////////////////////////////
+// ///////////////////////////////////////// FUNZIONI DI STAMPA /////////////////////////////////////////////////////////////
 // //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void stampa_comandi_device()
@@ -753,7 +753,7 @@ int carica_chat(char * my_username, char * dest_username)
       pulisci_buffer(file_path, sizeof(file_path));
       sprintf(file_path,"%s//%s.txt", my_username,dest_username);
       
-      fptr = fopen(file_path,"r");
+      fptr = fopen(file_path,"r+");
       if (fptr == NULL) 
       {
             printf("LOG: Errore nell'apertura del file\n");
@@ -1065,7 +1065,7 @@ int ricevi_file(char *my_username,int sender_socket)
       if (ret < 0)
       {
             perror("LOG: Errore nella ricezione della dimensione del file");
-            return ret;
+            return ret; 
       }
       printf("LOG: La dimensione del file che sto ricevendo è di %d byte\n", dim_file);
       
@@ -1113,4 +1113,69 @@ int ricevi_file(char *my_username,int sender_socket)
       close(fd);
 
       return bytes_read;
+}
+
+
+
+// restituisce un socket associato all'username di un elemento in una clientList
+int socket_da_username(struct clientList * head, char * username)
+{
+      if (head == NULL)
+            return -1; 
+
+      for ( struct clientList * pun = head; pun != NULL; pun = pun->pointer)
+            if (strcmp(username, pun->username) == 0)
+                  return pun->socket;
+      
+      return -1;
+}
+
+// ritorna il numero di elementi presenti nella lista del tipo clientlist
+int conta_utenti_chat(struct clientList * head)
+{     
+      int i = 0;
+
+      if (head == NULL)
+            return i;
+      
+      for ( struct clientList * pun = head; pun != NULL; pun = pun->pointer, i++){};      
+
+      return i; 
+}
+
+// elimina tutti gli utenti dalla lista del tipo clientList, ritorna il numero di utenti eliminati
+int elimina_utenti_lista(struct clientList ** head)
+{
+      struct clientList * temp = *head;
+      int i = 0;
+
+      if (*head == NULL)
+            return 0;
+
+      while (*head != NULL)
+      {
+            *head = (*head)->pointer;
+            free(temp);
+            temp = *head;
+            i++;
+      }
+
+      return i;
+}
+
+// invia all'utente connesso su dest socket i nomi degli utenti della sua chat di gruppo
+int invia_nomi_utenti(struct clientList * head, int dest_socket)
+{
+      int i = 0;
+
+      if (head == NULL)
+            return i;
+
+      for (struct clientList * pun = head; pun != NULL; pun = pun->pointer, i++)
+      {     
+            // invio il nome dell'utente presente nel gruppo al nuovo utente
+            invia_messaggio(pun->username,dest_socket);
+      }
+
+      return i;     
 }

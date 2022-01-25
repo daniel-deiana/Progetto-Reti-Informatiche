@@ -136,6 +136,7 @@
 				}
 		}
 
+			
 		// stampo comandi device
 		stampa_comandi_device();
 
@@ -146,10 +147,11 @@
 				// ri-inizalizzo la lista dei descrittori in lettura
 				readfds = master;
 				printf("sto per chiamare select\n");
-				select(fdmax + 1, &readfds, NULL, NULL, NULL);
+                select(fdmax + 1, &readfds, NULL, NULL, NULL);
 				for (int i = 0; i <= fdmax; i++)
 				{
 					// Devo ciclare fra i descrittori per servire quelli pronti
+
 					if (FD_ISSET(i, &readfds))
 					{
 							// Ho trovato un descrittore pronto
@@ -167,32 +169,27 @@
 
 
 
-								if (isChatting == 0)
+								if (conta_utenti_chat(group_chat_sockets_head) > 0)
 								{
 										// ////////////////////////// comandi chat /////////////////////////////////
 										if (check_share_command(my_credentials.Username,inputstring) == 0)
 										{
+
 											// prima di fare tutti i controlli, vedo se è un comando del tipo share <filename> e se il file esiste
-											if (isDestOnline == 0)
-											{
-												
 												if (invia_file(my_credentials.Username,"user1_logout_info.txt",cl_socket) < 0)
 													printf("LOG: invia_file ha ritornato un errore ");
-
-											}
-											else
-												printf("LOG: Sto cercando di inviare file ad un device offline\n");
 										}
 										else if (inputstring[0] != '\\')
 										{
 											// ----------------------- invio messaggio -----------------------------
 
-											if (isDestOnline == 0)
+											if (conta_utenti_chat(group_chat_sockets_head) >= 1)
 											{
 													// invio messaggio ai destinatari oppure solo ad un utente
 													invia_messaggio_gruppo(inputstring, group_chat_sockets_head);
-													printf("mittente: %s, destinatario %s\n", my_credentials.Username, destUsername);
-													scrivi_file_chat(my_credentials.Username, destUsername ,inputstring, SENDING ,RECEIVED);
+													
+													if (conta_utenti_chat(group_chat_sockets_head) == 1)
+														scrivi_file_chat(my_credentials.Username, destUsername ,inputstring, SENDING ,RECEIVED);
 								
 											}
 											else
@@ -213,7 +210,9 @@
 										{
 											// -------------------- comando "\q + "INVIO" -------------------------
 
-											isChatting = -1;
+											// sto uscendo dalla chat singola, o da una chat di gruppo quindi elimino tutti i destinatari
+											stampa_lista_utenti(group_chat_sockets_head);
+											elimina_utenti_lista(&group_chat_sockets_head);
 											break;
 										}
 										else if (inputstring[1] == 'u')
@@ -247,38 +246,57 @@
 														printf("l'utente che volevog aggiungere alla chat non è online\n");
 														break;
 													}
-
-											printf("l'utente con il numero di porta <%s> è stato aggiunto con successo alla chat\n",buffer);
-
-											// creo indirizzo destinatario e lo aggiungo ai socket della chat
-											struct sockaddr_in indirizzo;
-											int new_socket;
 											
-											// ------------------creazione indirizzo -------------------
-											// ---------------------------------------------------------
-											memset(&indirizzo, 0 ,sizeof(indirizzo));
-											indirizzo.sin_family = AF_INET;
-											indirizzo.sin_port = htons(atoi(buffer));
-											indirizzo.sin_addr.s_addr = INADDR_ANY;
+											int new_socket = socket_da_username(active_sockets_list_head, username); 
 
+											// controllo se ho gia una connessione attiva con l'utente che voglio aggiungere
+											if ( new_socket < 0 )
+											{
+												printf("l'utente con il numero di porta <%s> è stato aggiunto con successo alla chat\n",buffer);
 
-											printf("ciao\n");
-											new_socket = socket(AF_INET,SOCK_STREAM,0);
-											if ( connect(new_socket, (struct sockaddr *) &indirizzo, sizeof(indirizzo)) < 0)
-												{
-													perror("non sono riuscito a connettermi al client ");
-													break;
-												}
+												// creo indirizzo destinatario e lo aggiungo ai socket della chat
+												struct sockaddr_in indirizzo;
+												
+												// ------------------creazione indirizzo -------------------
+												// ---------------------------------------------------------
+												memset(&indirizzo, 0 ,sizeof(indirizzo));
+												indirizzo.sin_family = AF_INET;
+												indirizzo.sin_port = htons(atoi(buffer));
+												indirizzo.sin_addr.s_addr = INADDR_ANY;
 
-											// --------------------------------------------------------
+												new_socket = socket(AF_INET,SOCK_STREAM,0);
+												if ( connect(new_socket, (struct sockaddr *) &indirizzo, sizeof(indirizzo)) < 0)
+													{
+														perror("non sono riuscito a connettermi al client ");
+														break;
+													}
+												invia_messaggio(my_credentials.Username,new_socket);
+												// --------------------------------------------------------
 
-											// aggiorno fd
-											fdmax = (new_socket > fdmax) ? new_socket : fdmax;
-											FD_SET(new_socket, &master);
-											// inserisco nuovo utente nella lista dei socket della chat
-											inserisci_utente(&active_sockets_list_head, username, new_socket);
-											inserisci_utente(&group_chat_sockets_head, username, new_socket);
+												// aggiorno fd
+												fdmax = (new_socket > fdmax) ? new_socket : fdmax;
+												FD_SET(new_socket, &master);
 
+												// aggiungo alla lista chat
+												inserisci_utente(&active_sockets_list_head, username, new_socket);
+											}
+											
+											// invio gli username degli utenti al nuovo arrivato nella chat
+											// ------------------------------------------------------------
+											invia_messaggio("**NEW_GROUP**", new_socket);
+											
+											// invio il numero di utenti
+											int num_utenti = conta_utenti_chat(group_chat_sockets_head);								
+											int ret = send(new_socket, (void*)&num_utenti, sizeof(int), 0);
+											if (ret < 0)
+												perror("LOG: Errore nell'invio del numero di utenti al nuovo utente del gruppo");	
+											
+											// invio i nomi degli utenti della chat
+											invia_nomi_utenti(group_chat_sockets_head, new_socket);
+											// ------------------------------------------------------------
+
+											// inserisco nuovo utente nella lista dei socket online
+											inserisci_utente(&group_chat_sockets_head, username, new_socket);											
 										}
 								}
 								else
@@ -294,13 +312,26 @@
 										}
 
 										//  ////////////////////////// switching comandi /////////////////////////////
-
+										
 										switch (cmd.Command[0])
 										{
 										case 's':
 										{
 											// ------------------------ comando show -----------------------------
-											handler_comand_show(my_credentials.Username, cmd.Argument1, sv_communicate);
+											if ( handler_comand_show(my_credentials.Username, cmd.Argument1, sv_communicate) > 0)
+												{
+													printf("doveva inviarmi dei messaggi\n");
+													// devo notificare il server che ho visualizzato i messaggi pendenti con la show
+													invia_header(sv_communicate,'N',"notify","0000");
+
+													char buf[256];
+
+													// invio il nome del client da notificare al server
+													pulisci_buffer(buf, sizeof(buf));
+													
+													sprintf(buf,"%s %s",my_credentials.Username,cmd.Argument1);
+													invia_messaggio(buf,sv_communicate);
+												}
 										}
 										break;
 
@@ -366,43 +397,45 @@
 											ricevi_messaggio(notify_response_buf, sv_communicate);
 										
 											// prima
-											printf("prima\n");
 											if (strcmp(notify_response_buf,"notify_ack") == 0)
 												aggiorna_stato_messaggi(my_credentials.Username, cmd.Argument1);
-											printf("dopo\n");
 
 											// destinatario online
 											if (strcmp("ON", header.Options) == 0)
 											{
-													// creazione indirizzo e socket e connessione al destinatario
-													memset(&cl_addr, 0, sizeof(cl_addr));
+													if (socket_da_username(active_sockets_list_head, cmd.Argument1) < 0)
+													{	
+														// creazione indirizzo e socket e connessione al destinatario
+														memset(&cl_addr, 0, sizeof(cl_addr));
 
-													cl_addr.sin_family = AF_INET;
-													cl_addr.sin_port = htons(atoi(portChat));
-													inet_pton(AF_INET, "127.0.0.1", &cl_listen_addr.sin_addr);
+														cl_addr.sin_family = AF_INET;
+														cl_addr.sin_port = htons(atoi(portChat));
+														inet_pton(AF_INET, "127.0.0.1", &cl_listen_addr.sin_addr);
 
-													cl_socket = socket(AF_INET, SOCK_STREAM, 0);
+														cl_socket = socket(AF_INET, SOCK_STREAM, 0);
 
-													ret = connect(cl_socket, (struct sockaddr *)&cl_addr, sizeof(cl_addr));
-													if (ret < 0)
-														printf("Non sono riuscito a iniziare la chat con il destinatario\n");
+														// connessione al peer
+														ret = connect(cl_socket, (struct sockaddr *)&cl_addr, sizeof(cl_addr));
+														if (ret < 0)
+															printf("Non sono riuscito a iniziare la chat con il destinatario\n");
 
-													// invio il mio user al destinatario
-													invia_messaggio(my_credentials.Username,cl_socket);
+														// invio il mio user al destinatario
+														invia_messaggio(my_credentials.Username,cl_socket);
 
-													// aggiorno descriptor list
-													FD_SET(cl_socket, &master);
-													fdmax = (cl_socket > fdmax)? cl_socket : fdmax;
-
-													isDestOnline = 0;
-													// gestione lista socket attivi
+														// aggiorno descriptor list
+														FD_SET(cl_socket, &master);
+														fdmax = (cl_socket > fdmax)? cl_socket : fdmax;
+														
+														// aggiungo alla lista utenti con cui sto comunicando
+														inserisci_utente(&active_sockets_list_head, cmd.Argument1, cl_socket);
+													}
+													else
+													{
+														// ho gia il socket, mi basta inzializzare la variabile di riferimen
+														cl_socket = socket_da_username(active_sockets_list_head, cmd.Argument1);
+													}													
 													inserisci_utente(&group_chat_sockets_head, cmd.Argument1, cl_socket);
-													inserisci_utente(&active_sockets_list_head, cmd.Argument1, cl_socket);
-
-
 											}
-											isChatting = 0;
-
 											/*
 												prima di iniziare la chat devo chiedere per messaggi pendenti
 												rispetto all'utente con cui sto per iniziare la chat
@@ -439,14 +472,19 @@
 										int addrlen = sizeof(gp_addr);
 
 										communicate = accept(i, (struct sockaddr *)&gp_addr, (socklen_t *)&addrlen);
+                                        if (communicate < 0)
+                                            break;
 										fdmax = (communicate > fdmax) ? communicate : fdmax;
 										FD_SET(communicate, &master);
 
 										// chi mi chiede una connesione per prima cosa mi dice il suo nome
 										pulisci_buffer(new_user,sizeof(new_user));
+										
 										ricevi_messaggio(new_user,communicate);
 										inserisci_utente(&active_sockets_list_head, new_user, communicate);
-
+										
+										inserisci_utente(&group_chat_sockets_head,new_user,communicate);
+										
 										printf("Un client sta provando a connettersi\n");
 								}
 								else
@@ -470,13 +508,83 @@
 											FD_CLR(i, &master);
 											close(i);
 
-											// gestione lista
-											rimuovi_utente(&active_sockets_list_head, i, User_logged_out);
+											rimuovi_utente(&active_sockets_list_head,i,User_logged_out);
+											rimuovi_utente(&group_chat_sockets_head,i,User_logged_out);
+											printf("Ho rimosso dalla chat di gruppo %s\n", User_logged_out);
 											continue;		
 										}
 
-											
-										if (strcmp(bufferChatMessage,"***FILE***") == 0)
+
+										if ((strcmp(bufferChatMessage,"**NEW_GROUP**") == 0))
+										{
+											// -------------------- controllo nuovo gruppo -------------------------------
+                                            pulisci_buffer(bufferChatMessage,sizeof(bufferChatMessage));
+											// sono stato aggiunto ad un gruppo e devo vedere se sono gia connesso con gli utenti
+											int num_utenti;
+											int ret = recv(i, (void*)&num_utenti, sizeof(int), 0);
+											if (ret < 0)
+												{
+													perror("LOG: Errore nella ricezione del numero di utenti");
+													break;
+												}
+
+											// ricevo gli username degli utenti
+											for (int k = 0; k < num_utenti; k++)
+											{
+												char buffer[256];
+												pulisci_buffer(buffer,sizeof(buffer));
+
+												ricevi_messaggio(buffer,i);
+												printf("LOG: ricevuto il nome di un utente da aggiungere -> %s\n",buffer);
+												int socket_utente_chat = socket_da_username(active_sockets_list_head, buffer);
+												
+												if (socket_utente_chat < 0)
+												{
+													printf("aggiungo un estraneo\n");
+
+													int port;
+													// devo creare una connessione con l'utente 
+													invia_header(sv_communicate, 'P',"port_req","0000");
+
+													//invio il nome dell'utente di cui voglio sapere la porta
+													invia_messaggio(buffer,sv_communicate);
+
+													// ricevo il numero di porta
+													ret = recv(sv_communicate,(void*)&port, sizeof(int), 0);
+													if (ret < 0)
+													{
+														perror("LOG: errore nella ricezione del numero di porta del partecipante alla chat");
+														break;
+													}
+
+													if (port < 0)
+														continue;
+													
+													// creazione indirizzo
+													struct sockaddr_in indirizzo;
+													indirizzo.sin_family = AF_INET;
+													indirizzo.sin_port = htons(port);
+													indirizzo.sin_addr.s_addr = INADDR_ANY;
+													
+													// mi connetto al nuovo client
+													socket_utente_chat = socket(AF_INET, SOCK_STREAM, 0 );
+													ret = connect(socket_utente_chat,(struct sockaddr *)&indirizzo, sizeof(indirizzo));
+													// mando il mio nome
+													invia_messaggio(my_credentials.Username, socket_utente_chat);
+
+													// aggiorno lista descrittori
+													fdmax =  (socket_utente_chat > fdmax )? socket_utente_chat : fdmax;
+													FD_SET(socket_utente_chat, &master); 
+
+													// aggiungo il nuovo utente alla lista utenti con cui sono connesso 
+													inserisci_utente(&active_sockets_list_head,buffer,socket_utente_chat);
+												}
+
+												inserisci_utente(&group_chat_sockets_head,buffer,socket_utente_chat);
+											}
+
+										}
+										else if (strcmp(bufferChatMessage,"***FILE***") == 0)
 										{
 											// -------------------- controllo richiesta invio file -------------------------------
 											
@@ -491,7 +599,8 @@
 											pulisci_buffer(sender_username, sizeof(sender_username));
 											username_da_socket(i,active_sockets_list_head, sender_username);
 											printf("\nsto scrivendo nella chat che %s mi ha inviato un messaggio\n",sender_username);
-											scrivi_file_chat(my_credentials.Username,sender_username,bufferChatMessage, RECEIVING, NO_MEAN);
+											if (conta_utenti_chat(group_chat_sockets_head) == 1)
+												scrivi_file_chat(my_credentials.Username,sender_username,bufferChatMessage, RECEIVING, NO_MEAN);
 											printf("messaggio ricevuto: %s\n", bufferChatMessage);
 										}
 								}
