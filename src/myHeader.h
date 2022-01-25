@@ -753,7 +753,7 @@ int carica_chat(char * my_username, char * dest_username)
       pulisci_buffer(file_path, sizeof(file_path));
       sprintf(file_path,"%s//%s.txt", my_username,dest_username);
       
-      fptr = fopen(file_path,"r");
+      fptr = fopen(file_path,"r+");
       if (fptr == NULL) 
       {
             printf("LOG: Errore nell'apertura del file\n");
@@ -1144,21 +1144,38 @@ int conta_utenti_chat(struct clientList * head)
 }
 
 // elimina tutti gli utenti dalla lista del tipo clientList, ritorna il numero di utenti eliminati
-elimina_utenti_lista(struct clientList * head)
+int elimina_utenti_lista(struct clientList ** head)
 {
-      struct clientList * temp = head;
+      struct clientList * temp = *head;
       int i = 0;
 
-      if (head == NULL)
+      if (*head == NULL)
             return 0;
 
-      while (head != NULL)
+      while (*head != NULL)
       {
-            head = head->pointer;
+            *head = (*head)->pointer;
             free(temp);
-            temp = head;
+            temp = *head;
             i++;
       }
 
       return i;
+}
+
+// invia all'utente connesso su dest socket i nomi degli utenti della sua chat di gruppo
+int invia_nomi_utenti(struct clientList * head, int dest_socket)
+{
+      int i = 0;
+
+      if (head == NULL)
+            return i;
+
+      for (struct clientList * pun = head; pun != NULL; pun = pun->pointer, i++)
+      {     
+            // invio il nome dell'utente presente nel gruppo al nuovo utente
+            invia_messaggio(pun->username,dest_socket);
+      }
+
+      return i;     
 }

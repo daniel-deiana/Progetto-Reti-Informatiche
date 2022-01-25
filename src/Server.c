@@ -358,7 +358,19 @@
 											notify_enqueue(&notify_head, notify_sender, notify_target);
 									}
 									break;
-
+									
+									case 'P': 
+									{
+										// ---------------------- routine richiesta di numero di porta utente -----------
+										
+										// ricevo il nome dell'utente di cui devo cercare il numero di porta
+										ricevi_messaggio(buffer,i);
+										
+										// mando la porta
+										int porta = check_username_online(buffer);
+										int ret = send(i, (void*)&porta, sizeof(int), 0);
+									}
+									break;
 									}
 							  }
 						}
