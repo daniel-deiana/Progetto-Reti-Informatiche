@@ -10,7 +10,6 @@
 	
 		struct sockaddr_in server_addr, client_addr;
 		struct Credentials MyCredentials, cl_credentials;
-		struct msg sv_message;
 
 		// lista utenti online
 		struct clientList *head = NULL;
@@ -175,7 +174,7 @@
 
 											sscanf(buffer, "%s %s", MyCredentials.Username, MyCredentials.Password);
 
-										  if (isClientRegistered(MyCredentials.Username) == 0)
+										  if (is_client_registered(MyCredentials.Username) == 0)
 												invia_header(i,'A',"before","0000");
 										  else
 										  {
@@ -207,19 +206,19 @@
 
 											sscanf(buffer, "%s %s", cl_credentials.Username, cl_credentials.Password);
 
-										  if (LoginCheck(LogPointer, &cl_credentials, sizeof(cl_credentials)) == 0)
+										  if (is_client_registered(cl_credentials.Username) == 0)
 										  {
 												// debug
-												printf("Sto mandando l'ack positivo\n");
+												printf("LOG: Sto mandando l'ack positivo\n");
 
 												invia_header(i, 'B', "ok","8000");
 
 												pulisci_buffer(timestamp_string,sizeof(timestamp_string));
 												ricevi_messaggio(timestamp_string, i);
-												printf("timestamp ultima disconnessione di %s : %s \n",cl_credentials.Username, timestamp_string);
+												printf("LOG: timestamp ultima disconnessione di %s : %s \n",cl_credentials.Username, timestamp_string);
 
-												if (historyUpdateLogin(HistoryPointer, cl_credentials.Username, masterHeader.PortNumber) == 0)
-													  printf("Sono riuscito ad aggiornare con successo i campi history di un utente\n");
+												if (aggiorna_history_utente(HistoryPointer, cl_credentials.Username, masterHeader.PortNumber) == 0)
+													  printf("LOG: Sono riuscito ad aggiornare con successo i campi history di un utente\n");
 
 												stampa_history_utenti();
 
@@ -230,7 +229,7 @@
 										  else
 										  {
 												// debug
-												printf("Non ho trovato le credenziali nel registro del server\n");
+												printf("LOG: Non ho trovato le credenziali nel registro del server\n");
 												invia_header(i,'B',"noreg","8000");
 										  }
 									}
@@ -241,7 +240,7 @@
 											// ---------------------------- routine chat ------------------------------
 
 											ricevi_messaggio(buffer, i);
-											printf("Ho ricevuto la richiesta di una chat con l'utente <%s>\n", buffer);
+											printf("LOG: Ho ricevuto la richiesta di una chat con l'utente <%s>\n", buffer);
 
 											Port = check_username_online(buffer);
 											if (Port == 0)
@@ -261,7 +260,6 @@
 											pulisci_buffer(user_target, sizeof(user_target));
 											username_da_socket(i, head, user_target);
 											// provo a cercare se l'utente che ha iniziato la chat ha messaggi pendenti dal dest
-											printf("prima delle modifiche, sto per mandare la notify, %s\n",buffer);
 											if (notify_dequeue(&notify_head, buffer, user_target) == 0)
 												{
 												pulisci_buffer(buffer,sizeof(buffer));
@@ -275,8 +273,6 @@
 
 
 											invia_messaggio(buffer, i);
-
-											printf("Ho inviato al client informazioni sul destinatario\n");
 									}
 									break;
 
@@ -293,11 +289,9 @@
 											memset(messagebuffer, 0, sizeof(messagebuffer));
 											ricevi_messaggio(messagebuffer, i);
 
-											printf("prima della de-serializzazione: %s\n", messagebuffer);
-
 											sscanf(messagebuffer, "%s %s %[^\t]", tobuffer.sender, tobuffer.receiver, tobuffer.message);
-											printf("ho ricevuto %d byte, sender: %s\nreceiver:%s \n", numbyte, tobuffer.sender, tobuffer.receiver);
-											printf("Il messaggio che ho ricevuto dal client è:%s \n", tobuffer.message);
+											printf("LOG: ho ricevuto %d byte, sender: %s\nreceiver:%s \n", numbyte, tobuffer.sender, tobuffer.receiver);
+											printf("LOG: Il messaggio che ho ricevuto dal client è:%s \n", tobuffer.message);
 
 											bufferizza_msg(&tobuffer);
 											stampa_msg_bufferizzati();

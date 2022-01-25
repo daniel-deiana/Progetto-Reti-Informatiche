@@ -33,24 +33,44 @@
 #define NO_MEAN 4
 // -------------------------------
 
+
+// identificatore di un gruppo
+struct des_group
+{
+      int id;
+      char name[50];
+      char creator[50];
+      struct group_peer * peer_list_head;
+      struct des_group * pointer;
+};
+
+struct group_peer
+{
+      char username[50];
+      struct group_peer * pointer;
+}
+
+// identificatore richiesta di notifica da un utente ad un altro
 struct notify_queue
 {
       char sender[50];
       char target[50];
       struct notify_queue * pointer;
 };
-
+// elemento del tipo lista utenti
 struct clientList
 {
       int socket;
       char username[50];
       struct clientList *pointer;
 };
+// descrittore di un comando da linea di comando
 struct clientcmd
 {
       char Command[20];
       char Argument1[50]; // qua prendo un username oppure il nome di un file (viene quindi definita la lunghezza massima che accetto)
 };
+// descrittore messaggio bufferizzato sul server
 struct bufferedMessage
 {
       char sender[50];        // mittente del messaggio
@@ -58,6 +78,7 @@ struct bufferedMessage
       char message[1024 * 4]; // prendendo in considerazione che telegram impone una dimensione massima per messaggio di 4096
       time_t timestamp;       // un timestamp che mi dice quando è stato inviato il messaggio
 };
+// descrittore record di history di un utente (viene utilizzato per tenere traccia dei login e dei logout)
 struct HistoryRecord
 {
       char Username[50];
@@ -65,28 +86,20 @@ struct HistoryRecord
       time_t timestamp_in;
       time_t timestamp_out;
 };
+// descrittore credenziali di un utente username:password
 struct Credentials
 {
       char Username[50];
       char Password[50];
 };
+// descrittore di un messaggio di servizio client-server server-client
 struct msg_header
 {
       char RequestType;
       char Options[7];
       char PortNumber[5];
 };
-struct msg
-{
-      struct msg_header Header;
-      char Payload[1024 * 4];
-};
-struct chatMsg
-{
-      char sender[50];
-      char receiver[50];
-      char message[1024 * 4];
-};
+
 
 // //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // //////////////////////////////////////////// GENERICHE ///////////////////////////////////////////////////////////////////
@@ -134,21 +147,6 @@ int porta_da_username(char * username)
       return port; 
 }
 
-int LoginCheck(FILE *fileptr, struct Credentials *cl_credentials, int size)
-{
-      struct Credentials MyCredentials;
-      fileptr = fopen("Log.txt", "rb");
-      while (fread(&MyCredentials, size, 1, fileptr))
-      {
-            if (strcmp(MyCredentials.Username, cl_credentials->Username) == 0 && strcmp(MyCredentials.Password, cl_credentials->Password) == 0)
-            {
-                  fclose(fileptr);
-                  return 0;
-            }
-      }
-      fclose(fileptr);
-      return -1;
-}
 void make_header(struct msg_header *header, char Type, char *Options, char *PortNumber, int size)
 {
       memset(header, 0, size);
@@ -157,6 +155,8 @@ void make_header(struct msg_header *header, char Type, char *Options, char *Port
       strcpy(header->PortNumber, PortNumber);
       return;
 }
+
+
 int check_username_online(char *Username)
 {
       // apro il file di history
@@ -177,7 +177,7 @@ int check_username_online(char *Username)
       return -1;
 }
 
-int historyUpdateLogin(FILE *fileptr, char *Username, char *port)
+int aggiorna_history_utente(FILE *fileptr, char *Username, char *port)
 {
       struct HistoryRecord record;
       time_t rawtime;
@@ -439,7 +439,7 @@ int notify_dequeue(struct notify_queue **head, char * sender, char * target)
 
 
 // ritorna -1 se non trova user nel log dei registrati del server, 0 altrimenti
-int isClientRegistered(char *username)
+int is_client_registered(char *username)
 {
       FILE *fptr = fopen("Log.txt", "rb");
       struct Credentials myCredentials; // usato per fare il parsing della struttura nel file
