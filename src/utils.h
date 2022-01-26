@@ -218,7 +218,7 @@ void bufferizza_msg(struct bufferedMessage *msg)
 {
       // SCRIVE NEL FILE DEI MESSAGGI BUFFERIZZATI
       time_t rawtime;
-      FILE *fileptr = fopen("Chat.txt", "ab+");
+      FILE *fileptr = fopen("chat_buffer.txt", "ab+");
       // setto il timestamp del messaggio
       msg->timestamp = time(&rawtime);
       fwrite(msg, sizeof(struct bufferedMessage), 1, fileptr);
@@ -228,7 +228,7 @@ void bufferizza_msg(struct bufferedMessage *msg)
 void stampa_msg_bufferizzati()
 {
       FILE *fptr;
-      fptr = fopen("Chat.txt", "rb");
+      fptr = fopen("chat_buffer.txt", "rb");
 
       struct bufferedMessage record;
       while (fread(&record, sizeof(record), 1, fptr))
@@ -242,7 +242,7 @@ int countBuffered(char *dest, char *mitt)
 
       int nmsg = 0;
       struct bufferedMessage msg;
-      FILE *fptr = fopen("Chat.txt", "rb");
+      FILE *fptr = fopen("chat_buffer.txt", "rb");
 
       printf("sono dentro la count_buffered e mi hanno detto che devo cercare i messaggi inviati dal target %s al richiedente %s\n", mitt, dest);
 
@@ -442,7 +442,7 @@ int notify_dequeue(struct notify_queue **head, char *sender, char *target)
 // ritorna -1 se non trova user nel log dei registrati del server, 0 altrimenti
 int is_client_registered(char *username)
 {
-      FILE *fptr = fopen("Log.txt", "rb");
+      FILE *fptr = fopen("registered_clients", "rb");
       struct Credentials myCredentials; // usato per fare il parsing della struttura nel file
 
       while (fread(&myCredentials, sizeof(myCredentials), 1, fptr))
@@ -477,7 +477,7 @@ int invia_messaggi_pendenti(char *richiedente, char *target, int dest_socket)
 {
       int msg_num;
       struct bufferedMessage msg; // uso per fare il parsing dei messaggi nel file
-      FILE *fptr = fopen("Chat.txt", "rb+");
+      FILE *fptr = fopen("chat_buffer.txt", "rb+");
 
       msg_num = countBuffered(richiedente, target);
       printf("countBuffered ha restituito %d messaggi\n", msg_num);
@@ -568,7 +568,7 @@ int ricevi_messaggio(char *recv_buffer, int sender_socket)
             return ret;
       }
 
-      return ret;
+      return ret + 1;
 }
 
 // invia un headser che ha la seguente struttura - req_type_options_portnumber
@@ -687,17 +687,17 @@ int scrivi_file_chat(char *my_username, char *dest_username, char *messaggio, in
       int ret;
       char file_path[100];
 
-      /* 
-      check di correttezza sulla variabile msg_state 
-      (che mi dice se devo scrivere riguardo a messaggi 
+      /*
+      check di correttezza sulla variabile msg_state
+      (che mi dice se devo scrivere riguardo a messaggi
       che sto mandado quando il dest è sicuramente online oppure quando lo sto bufferizzando e basta)
       */
 
       if (msg_state != RECEIVED && msg_state != ONLY_SENDED && msg_state != NO_MEAN)
             return 0;
-      /* 
-      check di correttezza sulla variabile user_dest 
-      (che mi dice se devo scrivere riguardo a messaggi 
+      /*
+      check di correttezza sulla variabile user_dest
+      (che mi dice se devo scrivere riguardo a messaggi
       che sto mandado oppure rispetto a quelli che sto ricevendo)
       */
 
@@ -934,7 +934,7 @@ int check_share_command(char *my_username, char *command_string)
 // //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /*
-prende in ingresso il nome di un file (che deve essere presente nella directory "src" ) ed il socket a 
+prende in ingresso il nome di un file (che deve essere presente nella directory "src" ) ed il socket a
 cui lo si vuole inviare, e lo invia al destinatario frammentandolo in diversi segmenti TCP se necessario
 */
 
