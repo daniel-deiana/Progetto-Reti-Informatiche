@@ -568,7 +568,7 @@ int ricevi_messaggio(char *recv_buffer, int sender_socket)
             return ret;
       }
 
-      return ret;
+      return ret + 1 ;
 }
 
 // invia un headser che ha la seguente struttura - req_type_options_portnumber
