@@ -1,4 +1,4 @@
-#include "myHeader.h"
+#include "utils.h"
 
 // //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // ///////////////////////////////////////// NET CLIENT /////////////////////////////////////////////////////////////////////
@@ -486,10 +486,10 @@ int main(int argc, const char **argv)
 
 							inserisci_utente(&current_chatting_user, cmd.Argument1, cl_socket);
 							/*
-							
+
 								prima di iniziare la chat devo chiedere per messaggi pendenti
 								rispetto all'utente con cui sto per iniziare la chat
-							
+
 							*/
 
 							if (handler_comand_show(my_credentials.Username, cmd.Argument1, sv_communicate) > 0)
@@ -649,7 +649,7 @@ int main(int argc, const char **argv)
 									// devo creare una connessione con l'utente
 									invia_header(sv_communicate, 'P', "port_req", "0000");
 
-									//invio il nome dell'utente di cui voglio sapere la porta
+									// invio il nome dell'utente di cui voglio sapere la porta
 									invia_messaggio(buffer, sv_communicate);
 
 									// ricevo il numero di porta

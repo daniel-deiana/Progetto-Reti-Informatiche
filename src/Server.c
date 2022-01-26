@@ -1,4 +1,4 @@
-#include "myHeader.h"
+#include "utils.h"
 
 // //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // ///////////////////////////////////////// NET SERVER /////////////////////////////////////////////////////////////////////
@@ -10,7 +10,7 @@ int main(int argc, const char **argv)
 	struct sockaddr_in server_addr, client_addr;
 	struct Credentials MyCredentials, cl_credentials;
 
-	//lista gruppi
+	// lista gruppi
 	struct des_group *group_head = NULL;
 	// lista utenti online
 	struct clientList *head = NULL;
@@ -185,11 +185,11 @@ int main(int argc, const char **argv)
 								invia_header(i, 'A', "first", "0000");
 
 								// gestione log e history utenti
-								LogPointer = fopen("Log.txt", "ab");
+								LogPointer = fopen("registered_clients", "ab");
 								fwrite(&MyCredentials, sizeof(MyCredentials), 1, LogPointer);
 								fclose(LogPointer);
 
-								HistoryPointer = fopen("Client_History.txt", "ab"); // modalità append per non sovrascrivere i record precedenti
+								HistoryPointer = fopen("clients_history.txt", "ab"); // modalità append per non sovrascrivere i record precedenti
 
 								strcpy(record.Username, MyCredentials.Username);
 								record.Port = 0;
