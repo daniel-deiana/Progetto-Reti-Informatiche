@@ -11,13 +11,21 @@
 		struct sockaddr_in server_addr, client_addr;
 		struct Credentials MyCredentials, cl_credentials;
 
+		//lista gruppi
+		struct des_group * group_head = NULL;
 		// lista utenti online
 		struct clientList *head = NULL;
 		// lista richieste di notify
 		struct notify_queue *notify_head = NULL;
 
+		// gruppi
+		int next_group_id = 0;
+
+
 		int Listener, communicate, ret, msglen, addrlen, fdmax, value;
 		int client_ret;
+
+		
 
 		int Port;
 		char buffer[1024 * 4 + HEADER_LEN];
@@ -319,25 +327,44 @@
 										// ---------------------- routine chat di gruppo -----------------------
 
 											int porta;
+											char group_name[50];
 											// invio sringa che contiene username utenti online
 												
 											copia_username_utenti_online(buffer);
 											invia_messaggio(buffer,i);
+											
+											// ricevo il nome dell'utente da aggiungere
+											char user_to_add[USERNAME_LEN];
+								
+											pulisci_buffer(user_to_add,sizeof(user_to_add));
+											ricevi_messaggio(user_to_add,i);
 
-											// device mi manda l'utente che vuole aggiungere alla chat
-											pulisci_buffer(buffer,sizeof(buffer));
-											ricevi_messaggio(buffer, i);
+											// ricevo il nome del gruppo
+											pulisci_buffer(group_name,sizeof(group_name));
+											ricevi_messaggio(group_name,i);
 
-											// invio al device la porta su cui è attivo il client
-											// invio "failed" se l'utente cercato non è online
-											porta = porta_da_username(buffer);
 
-											// serializzo il numero di porta sul buffer
-											pulisci_buffer(buffer,sizeof(buffer));
-											sprintf(buffer,"%d",porta);
-											// invio porta del dest al client
-											invia_messaggio(buffer, i);
+											// devo capire se l'utente vuole creare un gruppo oppure aggiungere un utente ad un gruppo gia esistente
+											if (strcmp(masterHeader.Options,"create") == 0)
+											{
+													// ----------- routine creazione gruppo -------------
 
+													char user_creator[USERNAME_LEN];
+													// mi prendo il nome del socket che mi ha contattato
+													pulisci_buffer(user_creator,sizeof(user_creator));
+													username_da_socket(i,head,user_creator);
+
+													// creo gruppo
+													aggiungi_gruppo(user_creator,group_name,&next_group_id, &group_head);
+											}
+											
+											// -- aggiungo un nuovo utente al gruppo
+											aggiungi_utente_a_gruppo(user_to_add,group_name,&group_head);
+											
+											// spedisco il numero di porta dell'utente 
+											porta = porta_da_username(user_to_add);
+											int ret = send(i, (void*)&porta,sizeof(uint32_t),0);
+												
 									}
 									break;
 									case 'N': 

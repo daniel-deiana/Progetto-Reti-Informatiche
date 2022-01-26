@@ -1,0 +1,26 @@
+--> ciao user2
+ **
+--> come stai
+ **
+--> ciao user2
+ **
+--> come ti chiami
+ **
+--> ciao cosa fai
+ **
+--> come ti chiami
+ **
+--> ciao bello
+ **
+--> ciao come stai
+ **
+--> sono user1
+ **
+--> ciao come stai
+ **
+--> ciao bello questo lo sto bufferizzando
+ **
+--> come stai
+ **
+--> ciao user2
+ **
