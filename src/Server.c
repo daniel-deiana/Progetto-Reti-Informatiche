@@ -10,15 +10,22 @@
 	
 		struct sockaddr_in server_addr, client_addr;
 		struct Credentials MyCredentials, cl_credentials;
-		struct msg sv_message;
 
+		//lista gruppi
+		struct des_group * group_head = NULL;
 		// lista utenti online
 		struct clientList *head = NULL;
 		// lista richieste di notify
 		struct notify_queue *notify_head = NULL;
 
+		// gruppi
+		int next_group_id = 0;
+
+
 		int Listener, communicate, ret, msglen, addrlen, fdmax, value;
 		int client_ret;
+
+		
 
 		int Port;
 		char buffer[1024 * 4 + HEADER_LEN];
@@ -175,7 +182,7 @@
 
 											sscanf(buffer, "%s %s", MyCredentials.Username, MyCredentials.Password);
 
-										  if (isClientRegistered(MyCredentials.Username) == 0)
+										  if (is_client_registered(MyCredentials.Username) == 0)
 												invia_header(i,'A',"before","0000");
 										  else
 										  {
@@ -207,19 +214,19 @@
 
 											sscanf(buffer, "%s %s", cl_credentials.Username, cl_credentials.Password);
 
-										  if (LoginCheck(LogPointer, &cl_credentials, sizeof(cl_credentials)) == 0)
+										  if (is_client_registered(cl_credentials.Username) == 0)
 										  {
 												// debug
-												printf("Sto mandando l'ack positivo\n");
+												printf("LOG: Sto mandando l'ack positivo\n");
 
 												invia_header(i, 'B', "ok","8000");
 
 												pulisci_buffer(timestamp_string,sizeof(timestamp_string));
 												ricevi_messaggio(timestamp_string, i);
-												printf("timestamp ultima disconnessione di %s : %s \n",cl_credentials.Username, timestamp_string);
+												printf("LOG: timestamp ultima disconnessione di %s : %s \n",cl_credentials.Username, timestamp_string);
 
-												if (historyUpdateLogin(HistoryPointer, cl_credentials.Username, masterHeader.PortNumber) == 0)
-													  printf("Sono riuscito ad aggiornare con successo i campi history di un utente\n");
+												if (aggiorna_history_utente(HistoryPointer, cl_credentials.Username, masterHeader.PortNumber) == 0)
+													  printf("LOG: Sono riuscito ad aggiornare con successo i campi history di un utente\n");
 
 												stampa_history_utenti();
 
@@ -230,7 +237,7 @@
 										  else
 										  {
 												// debug
-												printf("Non ho trovato le credenziali nel registro del server\n");
+												printf("LOG: Non ho trovato le credenziali nel registro del server\n");
 												invia_header(i,'B',"noreg","8000");
 										  }
 									}
@@ -241,7 +248,7 @@
 											// ---------------------------- routine chat ------------------------------
 
 											ricevi_messaggio(buffer, i);
-											printf("Ho ricevuto la richiesta di una chat con l'utente <%s>\n", buffer);
+											printf("LOG: Ho ricevuto la richiesta di una chat con l'utente <%s>\n", buffer);
 
 											Port = check_username_online(buffer);
 											if (Port == 0)
@@ -261,7 +268,6 @@
 											pulisci_buffer(user_target, sizeof(user_target));
 											username_da_socket(i, head, user_target);
 											// provo a cercare se l'utente che ha iniziato la chat ha messaggi pendenti dal dest
-											printf("prima delle modifiche, sto per mandare la notify, %s\n",buffer);
 											if (notify_dequeue(&notify_head, buffer, user_target) == 0)
 												{
 												pulisci_buffer(buffer,sizeof(buffer));
@@ -275,8 +281,6 @@
 
 
 											invia_messaggio(buffer, i);
-
-											printf("Ho inviato al client informazioni sul destinatario\n");
 									}
 									break;
 
@@ -293,11 +297,9 @@
 											memset(messagebuffer, 0, sizeof(messagebuffer));
 											ricevi_messaggio(messagebuffer, i);
 
-											printf("prima della de-serializzazione: %s\n", messagebuffer);
-
 											sscanf(messagebuffer, "%s %s %[^\t]", tobuffer.sender, tobuffer.receiver, tobuffer.message);
-											printf("ho ricevuto %d byte, sender: %s\nreceiver:%s \n", numbyte, tobuffer.sender, tobuffer.receiver);
-											printf("Il messaggio che ho ricevuto dal client è:%s \n", tobuffer.message);
+											printf("LOG: ho ricevuto %d byte, sender: %s\nreceiver:%s \n", numbyte, tobuffer.sender, tobuffer.receiver);
+											printf("LOG: Il messaggio che ho ricevuto dal client è:%s \n", tobuffer.message);
 
 											bufferizza_msg(&tobuffer);
 											stampa_msg_bufferizzati();
@@ -325,25 +327,44 @@
 										// ---------------------- routine chat di gruppo -----------------------
 
 											int porta;
+											char group_name[50];
 											// invio sringa che contiene username utenti online
 												
 											copia_username_utenti_online(buffer);
 											invia_messaggio(buffer,i);
+											
+											// ricevo il nome dell'utente da aggiungere
+											char user_to_add[USERNAME_LEN];
+								
+											pulisci_buffer(user_to_add,sizeof(user_to_add));
+											ricevi_messaggio(user_to_add,i);
 
-											// device mi manda l'utente che vuole aggiungere alla chat
-											pulisci_buffer(buffer,sizeof(buffer));
-											ricevi_messaggio(buffer, i);
+											// ricevo il nome del gruppo
+											pulisci_buffer(group_name,sizeof(group_name));
+											ricevi_messaggio(group_name,i);
 
-											// invio al device la porta su cui è attivo il client
-											// invio "failed" se l'utente cercato non è online
-											porta = porta_da_username(buffer);
 
-											// serializzo il numero di porta sul buffer
-											pulisci_buffer(buffer,sizeof(buffer));
-											sprintf(buffer,"%d",porta);
-											// invio porta del dest al client
-											invia_messaggio(buffer, i);
+											// devo capire se l'utente vuole creare un gruppo oppure aggiungere un utente ad un gruppo gia esistente
+											if (strcmp(masterHeader.Options,"create") == 0)
+											{
+													// ----------- routine creazione gruppo -------------
 
+													char user_creator[USERNAME_LEN];
+													// mi prendo il nome del socket che mi ha contattato
+													pulisci_buffer(user_creator,sizeof(user_creator));
+													username_da_socket(i,head,user_creator);
+
+													// creo gruppo
+													aggiungi_gruppo(user_creator,group_name,&next_group_id, &group_head);
+											}
+											
+											// -- aggiungo un nuovo utente al gruppo
+											aggiungi_utente_a_gruppo(user_to_add,group_name,&group_head);
+											
+											// spedisco il numero di porta dell'utente 
+											porta = porta_da_username(user_to_add);
+											int ret = send(i, (void*)&porta,sizeof(uint32_t),0);
+												
 									}
 									break;
 									case 'N': 
