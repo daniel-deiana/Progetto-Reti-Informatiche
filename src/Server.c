@@ -219,11 +219,10 @@ int main(int argc, const char **argv)
 
 								pulisci_buffer(timestamp_string, sizeof(timestamp_string));
 								ricevi_messaggio(timestamp_string, i);
+
 								printf("LOG: timestamp ultima disconnessione di %s : %s \n", cl_credentials.Username, timestamp_string);
 
-								if (aggiorna_history_utente(HistoryPointer, cl_credentials.Username, masterHeader.PortNumber) == 0)
-									printf("LOG: Sono riuscito ad aggiornare con successo i campi history di un utente\n");
-
+								aggiorna_history_utente(HistoryPointer, cl_credentials.Username, masterHeader.PortNumber);
 								stampa_history_utenti();
 
 								// gestione lista utenti online
@@ -281,9 +280,10 @@ int main(int argc, const char **argv)
 						{
 							// -------------- routine messaggio pendente da salvare -----------------
 
-							struct bufferedMessage tobuffer;
-							int numbyte;
+							struct des_buffered_msg tobuffer;
 							char messagebuffer[4096];
+							int numbyte;
+
 							memset(&tobuffer, 0, sizeof(tobuffer));
 
 							// device mi sta mandando il suo nome e il nome del destinatario
@@ -295,6 +295,8 @@ int main(int argc, const char **argv)
 							printf("LOG: Il messaggio che ho ricevuto dal client è:%s \n", tobuffer.message);
 
 							bufferizza_msg(&tobuffer);
+							aggiorna_hanging(tobuffer.sender, tobuffer.receiver);
+
 							stampa_msg_bufferizzati();
 						}
 						break;
@@ -303,32 +305,45 @@ int main(int argc, const char **argv)
 						{
 							// ---------------- routine messaggi pendenti da inviare ---------------
 
-							char userTarget[50];	 // argomento della show eseguita dal client
-							char userRequesting[50]; // client che ha fatto la richiesta
+							char buf_sender[USERNAME_LEN];	 // argomento della show eseguita dal client
+							char buf_receiver[USERNAME_LEN]; // client che ha fatto la richiesta
 
+							// ricevo il nome del sender e del receiver
 							ricevi_messaggio(buffer, i);
-							sscanf(buffer, "%s %s", userRequesting, userTarget);
-							invia_messaggi_pendenti(userRequesting, userTarget, i);
+							sscanf(buffer, "%s %s", buf_receiver, buf_sender);
 
-							// devo notificare l'user target che "userRequesting ha letto i messaggi"
-							// devo inviare il nome di chi ha letto i messaggi --> userRequesting
+							invia_messaggi_pendenti(buf_receiver, buf_sender, i);
+							aggiorna_hanging(buf_receiver, buf_sender);
 						}
 						break;
+						case 'H':
+						{
+							// ----------------- routine richiesta di hanging ---------------
 
+							// ricevo il nome del "target" della hanging
+							char buf_receiver[USERNAME_LEN];
+
+							// prendo il nome del client che mi ha fatto la richiesta
+							username_da_socket(i, head, buf_receiver);
+
+							print_hanging();
+							// prendo le informazioni della hanging
+							send_hanging_info(buf_receiver, i);
+						}
+						break;
 						case 'U':
 						{
 							// ---------------------- routine chat di gruppo -----------------------
 
 							int porta;
 							char group_name[50];
-							// invio sringa che contiene username utenti online
 
+							// invio sringa che contiene username utenti online
 							copia_username_utenti_online(buffer);
 							invia_messaggio(buffer, i);
 
 							// ricevo il nome dell'utente da aggiungere
 							char user_to_add[USERNAME_LEN];
-
 							pulisci_buffer(user_to_add, sizeof(user_to_add));
 							ricevi_messaggio(user_to_add, i);
 
@@ -350,7 +365,7 @@ int main(int argc, const char **argv)
 								aggiungi_gruppo(user_creator, group_name, &next_group_id, &group_head);
 							}
 
-							// -- aggiungo un nuovo utente al gruppo
+							// aggiungo un nuovo utente al gruppo
 							aggiungi_utente_a_gruppo(user_to_add, group_name, &group_head);
 
 							// spedisco il numero di porta dell'utente

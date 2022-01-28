@@ -383,7 +383,9 @@ int main(int argc, const char **argv)
 						case 'h':
 						{
 							// ----------------------- comando hanging ----------------------------
-							printf("primo comando in lista\n");
+							invia_header(sv_communicate, 'H', "hang", "0000");
+
+							receive_hanging_info(sv_communicate);
 						}
 						break;
 

@@ -6,7 +6,7 @@ set(CMAKE_C_STANDARD 11)
 include_directories(src)
 
 add_executable(Progetto
-        src/device.c)
+        src/server.c)
 
 set (sources
         utils.h)

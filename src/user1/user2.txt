@@ -24,3 +24,23 @@
  **
 --> ciao user2
  **
+--> ciao come stai
+ **
+          *-- ciao io bene tu
+
+--> ciao benissimo sono gay
+ **
+--> ciao come stai 
+ **
+--> ciao sono io
+ **
+--> hanging 1 2 3 
+ **
+--> ariciao
+ **
+--> ciao nuovo messaggio per te
+ **
+--> ciaooo
+ **
+--> ciao come ti chiami
+ **
