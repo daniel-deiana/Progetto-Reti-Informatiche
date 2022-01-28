@@ -72,8 +72,8 @@ build edit_cache: phony CMakeFiles/edit_cache.util
 
 build cmake_object_order_depends_target_Progetto: phony || CMakeFiles/Progetto.dir
 
-build CMakeFiles/Progetto.dir/src/Device.c.o: C_COMPILER__Progetto_Debug /Users/daniel/Progetto/src/Device.c || cmake_object_order_depends_target_Progetto
-  DEP_FILE = CMakeFiles/Progetto.dir/src/Device.c.o.d
+build CMakeFiles/Progetto.dir/src/server.c.o: C_COMPILER__Progetto_Debug /Users/daniel/Progetto/src/server.c || cmake_object_order_depends_target_Progetto
+  DEP_FILE = CMakeFiles/Progetto.dir/src/server.c.o.d
   FLAGS = -g -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX10.15.sdk -std=gnu11
   INCLUDES = -I/Users/daniel/Progetto/src
   OBJECT_DIR = CMakeFiles/Progetto.dir
@@ -87,7 +87,7 @@ build CMakeFiles/Progetto.dir/src/Device.c.o: C_COMPILER__Progetto_Debug /Users/
 #############################################
 # Link the executable Progetto
 
-build Progetto: C_EXECUTABLE_LINKER__Progetto_Debug CMakeFiles/Progetto.dir/src/Device.c.o
+build Progetto: C_EXECUTABLE_LINKER__Progetto_Debug CMakeFiles/Progetto.dir/src/server.c.o
   FLAGS = -g -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX10.15.sdk
   OBJECT_DIR = CMakeFiles/Progetto.dir
   POST_BUILD = :

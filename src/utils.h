@@ -34,6 +34,14 @@
 #define NO_MEAN 4
 // -------------------------------
 
+struct des_hanging_record
+{
+      char sender[USERNAME_LEN];
+      char receiver[USERNAME_LEN];
+      int max_timestamp;
+      int num_pending_msg;
+};
+
 // identificatore di un gruppo
 struct des_group
 {
@@ -74,7 +82,7 @@ struct clientcmd
 };
 
 // descrittore messaggio bufferizzato sul server
-struct bufferedMessage
+struct des_buffered_msg
 {
       char sender[50];        // mittente del messaggio
       char receiver[50];      // destinatario del messaggio
@@ -132,7 +140,7 @@ int porta_da_username(char *username)
 {
       int port = 0;
       struct HistoryRecord record;
-      FILE *fptr = fopen("Client_History.txt", "rb");
+      FILE *fptr = fopen("clients_history.txt", "rb");
 
       while (fread(&record, sizeof(record), 1, fptr))
       {
@@ -161,7 +169,7 @@ int check_username_online(char *Username)
       // apro il file di history
       FILE *fptr;
       struct HistoryRecord fileRecord;
-      fptr = fopen("Client_history.txt", "rb");
+      fptr = fopen("clients_history.txt", "rb");
 
       while (fread(&fileRecord, sizeof(fileRecord), 1, fptr))
       {
@@ -180,7 +188,7 @@ int aggiorna_history_utente(FILE *fileptr, char *Username, char *port)
 {
       struct HistoryRecord record;
       time_t rawtime;
-      fileptr = fopen("Client_history.txt", "rb+");
+      fileptr = fopen("clients_history.txt", "rb+");
       while (fread(&record, sizeof(struct HistoryRecord), 1, fileptr))
       {
             if (strcmp(record.Username, Username) == 0)
@@ -206,7 +214,7 @@ void stampa_history_utenti()
 {
       FILE *fptr;
       struct HistoryRecord record;
-      fptr = fopen("Client_History.txt", "rb");
+      fptr = fopen("clients_history.txt", "rb");
       while (fread(&record, sizeof(struct HistoryRecord), 1, fptr))
       {
             printf("Username: %s|timestampIN: %ld|timestampOUT: %ld|Porta: %d\n", record.Username, record.timestamp_in, record.timestamp_out, record.Port);
@@ -214,14 +222,14 @@ void stampa_history_utenti()
       fclose(fptr);
 }
 
-void bufferizza_msg(struct bufferedMessage *msg)
+void bufferizza_msg(struct des_buffered_msg *msg)
 {
       // SCRIVE NEL FILE DEI MESSAGGI BUFFERIZZATI
       time_t rawtime;
       FILE *fileptr = fopen("chat_buffer.txt", "ab+");
       // setto il timestamp del messaggio
       msg->timestamp = time(&rawtime);
-      fwrite(msg, sizeof(struct bufferedMessage), 1, fileptr);
+      fwrite(msg, sizeof(struct des_buffered_msg), 1, fileptr);
       fclose(fileptr);
 }
 
@@ -230,18 +238,18 @@ void stampa_msg_bufferizzati()
       FILE *fptr;
       fptr = fopen("chat_buffer.txt", "rb");
 
-      struct bufferedMessage record;
+      struct des_buffered_msg record;
       while (fread(&record, sizeof(record), 1, fptr))
       {
             printf("sender:%s|receiver: %s|messaggio: %s|timestamp %ld\n", record.sender, record.receiver, record.message, record.timestamp);
       }
 }
 
-int countBuffered(char *dest, char *mitt)
+int count_buffered(char *dest, char *mitt)
 {
 
       int nmsg = 0;
-      struct bufferedMessage msg;
+      struct des_buffered_msg msg;
       FILE *fptr = fopen("chat_buffer.txt", "rb");
 
       printf("sono dentro la count_buffered e mi hanno detto che devo cercare i messaggi inviati dal target %s al richiedente %s\n", mitt, dest);
@@ -291,7 +299,7 @@ int handlerFriends(char *srcUsername, char *destUsername)
 void logout(char *user)
 {
       // prende in ingresso user e cerca una corrispondenza nel file degli utenti online e ne cambia il ts
-      FILE *fptr = fopen("Client_history.txt", "rb+");
+      FILE *fptr = fopen("clients_history.txt", "rb+");
       struct HistoryRecord record;
       time_t rawtime;
 
@@ -442,7 +450,7 @@ int notify_dequeue(struct notify_queue **head, char *sender, char *target)
 // ritorna -1 se non trova user nel log dei registrati del server, 0 altrimenti
 int is_client_registered(char *username)
 {
-      FILE *fptr = fopen("registered_clients", "rb");
+      FILE *fptr = fopen("registered_clients.txt", "rb");
       struct Credentials myCredentials; // usato per fare il parsing della struttura nel file
 
       while (fread(&myCredentials, sizeof(myCredentials), 1, fptr))
@@ -476,10 +484,10 @@ void chiudi_connesioni_attive(struct clientList **head)
 int invia_messaggi_pendenti(char *richiedente, char *target, int dest_socket)
 {
       int msg_num;
-      struct bufferedMessage msg; // uso per fare il parsing dei messaggi nel file
+      struct des_buffered_msg msg; // uso per fare il parsing dei messaggi nel file
       FILE *fptr = fopen("chat_buffer.txt", "rb+");
 
-      msg_num = countBuffered(richiedente, target);
+      msg_num = count_buffered(richiedente, target);
       printf("countBuffered ha restituito %d messaggi\n", msg_num);
 
       if (send(dest_socket, (void *)&msg_num, sizeof(int), 0) < 0)
@@ -489,7 +497,7 @@ int invia_messaggi_pendenti(char *richiedente, char *target, int dest_socket)
       }
 
       // scorro i messaggi da target verso richiedente e li invio al richiedente
-      while (fread(&msg, sizeof(struct bufferedMessage), 1, fptr))
+      while (fread(&msg, sizeof(struct des_buffered_msg), 1, fptr))
       {
             if (strcmp(msg.receiver, richiedente) == 0 && strcmp(msg.sender, target) == 0)
             {
@@ -504,8 +512,8 @@ int invia_messaggi_pendenti(char *richiedente, char *target, int dest_socket)
                         perror("Non sono riuscito ad inviare il messaggio bufferizzato\n");
 
                   strcpy(msg.sender, "junk");
-                  fseek(fptr, -1 * sizeof(struct bufferedMessage), SEEK_CUR);
-                  fwrite(&msg, sizeof(struct bufferedMessage), 1, fptr);
+                  fseek(fptr, -1 * sizeof(struct des_buffered_msg), SEEK_CUR);
+                  fwrite(&msg, sizeof(struct des_buffered_msg), 1, fptr);
             }
       }
 
@@ -643,7 +651,7 @@ int ricevi_header(int sender_socket, struct msg_header *header)
 // copia nella stringa "buffer" gli username degli utenti online separati dal carattere '\n'
 int copia_username_utenti_online(char *buffer)
 {
-      FILE *fptr = fopen("Client_History.txt", "rb");
+      FILE *fptr = fopen("clients_history.txt", "rb");
       struct HistoryRecord record;
       // tengo il conto di dove mi trovo nella stringa
       int buf_index = 0;
@@ -1224,4 +1232,181 @@ int aggiungi_utente_a_gruppo(char peer_user[], char nomegruppo[], struct des_gro
             }
       }
       return -1;
+}
+
+// ritorna il massimo timestamp nei record dei messaggi bufferizzati relativi alla coppia sender | receiver
+int cerca_timestamp_hanging(char buf_sender[], char buf_receiver[])
+{
+      FILE *fptr = fopen("chat_buffer.txt", "rb");
+      struct des_buffered_msg buf_msg;
+      time_t max_timestamp = -1; // variabile di appoggio per il timestamp di valore massimo
+
+      while (fread(&buf_msg, sizeof(struct des_buffered_msg), 1, fptr))
+      {
+            // trovato un messaggio bufferizzato relativo alla coppia
+            if (strcmp(buf_sender, buf_msg.sender) == 0 && strcmp(buf_receiver, buf_msg.receiver) == 0)
+                  // se timestamp trovato maggiore aggiorno
+                  max_timestamp = (max_timestamp < buf_msg.timestamp) ? buf_msg.timestamp : max_timestamp;
+      }
+      fclose(fptr);
+      return max_timestamp;
+}
+
+// prende in ingresso l'utente che ha mandato il messaggio pendente e quello a cui è destinato ed aggiorna il relativo campo nel file "hanging_data" usando le informazioni
+// presenti nel file "chat_buffered"
+// incremental refresh???? flashback del vietnam
+void aggiorna_hanging(char buf_sender[], char buf_receiver[])
+{
+
+      // per la coppia di utenti |buf_sender|buf_receiver| devo andare a contare i messaggi pendenti e il timestamp del più recente
+      int num_msg = count_buffered(buf_receiver, buf_sender);
+
+      // vado a cercare il timestamp più grande relativo alla "chiave" sender | receiver
+
+      time_t max_timestamp = cerca_timestamp_hanging(buf_sender, buf_receiver);
+
+      // aggiorno il campo del file hanging_data con i dati appena trovati
+
+      FILE *fptr = fopen("hanging_data.txt", "rb+");
+      struct des_hanging_record record;
+
+      while (fread(&record, sizeof(struct des_hanging_record), 1, fptr))
+      {
+            if (strcmp(buf_sender, record.sender) == 0 && strcmp(buf_receiver, record.receiver) == 0)
+            {
+                  // sovrascrivo i valori precedenti
+                  record.num_pending_msg = num_msg;
+                  record.max_timestamp = max_timestamp;
+
+                  // torno indietro con il puntatore a file che dopo la fread è andato avanti
+                  fseek(fptr, -sizeof(struct des_hanging_record), 1);
+
+                  // scrivo il valore nel relativo record
+                  fwrite(&record, sizeof(struct des_hanging_record), 1, fptr);
+
+                  // chiudo
+                  fclose(fptr);
+                  return;
+            }
+      }
+
+      // se sono qua allora vuol dire che non esiste ancora un campo nel file per la coppia sender | receiver
+      // inizializzo la struttura e scrivo in modalità append
+      fptr = fopen("hanging_data.txt", "ab+");
+      record.max_timestamp = max_timestamp;
+      record.num_pending_msg = num_msg;
+      strcpy(record.sender, buf_sender);
+      strcpy(record.receiver, buf_receiver);
+
+      // scrivo
+      fwrite(&record, sizeof(struct des_hanging_record), 1, fptr);
+
+      // chiudo e termino
+      fclose(fptr);
+      return;
+}
+
+// si prende il nome del client che ha fatto la richiesta di hanging e conta i record nel file hanging_data che sono significativi da spedire (quelli con num_msg > 1)
+int count_hanging(char buf_receiver[])
+{
+      FILE *fptr = fopen("hanging_data.txt", "rb");
+      struct des_hanging_record record;
+      int msg_to_send = 0;
+
+      while (fread(&record, sizeof(struct des_hanging_record), 1, fptr))
+      {
+            if (strcmp(buf_receiver, record.receiver) == 0 && record.num_pending_msg > 0)
+                  msg_to_send++;
+      }
+
+      fclose(fptr);
+      return msg_to_send;
+}
+
+// spedisce i record hanging al richiedente
+int send_hanging_info(char buf_receiver[], int sender_socket)
+{
+
+      // devo mandare il numero di record hanging significativi
+      int msg_to_send = count_hanging(buf_receiver);
+
+      if (send(sender_socket, (void *)&msg_to_send, sizeof(uint32_t), 0) < 0)
+            perror("LOG: errore nell invio del numero di msg_hanging");
+
+      // vado a cercare nel file "hanging_data" il record relativo alla coppia
+      FILE *fptr = fopen("hanging_data.txt", "rb");
+      struct des_hanging_record record;
+
+      while (fread(&record, sizeof(struct des_hanging_record), 1, fptr))
+      {
+            if (strcmp(buf_receiver, record.receiver) == 0 && record.num_pending_msg > 0)
+            {
+                  // scrivo i valori nei parametri passati in ingresso
+                  int ret;
+
+                  // mando il nome del sender
+                  invia_messaggio(record.sender, sender_socket);
+
+                  // mando il num_msg
+                  ret = send(sender_socket, (void *)&record.num_pending_msg, sizeof(uint32_t), 0);
+                  if (ret < 0)
+                        perror("LOG: Errore nell'invio del numero di msg_pendenti");
+
+                  // mando max_timestamp
+                  ret = send(sender_socket, (void *)&record.max_timestamp, sizeof(uint32_t), 0);
+                  if (ret < 0)
+                        perror("LOG: Errore nell'invio del max_timestamp");
+            }
+      }
+
+      fclose(fptr);
+      // non ho trovato un campo per quella coppia
+      return -1;
+}
+
+// riceve i messaggi dal server dopo una chiamata alla hanging
+void receive_hanging_info(int sender_socket)
+{
+      int num_msg_hanging;
+
+      // server mi invia il numero di utenti che mi hanno inviato richieste pendenti
+      int ret = recv(sender_socket, (void *)&num_msg_hanging, sizeof(uint32_t), 0);
+      if (ret < 0)
+            perror("LOG: Errore nella ricezione del messaggio di hanging");
+
+      for (int k = 0; k < num_msg_hanging; k++)
+      {
+            char hanging_sender[USERNAME_LEN];
+            int num_msg_pendenti = 0;
+            time_t max_timestamp = 0;
+
+            ricevi_messaggio(hanging_sender, sender_socket);
+
+            ret = recv(sender_socket, (void *)&num_msg_pendenti, sizeof(uint32_t), 0);
+
+            ret = recv(sender_socket, (void *)&max_timestamp, sizeof(uint64_t), 0);
+
+            // ts_converti_stringa(max_timestamp);
+
+            printf("username_sender: %s num_msg; %d max_timestamp %lu",
+                   hanging_sender,
+                   num_msg_pendenti,
+                   max_timestamp);
+      }
+}
+
+void print_hanging()
+{
+      FILE *fptr = fopen("hanging_data.txt", "rb");
+      struct des_hanging_record record;
+
+      while (fread(&record, sizeof(struct des_hanging_record), 1, fptr))
+      {
+            printf("sender: %s receiver: %s msg_pendenti: %d max_ts: %d\n",
+                   record.sender,
+                   record.receiver,
+                   record.num_pending_msg,
+                   record.max_timestamp);
+      }
+      fclose(fptr);
 }
