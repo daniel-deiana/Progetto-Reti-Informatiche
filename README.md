@@ -4,21 +4,16 @@ Progetto corso Reti Informatiche Università di Pisa A.A. 2021/2022, semplice pr
 
 
 
-CORSO DI LAUREA IN INGEGNERIA INFORMATICA
+# CORSO DI LAUREA IN INGEGNERIA INFORMATICA
+# SPECIFICHE PROGETTO A.A. 2021/2022
 
-SPECIFICHE PROGETTO A.A. 2021/2022
-
-Reti informatiche, cod. 545II, 9 CFU
+## Reti informatiche, cod. 545II, 9 CFU
 
 Prof. Giuseppe Anastasi, Ing. Francesco Pistolesi
 
-Si richiede di progettare un’applicazione distribuita basata su paradigma ibrido peer-to-peer e client-server
+Si richiede di progettare un’applicazione distribuita basata su paradigma ibrido peer-to-peer e client-serverche implementi una moderna applicazione di instant messaging con notifiche, chat di gruppo, file sharing e messaggistica offline.
 
-che implementi una moderna applicazione di instant messaging con notifiche, chat di gruppo, file sharing e
-
-messaggistica offline.
-
-\1. DESCRIZIONE GENERALE
+# DESCRIZIONE GENERALE
 
 L’applicazione di instant messaging da implementare è composta da un server e da un insieme di device.
 
