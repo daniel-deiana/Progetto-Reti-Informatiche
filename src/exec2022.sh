@@ -11,7 +11,6 @@
 #  'user3' ha in rubrica 'user2'.
 
   make
-
   read -p "Compilazione eseguita. Premi invio per eseguire..."
 
 # 2. ESECUZIONE
@@ -19,10 +18,10 @@
 # chiamarsi 'serv' e 'dev', e devono essere nella current folder
 
 # 2.1 esecuzioe del server sulla porta 4242
-  "./serv 4242; exec bash"
+  "./serv  4242"
 
 # 2.2 esecuzione di 3 device sulle porte {5001,...,5003}
   for port in {5001..5003}
   do
-      "./dev $port; exec bash"
+      "./dev  $port"
   done

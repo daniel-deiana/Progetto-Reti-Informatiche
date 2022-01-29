@@ -11,7 +11,7 @@ int main(int argc, const char **argv)
 	struct clientList *current_chatting_user = NULL;
 	int current_chatting_user_state = NO_MEAN;
 
-	struct Credentials my_credentials;
+	struct credentials my_credentials;
 	struct sockaddr_in server_addr, cl_addr, cl_listen_addr, gp_addr;
 
 	int sv_communicate, communicate, cl_socket, listener, ret, msglen, fdmax = 0;
@@ -517,11 +517,12 @@ int main(int argc, const char **argv)
 				}
 				else
 				{
-					// 		---------------------------- nuova connessione -----------------------------------------
+					// ---------------------------- nuova connessione -----------------------------------------
 					if (i == listener)
 					{
 						int addrlen = sizeof(gp_addr);
 
+						// accetta la richiesta ed aggiorna i file descriptor
 						communicate = accept(i, (struct sockaddr *)&gp_addr, (socklen_t *)&addrlen);
 						if (communicate < 0)
 							break;
@@ -533,10 +534,10 @@ int main(int argc, const char **argv)
 
 						// chi mi chiede una connesione per prima cosa mi dice il suo nome
 						pulisci_buffer(new_user, sizeof(new_user));
-
 						ricevi_messaggio(new_user, communicate);
 						inserisci_utente(&active_sockets_list_head, new_user, communicate);
 
+						// se mi arriva una connessione da un client mentre sono in un gruppo vuol dire che è un componente del gruppo che mi sta aggiungendo
 						if (is_in_group == 0)
 							inserisci_utente(&group_chat_sockets_head, new_user, communicate);
 

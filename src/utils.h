@@ -98,7 +98,7 @@ struct HistoryRecord
       time_t timestamp_out;
 };
 // descrittore credenziali di un utente username:password
-struct Credentials
+struct credentials
 {
       char Username[50];
       char Password[50];
@@ -451,11 +451,11 @@ int notify_dequeue(struct notify_queue **head, char *sender, char *target)
 int is_client_registered(char *username)
 {
       FILE *fptr = fopen("registered_clients.txt", "rb");
-      struct Credentials myCredentials; // usato per fare il parsing della struttura nel file
+      struct credentials mycredentials; // usato per fare il parsing della struttura nel file
 
-      while (fread(&myCredentials, sizeof(myCredentials), 1, fptr))
+      while (fread(&mycredentials, sizeof(mycredentials), 1, fptr))
       {
-            if (strcmp(username, myCredentials.Username) == 0)
+            if (strcmp(username, mycredentials.Username) == 0)
                   return 0;
       }
 
