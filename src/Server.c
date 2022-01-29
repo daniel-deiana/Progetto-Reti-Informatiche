@@ -8,7 +8,7 @@ int main(int argc, const char **argv)
 {
 
 	struct sockaddr_in server_addr, client_addr;
-	struct Credentials MyCredentials, cl_credentials;
+	struct credentials MyCredentials, cl_credentials;
 
 	// lista gruppi
 	struct des_group *group_head = NULL;
@@ -20,7 +20,7 @@ int main(int argc, const char **argv)
 	// gruppi
 	int next_group_id = 0;
 
-	int Listener, communicate, ret, msglen, addrlen, fdmax, value;
+	int Listener, communicate, ret, msglen, addrlen, fdmax;
 	int client_ret;
 
 	int Port;
