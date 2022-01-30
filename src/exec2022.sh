@@ -18,10 +18,10 @@
 # chiamarsi 'serv' e 'dev', e devono essere nella current folder
 
 # 2.1 esecuzioe del server sulla porta 4242
-  "./serv  4242"
+  "./serv 4242"
 
 # 2.2 esecuzione di 3 device sulle porte {5001,...,5003}
   for port in {5001..5003}
   do
-      "./dev  $port"
+      "./dev $port"
   done
