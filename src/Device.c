@@ -25,15 +25,10 @@ int main(int argc, const char **argv)
 	char buffer[4096], LogInCommand[20];
 
 	char timestamp_string[TIMESTAMP_LEN];
-	char destUsername[50] = "";
-	char rubrica[3][50];
+	char destUsername[50];
 	char new_user[50];
 
-	strcpy(rubrica[0], "user1");
-	strcpy(rubrica[1], "user2");
-	strcpy(rubrica[2], "user3");
 	// stringa per le conversioni dei numeri di porta
-
 	fd_set master, readfds;
 	FILE *RegistrationLog, *friends;
 
@@ -41,6 +36,7 @@ int main(int argc, const char **argv)
 	FD_ZERO(&readfds);
 
 	// --------------------- indirizzo server ---------------------
+
 	memset(&server_addr, 0, sizeof(server_addr));
 	server_addr.sin_family = AF_INET;
 	server_addr.sin_port = htons(4242);
@@ -62,6 +58,7 @@ int main(int argc, const char **argv)
 	printf("\n%s\n", Port);
 
 	// ---------------------- indirizzo device --------------------
+
 	memset(&cl_addr, 0, sizeof(cl_addr));
 	cl_listen_addr.sin_family = AF_INET;
 	cl_listen_addr.sin_port = htons(atoi(Port));
@@ -96,6 +93,7 @@ int main(int argc, const char **argv)
 		{
 			invia_header(sv_communicate, 'A', "reg", Port);
 			sprintf(sendbuffer, "%s %s", first, second);
+			crea_rubrica(first);
 		}
 		else if (strcmp(cmd, "in") == 0)
 		{
@@ -118,6 +116,7 @@ int main(int argc, const char **argv)
 			if (strcmp(header.Options, "first") == 0)
 			{
 				printf("Client registrato correttamente al servizio\n");
+
 				// salvo istante disconnessione così quando vado a fare login non causa pagefault
 				salva_disconnessione(first);
 			}
@@ -129,8 +128,10 @@ int main(int argc, const char **argv)
 			// controllo messaggio di login al server
 			if (strcmp(header.Options, "ok") == 0)
 			{
+
 				printf("Utente loggato\n");
 				inserisci_utente(&active_sockets_list_head, "server", sv_communicate);
+
 				// invio l'istante di disconnessione salvato l'ultima volta
 				prendi_istante_disconnessione(my_credentials.Username, timestamp_string);
 				invia_messaggio(timestamp_string, sv_communicate);
@@ -414,8 +415,7 @@ int main(int argc, const char **argv)
 							char sendbuffer[1024];
 
 							// controllo se possiedo il destinatario nella mia rubrica personale
-
-							if (handlerFriends(my_credentials.Username, cmd.Argument1) == -1)
+							if (check_utente_rubrica(my_credentials.Username, cmd.Argument1) < 0)
 							{
 								printf("Non ho il destinatario nella rubrica, non posso inziare la chat:\n");
 								break;
