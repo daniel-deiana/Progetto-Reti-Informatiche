@@ -1410,3 +1410,45 @@ void print_hanging()
       }
       fclose(fptr);
 }
+
+int crea_rubrica(char my_user[])
+{
+      // crea il file della rubrica relativa a my_user
+      char f_path[100];
+      pulisci_buffer(f_path, sizeof(f_path));
+
+      // crea file
+      sprintf(f_path, "%s//%s_rubrica.txt", my_user, my_user);
+      FILE *fptr = fopen(f_path, "w");
+      fclose(fptr);
+
+      return 0;
+}
+
+// ritorna 0 se trova dst_user nella rubrica di my_user, -1 altrimenti
+int check_utente_rubrica(char my_user[], char dst_user[])
+{
+      char f_path[100];
+      char buf[USERNAME_LEN];
+
+      pulisci_buffer(buf, sizeof(buf));
+
+      // apertura file
+      pulisci_buffer(f_path, sizeof(f_path));
+      sprintf(f_path, "%s//%s_rubrica.txt", my_user, my_user);
+      FILE *fptr = fopen(f_path, "r+");
+
+      // leggo dal file gli utenti salvati in rubrica, se quello che sto cercando è presente allora
+      while (fscanf(fptr, "%s\n", buf))
+      {
+            if (strcmp(buf, dst_user) == 0)
+            // utente trovato
+            {
+                  return 0;
+                  fclose(fptr);
+            }
+      }
+
+      fclose(fptr);
+      return -1;
+}

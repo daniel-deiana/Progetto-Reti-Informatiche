@@ -185,10 +185,9 @@ int main(int argc, const char **argv)
 								invia_header(i, 'A', "first", "0000");
 
 								// gestione log e history utenti
-								LogPointer = fopen("registered_clients", "ab");
+								LogPointer = fopen("registered_clients.txt", "ab");
 								fwrite(&MyCredentials, sizeof(MyCredentials), 1, LogPointer);
 								fclose(LogPointer);
-
 								HistoryPointer = fopen("clients_history.txt", "ab"); // modalità append per non sovrascrivere i record precedenti
 
 								strcpy(record.Username, MyCredentials.Username);
