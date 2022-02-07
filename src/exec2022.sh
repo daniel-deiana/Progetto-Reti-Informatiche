@@ -8,8 +8,7 @@
 # Fare in modo che le rubriche degli utenti siano le seguenti:
 #  'user1' ha in rubrica 'user2'
 #  'user2' ha in rubrica 'user1' e 'user3'
-#  'user3' ha in rubrica 'user2'.
-
+#  'user3' ha in rubrica 'user2'
   make
   read -p "Compilazione eseguita. Premi invio per eseguire..."
 
@@ -18,10 +17,10 @@
 # chiamarsi 'serv' e 'dev', e devono essere nella current folder
 
 # 2.1 esecuzioe del server sulla porta 4242
-  "./serv 4242"
+  "./serv 4242; exec bash"
 
 # 2.2 esecuzione di 3 device sulle porte {5001,...,5003}
   for port in {5001..5003}
   do
-      "./dev $port"
+      "./dev $port; exec bash"
   done

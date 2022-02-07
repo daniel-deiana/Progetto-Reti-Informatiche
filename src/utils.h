@@ -34,6 +34,7 @@
 #define NO_MEAN 4
 // -------------------------------
 
+// descrittore utilizzato per mantenere lo stato delle informazioni di hanging di ogni utente
 struct des_hanging_record
 {
       char sender[USERNAME_LEN];
@@ -42,7 +43,7 @@ struct des_hanging_record
       int num_pending_msg;
 };
 
-// identificatore di un gruppo
+// descrittore per memorizzare le informazioni riguardanti i gruppi
 struct des_group
 {
       int id;
@@ -52,6 +53,7 @@ struct des_group
       struct des_group *pointer;
 };
 
+// descrittore utilizzato per rappresentare un partecipante ad un gruppo
 struct group_peer
 {
       char username[50];
@@ -103,6 +105,7 @@ struct credentials
       char Username[50];
       char Password[50];
 };
+
 // descrittore di un messaggio di servizio client-server server-client
 struct msg_header
 {
@@ -198,7 +201,11 @@ int aggiorna_history_utente(FILE *fileptr, char *Username, char *port)
                   record.timestamp_out = 0;
                   record.Port = atoi(port);
                   // stampo i valori che sto per scrivere
-                  printf("Sto scrivendo sul registro client history i seguenti valori\nUsername: %s\nTimestampIN: %ld\nTimestampOUT: %ld\nPort: %d\n", record.Username, record.timestamp_in, record.timestamp_out, record.Port);
+                  printf(" Sto scrivendo sul registro client history i seguenti valori\nUsername:%s\nTimestampIN:%ld\nTimestampOUT:%ld\nPort:%d\n ",
+                         record.Username,
+                         record.timestamp_in,
+                         record.timestamp_out,
+                         record.Port);
                   fseek(fileptr, -1 * sizeof(struct HistoryRecord), SEEK_CUR);
                   fwrite(&record, sizeof(struct HistoryRecord), 1, fileptr);
                   fclose(fileptr);
@@ -217,7 +224,11 @@ void stampa_history_utenti()
       fptr = fopen("clients_history.txt", "rb");
       while (fread(&record, sizeof(struct HistoryRecord), 1, fptr))
       {
-            printf("Username: %s|timestampIN: %ld|timestampOUT: %ld|Porta: %d\n", record.Username, record.timestamp_in, record.timestamp_out, record.Port);
+            printf("Username: %s| timestampIN:%ld|timestampOUT:%ld|Porta:%d\n",
+                   record.Username,
+                   record.timestamp_in,
+                   record.timestamp_out,
+                   record.Port);
       }
       fclose(fptr);
 }
@@ -241,7 +252,11 @@ void stampa_msg_bufferizzati()
       struct des_buffered_msg record;
       while (fread(&record, sizeof(record), 1, fptr))
       {
-            printf("sender:%s|receiver: %s|messaggio: %s|timestamp %ld\n", record.sender, record.receiver, record.message, record.timestamp);
+            printf("sender:%s|receiver: %s|messaggio: %s|timestamp %ld\n",
+                   record.sender,
+                   record.receiver,
+                   record.message,
+                   record.timestamp);
       }
 }
 
@@ -269,30 +284,6 @@ int check(char *cmd)
             return 0;
       else
             return -1;
-}
-
-int handlerFriends(char *srcUsername, char *destUsername)
-{
-      switch (srcUsername[4])
-      {
-      case '1':
-            if (strcmp(destUsername, "user2") == 0 || strcmp(destUsername, "user1") == 0)
-                  return 0;
-            else
-                  return -1;
-      case '2':
-            if (strcmp(destUsername, "user1") == 0 || strcmp(destUsername, "user3") == 0)
-                  return 0;
-            else
-                  return -1;
-      case '3':
-            if (strcmp(destUsername, "user2") == 0)
-                  return 0;
-            else
-                  return -1;
-            break;
-      }
-      return -1;
 }
 
 // Routine di logout: quando un utente si disconette aggiorna il campo timestamp_out al tempo corrente
