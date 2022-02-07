@@ -442,15 +442,15 @@ int main(int argc, const char **argv)
 							// invio destinatario della chat al server
 							invia_messaggio(sendbuffer, sv_communicate);
 
+							// risposta server: destinatario online/offline
+							ricevi_header(sv_communicate, &header);
+
 							// ricevo il numero di porta dell'utente con cui voglio aprire una chat
 							uint32_t port;
 
 							// ricezione numero di porta
 							if (recv(i, (void *)&port, sizeof(uint32_t), 0) < 0)
 								perror("LOG: errore nella ricezione del numero di porta");
-
-							// risposta server: destinatario online/offline
-							ricevi_header(sv_communicate, &header);
 
 							printf("il server mi ha mandato un header con la porta del dest che è la seguente\nPorta: %d\n", port);
 
