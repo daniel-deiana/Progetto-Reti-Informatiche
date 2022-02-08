@@ -21,7 +21,7 @@ int main(int argc, const char **argv)
 	int last_group_id = -1;
 	char current_group[50];
 
-	char Port[5], portChat[5], headerChat_string[HEADER_LEN] = "", string[HEADER_LEN];
+	char port[5];
 	char buffer[4096], LogInCommand[20];
 
 	char timestamp_string[TIMESTAMP_LEN];
@@ -39,7 +39,6 @@ int main(int argc, const char **argv)
 
 	memset(&server_addr, 0, sizeof(server_addr));
 	server_addr.sin_family = AF_INET;
-	server_addr.sin_port = htons(4242);
 	inet_pton(AF_INET, "127.0.0.1", &server_addr.sin_addr);
 
 	// socket server
@@ -54,17 +53,13 @@ int main(int argc, const char **argv)
 		exit(1);
 	}
 
-	strcpy(Port, argv[1]);
-	printf("\n%s\n", Port);
-
 	// ---------------------- indirizzo device --------------------
 
 	memset(&cl_addr, 0, sizeof(cl_addr));
 	cl_listen_addr.sin_family = AF_INET;
-	cl_listen_addr.sin_port = htons(atoi(Port));
+	cl_listen_addr.sin_port = htons(atoi(port));
 	inet_pton(AF_INET, "127.0.0.1", &cl_listen_addr.sin_addr);
 
-	// socket client -> client : server -> client
 	listener = socket(AF_INET, SOCK_STREAM, 0);
 	bind(listener, (struct sockaddr *)&cl_listen_addr, sizeof(cl_listen_addr));
 	listen(listener, 50);
@@ -72,39 +67,57 @@ int main(int argc, const char **argv)
 	FD_SET(listener, &master);
 	fdmax = listener;
 
-	// faccio la connect al server
-	if (connect(sv_communicate, (struct sockaddr *)&server_addr, sizeof(server_addr)))
-		exit(1);
+	// comandi signup e in
+	int attempts = 0;
 
-	// comandi <signup> e <in>
 	for (;;)
 	{
 		char commandString[1024], headerBuffer[1024], sendbuffer[1024];
 		char cmd[20], first[50], second[50], third[50];
 		struct msg_header header;
-		int ret;
 
 		// parsing comandi
 		fgets(commandString, 1024 - 1, stdin);
 		sscanf(commandString, "%s %s %s %s", cmd, first, second, third);
-
 		printf("stampo i comandi passati in input: first: %s, second: %s, third %s\n", first, second, third);
+
+		if (attempts == 0)
+		{
+			server_addr.sin_port = htons(atoi(first));
+			printf("first ha valore: %s", first);
+			if (connect(sv_communicate, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0)
+			{
+				perror("LOG: Errore nella connnesione iniziale con il server, inserire numero di porta corretto ...");
+				continue;
+			}
+			printf("LOG: Connessione stabilita con il server\n");
+			attempts++;
+		}
+
 		if (strcmp(cmd, "signup") == 0)
 		{
-			invia_header(sv_communicate, 'A', "reg", Port);
-			sprintf(sendbuffer, "%s %s", first, second);
-			crea_rubrica(first);
+			invia_header(sv_communicate, 'A', "reg");
+			sprintf(sendbuffer, "%s %s", second, third);
+			crea_rubrica(second);
 		}
 		else if (strcmp(cmd, "in") == 0)
 		{
-			invia_header(sv_communicate, 'B', "login", Port);
+			invia_header(sv_communicate, 'B', "login");
 			strcpy(my_credentials.Username, second);
 			strcpy(my_credentials.Password, third);
 			sprintf(sendbuffer, "%s %s", second, third);
 		}
 
+		// invia numero di porta
+		uint32_t port = atoi(argv[1]);
+		if (send(sv_communicate, (void *)&port, sizeof(uint32_t), 0) < 0)
+		{
+			perror("LOG: errore nell'invio del numero di porta nella fase iniziale");
+			exit(1);
+		}
+
 		// invio credenziali utente
-		printf("prima di invia_msg: sto mandando: %s", sendbuffer);
+		printf("prima di invia_msg: sto mandando: %s\n", sendbuffer);
 		invia_messaggio(sendbuffer, sv_communicate);
 
 		// risposta del server
@@ -116,9 +129,7 @@ int main(int argc, const char **argv)
 			if (strcmp(header.Options, "first") == 0)
 			{
 				printf("Client registrato correttamente al servizio\n");
-
-				// salvo istante disconnessione così quando vado a fare login non causa pagefault
-				salva_disconnessione(first);
+				salva_disconnessione(second);
 			}
 			else
 				printf("Client gia registrato al servizio\n");
@@ -137,6 +148,8 @@ int main(int argc, const char **argv)
 				invia_messaggio(timestamp_string, sv_communicate);
 				break;
 			}
+			else
+				printf("LOG: Hai inserito un username/password sbagliati\n");
 		}
 	}
 
@@ -200,7 +213,7 @@ int main(int argc, const char **argv)
 									// bufferizzo sul server, invio prima richiesta di buffer poi messaggio vero e proprio
 									char premessage[1024];
 
-									invia_header(sv_communicate, 'E', "tosend", portChat);
+									invia_header(sv_communicate, 'E', "tosend");
 
 									pulisci_buffer(premessage, sizeof(premessage));
 
@@ -240,11 +253,11 @@ int main(int argc, const char **argv)
 							{
 								// vuol dire che questa è la prima volta che aggiungo un utente dopo essere entrato in chat con un altro,
 								// quindi creo un nuovo gruppo dove i primi partecipanti saremo io e l'utente con cui stavo chattando
-								invia_header(sv_communicate, 'U', "create", "0000");
+								invia_header(sv_communicate, 'U', "create");
 							}
 							else
 								// sono gia in un gruppo e aggiungo un utente a quest ultimo
-								invia_header(sv_communicate, 'U', "add", "0000");
+								invia_header(sv_communicate, 'U', "add");
 
 							// risposta server
 							ricevi_messaggio(buffer, sv_communicate);
@@ -368,7 +381,7 @@ int main(int argc, const char **argv)
 							{
 								printf("doveva inviarmi dei messaggi\n");
 								// devo notificare il server che ho visualizzato i messaggi pendenti con la show
-								invia_header(sv_communicate, 'N', "notify", "0000");
+								invia_header(sv_communicate, 'N', "notify");
 
 								char buf[256];
 
@@ -384,7 +397,7 @@ int main(int argc, const char **argv)
 						case 'h':
 						{
 							// ----------------------- comando hanging ----------------------------
-							invia_header(sv_communicate, 'H', "hang", "0000");
+							invia_header(sv_communicate, 'H', "hang");
 
 							receive_hanging_info(sv_communicate);
 						}
@@ -421,7 +434,7 @@ int main(int argc, const char **argv)
 								break;
 							}
 
-							invia_header(sv_communicate, 'C', optionString, "0000");
+							invia_header(sv_communicate, 'C', optionString);
 
 							strcpy(destUsername, cmd.Argument1);
 							sprintf(sendbuffer, "%s", cmd.Argument1);
@@ -429,13 +442,17 @@ int main(int argc, const char **argv)
 							// invio destinatario della chat al server
 							invia_messaggio(sendbuffer, sv_communicate);
 
-							printf("sto mandando la richiesta di chat che è: %s \n", sendbuffer);
-
 							// risposta server: destinatario online/offline
 							ricevi_header(sv_communicate, &header);
 
-							printf("il server mi ha mandato un header con la porta del dest che è la seguente\nPorta: %s\n", header.PortNumber);
-							strcpy(portChat, header.PortNumber);
+							// ricevo il numero di porta dell'utente con cui voglio aprire una chat
+							uint32_t port;
+
+							// ricezione numero di porta
+							if (recv(i, (void *)&port, sizeof(uint32_t), 0) < 0)
+								perror("LOG: errore nella ricezione del numero di porta");
+
+							printf("il server mi ha mandato un header con la porta del dest che è la seguente\nPorta: %d\n", port);
 
 							// prima della procedura devo vedere se l'utente con cui sto aprendo la chat mi aveva visualizzato i messaggi
 							pulisci_buffer(notify_response_buf, sizeof(notify_response_buf));
@@ -457,7 +474,7 @@ int main(int argc, const char **argv)
 									memset(&cl_addr, 0, sizeof(cl_addr));
 
 									cl_addr.sin_family = AF_INET;
-									cl_addr.sin_port = htons(atoi(portChat));
+									cl_addr.sin_port = htons(port);
 									inet_pton(AF_INET, "127.0.0.1", &cl_listen_addr.sin_addr);
 
 									cl_socket = socket(AF_INET, SOCK_STREAM, 0);
@@ -482,8 +499,6 @@ int main(int argc, const char **argv)
 									// ho gia il socket, mi basta inzializzare la variabile di riferimen
 									cl_socket = socket_da_username(active_sockets_list_head, cmd.Argument1);
 								}
-
-								// aggiorno l'utente con cui sto chattando
 							}
 
 							inserisci_utente(&current_chatting_user, cmd.Argument1, cl_socket);
@@ -498,7 +513,7 @@ int main(int argc, const char **argv)
 							{
 								printf("doveva inviarmi dei messaggi\n");
 								// devo notificare il server che ho visualizzato i messaggi pendenti con la show
-								invia_header(sv_communicate, 'N', "notify", "0000");
+								invia_header(sv_communicate, 'N', "notify");
 
 								char buf[256];
 
@@ -650,7 +665,7 @@ int main(int argc, const char **argv)
 
 									int port;
 									// devo creare una connessione con l'utente
-									invia_header(sv_communicate, 'P', "port_req", "0000");
+									invia_header(sv_communicate, 'P', "port_req");
 
 									// invio il nome dell'utente di cui voglio sapere la porta
 									invia_messaggio(buffer, sv_communicate);

@@ -23,9 +23,9 @@ int main(int argc, const char **argv)
 	int Listener, communicate, ret, msglen, addrlen, fdmax;
 	int client_ret;
 
-	int Port;
-	char buffer[1024 * 4 + HEADER_LEN];
-	char ServerPort[5] = "4242";
+	int port;
+	char buffer[1024 * 4];
+	char Serverport[5] = "4242";
 	char Command[1024];
 	char Options[8];
 	char timestamp_string[TIMESTAMP_LEN];
@@ -40,9 +40,9 @@ int main(int argc, const char **argv)
 		exit(1);
 	}
 
-	// Assegno il valore passato a ServerPort
-	strcpy(ServerPort, argv[1]);
-	printf("La porta selezionata è %s \n", ServerPort);
+	// Assegno il valore passato a Serverport
+	strcpy(Serverport, argv[1]);
+	printf("La porta selezionata è %s \n", Serverport);
 
 	// Stampo la parte iniziale
 	printf("------------------ server online ------------------\n\n");
@@ -132,13 +132,13 @@ int main(int argc, const char **argv)
 					{
 						// socket di comunicazione
 
-						struct msg_header masterHeader;
+						struct msg_header service_hdr;
 						char portString[5];
 
-						// client mi sta inviando l'header
-						if (ricevi_header(i, &masterHeader) == 0)
+						// ricezione di una richiesta
+						if (ricevi_header(i, &service_hdr) == 0)
 						{
-							// mi è stato mandato un messaggio di "close()"
+							// chiusura della connessione TCP
 							char logout_user[50];
 
 							close(i);
@@ -156,21 +156,26 @@ int main(int argc, const char **argv)
 						}
 
 						// debug
-						printf("Il tipo della richiesta è: %c\n", masterHeader.RequestType);
-						printf("Il contenuto del campo options è: %s\n", masterHeader.Options);
-						printf("Il contenuto del campo PortNumber è: %s\n", masterHeader.PortNumber);
+						printf("Il tipo della richiesta è: %c\n", service_hdr.RequestType);
+						printf("Il contenuto del campo options è: %s\n", service_hdr.Options);
 
 						// pulizia buffer messaggi
 						memset(buffer, 0, sizeof(buffer));
 
-						switch (masterHeader.RequestType)
+						switch (service_hdr.RequestType)
 						{
 						case 'A':
 						{
 							// ----------------------- routine di registrazione ---------------------------
 
 							struct HistoryRecord record;
+							uint32_t port;
 
+							// ricezione numero di porta
+							if (recv(i, (void *)&port, sizeof(uint32_t), 0) < 0)
+								perror("LOG: errore nella ricezione del numero di porta");
+
+							// ricezione credenziali
 							ricevi_messaggio(buffer, i);
 
 							// debug
@@ -179,10 +184,10 @@ int main(int argc, const char **argv)
 							sscanf(buffer, "%s %s", MyCredentials.Username, MyCredentials.Password);
 
 							if (is_client_registered(MyCredentials.Username) == 0)
-								invia_header(i, 'A', "before", "0000");
+								invia_header(i, 'A', "before");
 							else
 							{
-								invia_header(i, 'A', "first", "0000");
+								invia_header(i, 'A', "first");
 
 								// gestione log e history utenti
 								LogPointer = fopen("registered_clients.txt", "ab");
@@ -204,8 +209,15 @@ int main(int argc, const char **argv)
 						{
 							//-------------------------- routine di login -------------------------------
 
+							uint32_t port;
+
+							if (recv(i, (void *)&port, sizeof(uint32_t), 0) < 0)
+								perror("LOG: errore nella ricezione del numero di porta");
+
 							// client mi sta mandando credenziali di login
 							ricevi_messaggio(buffer, i);
+
+							// ricezione numero di porta
 
 							sscanf(buffer, "%s %s", cl_credentials.Username, cl_credentials.Password);
 
@@ -214,14 +226,14 @@ int main(int argc, const char **argv)
 								// debug
 								printf("LOG: Sto mandando l'ack positivo\n");
 
-								invia_header(i, 'B', "ok", "8000");
+								invia_header(i, 'B', "ok");
 
 								pulisci_buffer(timestamp_string, sizeof(timestamp_string));
 								ricevi_messaggio(timestamp_string, i);
 
 								printf("LOG: timestamp ultima disconnessione di %s : %s \n", cl_credentials.Username, timestamp_string);
 
-								aggiorna_history_utente(HistoryPointer, cl_credentials.Username, masterHeader.PortNumber);
+								aggiorna_history_utente(HistoryPointer, cl_credentials.Username, port);
 								stampa_history_utenti();
 
 								// gestione lista utenti online
@@ -232,7 +244,7 @@ int main(int argc, const char **argv)
 							{
 								// debug
 								printf("LOG: Non ho trovato le credenziali nel registro del server\n");
-								invia_header(i, 'B', "noreg", "8000");
+								invia_header(i, 'B', "noreg");
 							}
 						}
 						break;
@@ -244,15 +256,19 @@ int main(int argc, const char **argv)
 							ricevi_messaggio(buffer, i);
 							printf("LOG: Ho ricevuto la richiesta di una chat con l'utente <%s>\n", buffer);
 
-							Port = check_username_online(buffer);
-							if (Port == 0)
-								printf("Port sta a zero\n");
+							port = check_username_online(buffer);
 
-							sprintf(portString, "%d", Port);
-							if (Port == -1)
-								invia_header(i, 'C', "OFF", portString);
+							if (port == -1)
+								invia_header(i, 'C', "OFF");
 							else
-								invia_header(i, 'C', "ON", portString);
+								invia_header(i, 'C', "ON");
+
+							// invio il numero di porta
+							if (send(i, (void *)&port, sizeof(uint32_t), 0) < 0)
+							{
+								perror("LOG: errore nell'invio del numero di porta nella fase iniziale");
+								exit(1);
+							}
 
 							char user_target[50];
 
@@ -351,7 +367,7 @@ int main(int argc, const char **argv)
 							ricevi_messaggio(group_name, i);
 
 							// devo capire se l'utente vuole creare un gruppo oppure aggiungere un utente ad un gruppo gia esistente
-							if (strcmp(masterHeader.Options, "create") == 0)
+							if (strcmp(service_hdr.Options, "create") == 0)
 							{
 								// ----------- routine creazione gruppo -------------
 

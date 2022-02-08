@@ -12,28 +12,32 @@
 #include <time.h>
 #include <unistd.h>
 
-// ---------- COSTANTI ----------
-#define STDIN 0 // il file descriptor dello stdin ha come indice 0
-#define HEADER_LEN 14
-#define LOGIN_REQ_LEN 114
-#define LOGIN_MSG_SIZE 114
+// ////////////////// COSTANTI /////////////////////////
+#define STDIN 0
 #define USERNAME_LEN 50
 #define TIMESTAMP_LEN 26
+#define MAX_OPTIONS_LEN 128
 
-// stati di un utente con cui si ha aperta una chat
+// -------------------------------
 #define ONLINE 1
 #define OFFLINE 0
+// -------------------------------
 
 // -------------------------------
 #define SENDING 0
 #define RECEIVING 1
+// -------------------------------
 
+// -------------------------------
 #define RECEIVED 2
 #define ONLY_SENDED 3
+// -------------------------------
 
+// -------------------------------
 #define NO_MEAN 4
 // -------------------------------
 
+// descrittore utilizzato per mantenere lo stato delle informazioni di hanging di ogni utente
 struct des_hanging_record
 {
       char sender[USERNAME_LEN];
@@ -42,7 +46,7 @@ struct des_hanging_record
       int num_pending_msg;
 };
 
-// identificatore di un gruppo
+// descrittore per memorizzare le informazioni riguardanti i gruppi
 struct des_group
 {
       int id;
@@ -52,6 +56,7 @@ struct des_group
       struct des_group *pointer;
 };
 
+// descrittore utilizzato per rappresentare un partecipante ad un gruppo
 struct group_peer
 {
       char username[50];
@@ -103,12 +108,12 @@ struct credentials
       char Username[50];
       char Password[50];
 };
+
 // descrittore di un messaggio di servizio client-server server-client
 struct msg_header
 {
       char RequestType;
       char Options[7];
-      char PortNumber[5];
 };
 
 // //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -155,15 +160,6 @@ int porta_da_username(char *username)
       return port;
 }
 
-void make_header(struct msg_header *header, char Type, char *Options, char *PortNumber, int size)
-{
-      memset(header, 0, size);
-      header->RequestType = Type;
-      strcpy(header->Options, Options);
-      strcpy(header->PortNumber, PortNumber);
-      return;
-}
-
 int check_username_online(char *Username)
 {
       // apro il file di history
@@ -184,7 +180,7 @@ int check_username_online(char *Username)
       return -1;
 }
 
-int aggiorna_history_utente(FILE *fileptr, char *Username, char *port)
+int aggiorna_history_utente(FILE *fileptr, char *Username, int port)
 {
       struct HistoryRecord record;
       time_t rawtime;
@@ -196,9 +192,13 @@ int aggiorna_history_utente(FILE *fileptr, char *Username, char *port)
                   // ho trovato il record che cercavo e quindi ne aggiorno il campo timestamp_in
                   record.timestamp_in = time(&rawtime);
                   record.timestamp_out = 0;
-                  record.Port = atoi(port);
+                  record.Port = port;
                   // stampo i valori che sto per scrivere
-                  printf("Sto scrivendo sul registro client history i seguenti valori\nUsername: %s\nTimestampIN: %ld\nTimestampOUT: %ld\nPort: %d\n", record.Username, record.timestamp_in, record.timestamp_out, record.Port);
+                  printf(" Sto scrivendo sul registro client history i seguenti valori\nUsername:%s\nTimestampIN:%ld\nTimestampOUT:%ld\nPort:%d\n ",
+                         record.Username,
+                         record.timestamp_in,
+                         record.timestamp_out,
+                         record.Port);
                   fseek(fileptr, -1 * sizeof(struct HistoryRecord), SEEK_CUR);
                   fwrite(&record, sizeof(struct HistoryRecord), 1, fileptr);
                   fclose(fileptr);
@@ -217,7 +217,11 @@ void stampa_history_utenti()
       fptr = fopen("clients_history.txt", "rb");
       while (fread(&record, sizeof(struct HistoryRecord), 1, fptr))
       {
-            printf("Username: %s|timestampIN: %ld|timestampOUT: %ld|Porta: %d\n", record.Username, record.timestamp_in, record.timestamp_out, record.Port);
+            printf("Username: %s| timestampIN:%ld|timestampOUT:%ld|Porta:%d\n",
+                   record.Username,
+                   record.timestamp_in,
+                   record.timestamp_out,
+                   record.Port);
       }
       fclose(fptr);
 }
@@ -241,7 +245,11 @@ void stampa_msg_bufferizzati()
       struct des_buffered_msg record;
       while (fread(&record, sizeof(record), 1, fptr))
       {
-            printf("sender:%s|receiver: %s|messaggio: %s|timestamp %ld\n", record.sender, record.receiver, record.message, record.timestamp);
+            printf("sender:%s|receiver: %s|messaggio: %s|timestamp %ld\n",
+                   record.sender,
+                   record.receiver,
+                   record.message,
+                   record.timestamp);
       }
 }
 
@@ -269,30 +277,6 @@ int check(char *cmd)
             return 0;
       else
             return -1;
-}
-
-int handlerFriends(char *srcUsername, char *destUsername)
-{
-      switch (srcUsername[4])
-      {
-      case '1':
-            if (strcmp(destUsername, "user2") == 0 || strcmp(destUsername, "user1") == 0)
-                  return 0;
-            else
-                  return -1;
-      case '2':
-            if (strcmp(destUsername, "user1") == 0 || strcmp(destUsername, "user3") == 0)
-                  return 0;
-            else
-                  return -1;
-      case '3':
-            if (strcmp(destUsername, "user2") == 0)
-                  return 0;
-            else
-                  return -1;
-            break;
-      }
-      return -1;
 }
 
 // Routine di logout: quando un utente si disconette aggiorna il campo timestamp_out al tempo corrente
@@ -579,15 +563,15 @@ int ricevi_messaggio(char *recv_buffer, int sender_socket)
       return ret + 1;
 }
 
-// invia un headser che ha la seguente struttura - req_type_options_portnumber
-int invia_header(int receiver_socket, char req_type, char *options, char *port_number)
+// invia un headser che ha la seguente struttura - |req_type options|
+int invia_header(int receiver_socket, char req_type, char *options)
 {
       char buf[1024];
       int msg_len;
       int ret;
 
       memset(buf, 0, sizeof(buf));
-      sprintf(buf, "%c %s %s", req_type, options, port_number);
+      sprintf(buf, "%c %s", req_type, options);
 
       // dimensione header
       msg_len = strlen(buf);
@@ -644,7 +628,7 @@ int ricevi_header(int sender_socket, struct msg_header *header)
       }
 
       // faccio il parsing sulla struttura header
-      sscanf(buf, "%c %s %s", &header->RequestType, header->Options, header->PortNumber);
+      sscanf(buf, "%c %s", &header->RequestType, header->Options);
       return ret;
 }
 
@@ -804,7 +788,7 @@ int handler_comand_show(char my_username[], char target_username[], int server_s
       char buf[512];
 
       // invio richiesta di show al server
-      invia_header(server_socket, 'D', "toreq", "0000");
+      invia_header(server_socket, 'D', "toreq");
 
       // serializzo buffer per l'invio
       pulisci_buffer(buf, sizeof(buf));
