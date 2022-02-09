@@ -57,7 +57,7 @@ int main(int argc, const char **argv)
 
 	memset(&cl_addr, 0, sizeof(cl_addr));
 	cl_listen_addr.sin_family = AF_INET;
-	cl_listen_addr.sin_port = htons(atoi(port));
+	cl_listen_addr.sin_port = htons(atoi(argv[1]));
 	inet_pton(AF_INET, "127.0.0.1", &cl_listen_addr.sin_addr);
 
 	listener = socket(AF_INET, SOCK_STREAM, 0);
@@ -191,7 +191,7 @@ int main(int argc, const char **argv)
 						{
 
 							// prima di fare tutti i controlli, vedo se è un comando del tipo share <filename> e se il file esiste
-							if (invia_file(my_credentials.Username, "user1_logout_info.txt", cl_socket) < 0)
+							if (invia_file(my_credentials.Username, "documentazione.pdf", current_chatting_user->socket) < 0)
 								printf("LOG: invia_file ha ritornato un errore ");
 						}
 						else if (inputstring[0] != '\\')
@@ -446,13 +446,13 @@ int main(int argc, const char **argv)
 							ricevi_header(sv_communicate, &header);
 
 							// ricevo il numero di porta dell'utente con cui voglio aprire una chat
-							uint32_t port;
+							int port;
 
 							// ricezione numero di porta
-							if (recv(i, (void *)&port, sizeof(uint32_t), 0) < 0)
+							if (recv(sv_communicate, (void *)&port, sizeof(int), 0) < 0)
 								perror("LOG: errore nella ricezione del numero di porta");
 
-							printf("il server mi ha mandato un header con la porta del dest che è la seguente\nPorta: %d\n", port);
+							printf("il server mi ha mandato un header con la porta del dest che è la seguente\nPorta:%d\n", port);
 
 							// prima della procedura devo vedere se l'utente con cui sto aprendo la chat mi aveva visualizzato i messaggi
 							pulisci_buffer(notify_response_buf, sizeof(notify_response_buf));
@@ -467,16 +467,21 @@ int main(int argc, const char **argv)
 							// destinatario online
 							if (strcmp("ON", header.Options) == 0)
 							{
+								// debug
+								printf("LOG: destinatario online\n");
+
 								current_chatting_user_state = ONLINE;
-								if (socket_da_username(active_sockets_list_head, cmd.Argument1) < 0)
+								if (socket_da_username(active_sockets_list_head, destUsername) < 0)
 								{
+									// debug
+									printf("LOG: apro connessione TCP\n");
+
 									// creazione indirizzo e socket e connessione al destinatario
 									memset(&cl_addr, 0, sizeof(cl_addr));
 
 									cl_addr.sin_family = AF_INET;
 									cl_addr.sin_port = htons(port);
-									inet_pton(AF_INET, "127.0.0.1", &cl_listen_addr.sin_addr);
-
+									inet_pton(AF_INET, "127.0.0.1", &cl_addr.sin_addr);
 									cl_socket = socket(AF_INET, SOCK_STREAM, 0);
 
 									// connessione al peer
@@ -579,7 +584,7 @@ int main(int argc, const char **argv)
 							pulisci_buffer(User_logged_out, sizeof(User_logged_out));
 							username_da_socket(i, active_sockets_list_head, User_logged_out);
 
-							if (current_chatting_user != NULL && strcmp(current_chatting_user->username, User_logged_out))
+							if (current_chatting_user != NULL && strcmp(current_chatting_user->username, User_logged_out) == 0)
 								// devo cambiare il suo stato in OFFLINE
 								current_chatting_user_state = OFFLINE;
 

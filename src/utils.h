@@ -42,14 +42,14 @@ struct des_hanging_record
 {
       char sender[USERNAME_LEN];
       char receiver[USERNAME_LEN];
-      int max_timestamp;
-      int num_pending_msg;
+      uint32_t max_timestamp;
+      uint32_t num_pending_msg;
 };
 
 // descrittore per memorizzare le informazioni riguardanti i gruppi
 struct des_group
 {
-      int id;
+      uint32_t id;
       char name[50];
       char creator[50];
       struct group_peer *peer_list_head;
@@ -74,7 +74,7 @@ struct notify_queue
 // elemento del tipo lista utenti
 struct clientList
 {
-      int socket;
+      uint32_t socket;
       char username[50];
       struct clientList *pointer;
 };
@@ -98,7 +98,7 @@ struct des_buffered_msg
 struct HistoryRecord
 {
       char Username[50];
-      int Port;
+      uint32_t Port;
       time_t timestamp_in;
       time_t timestamp_out;
 };
@@ -120,7 +120,7 @@ struct msg_header
 // //////////////////////////////////////////// GENERICHE ///////////////////////////////////////////////////////////////////
 // //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void pulisci_buffer(char *buffer, int buf_len) { memset(buffer, 0, buf_len); }
+void pulisci_buffer(char *buffer, uint32_t buf_len) { memset(buffer, 0, buf_len); }
 
 // //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // ///////////////////////////////////////// FUNZIONI DI STAMPA /////////////////////////////////////////////////////////////
@@ -141,9 +141,9 @@ void stampa_comandi_device()
 // ///////////////////////////////////////// GESTIONE FILES  ////////////////////////////////////////////////////////////////
 // //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-int porta_da_username(char *username)
+uint32_t porta_da_username(char *username)
 {
-      int port = 0;
+      uint32_t port = 0;
       struct HistoryRecord record;
       FILE *fptr = fopen("clients_history.txt", "rb");
 
@@ -160,7 +160,7 @@ int porta_da_username(char *username)
       return port;
 }
 
-int check_username_online(char *Username)
+uint32_t check_username_online(char *Username)
 {
       // apro il file di history
       FILE *fptr;
@@ -180,7 +180,7 @@ int check_username_online(char *Username)
       return -1;
 }
 
-int aggiorna_history_utente(FILE *fileptr, char *Username, int port)
+uint32_t aggiorna_history_utente(FILE *fileptr, char *Username, uint32_t port)
 {
       struct HistoryRecord record;
       time_t rawtime;
@@ -253,10 +253,10 @@ void stampa_msg_bufferizzati()
       }
 }
 
-int count_buffered(char *dest, char *mitt)
+uint32_t count_buffered(char *dest, char *mitt)
 {
 
-      int nmsg = 0;
+      uint32_t nmsg = 0;
       struct des_buffered_msg msg;
       FILE *fptr = fopen("chat_buffer.txt", "rb");
 
@@ -271,7 +271,7 @@ int count_buffered(char *dest, char *mitt)
       return nmsg;
 }
 
-int check(char *cmd)
+uint32_t check(char *cmd)
 {
       if ((strcmp("share", cmd) == 0) || (strcmp("hanging", cmd) == 0) || (strcmp("show", cmd) == 0) || (strcmp("chat", cmd) == 0) || (strcmp("out", cmd) == 0))
             return 0;
@@ -306,7 +306,7 @@ void logout(char *user)
 // ///////////////////////////////////////// GESTIONE LISTA /////////////////////////////////////////////////////////////////
 // //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-int inserisci_utente(struct clientList **head, char *Username, int socket)
+uint32_t inserisci_utente(struct clientList **head, char *Username, uint32_t socket)
 {
       struct clientList *node = (struct clientList *)malloc(sizeof(struct clientList));
       node->pointer = NULL;
@@ -326,7 +326,7 @@ int inserisci_utente(struct clientList **head, char *Username, int socket)
 }
 // ritorna -1 se l'operazione non ha successo, 0 altrimenti
 // se ha successo scrive in un puntatore l'username dell'utente che si è disconnesso
-int rimuovi_utente(struct clientList **head, int todelete, char *usernameToGet)
+uint32_t rimuovi_utente(struct clientList **head, uint32_t todelete, char *usernameToGet)
 {
       struct clientList *pun;
 
@@ -374,7 +374,7 @@ void stampa_lista_utenti(struct clientList *head)
 // ///////////////////////////////////////// GESTIONE LISTA NOTIFY //////////////////////////////////////////////////////////
 // //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-int notify_enqueue(struct notify_queue **head, char *sender, char *target)
+uint32_t notify_enqueue(struct notify_queue **head, char *sender, char *target)
 {
       struct notify_queue *node = (struct notify_queue *)malloc(sizeof(struct notify_queue));
 
@@ -393,7 +393,7 @@ int notify_enqueue(struct notify_queue **head, char *sender, char *target)
       return 0;
 }
 
-int notify_dequeue(struct notify_queue **head, char *sender, char *target)
+uint32_t notify_dequeue(struct notify_queue **head, char *sender, char *target)
 {
       struct notify_queue *pun;
 
@@ -432,7 +432,7 @@ int notify_dequeue(struct notify_queue **head, char *sender, char *target)
 // //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // ritorna -1 se non trova user nel log dei registrati del server, 0 altrimenti
-int is_client_registered(char *username)
+uint32_t is_client_registered(char *username)
 {
       FILE *fptr = fopen("registered_clients.txt", "rb");
       struct credentials mycredentials; // usato per fare il parsing della struttura nel file
@@ -465,9 +465,9 @@ void chiudi_connesioni_attive(struct clientList **head)
 // ///////////////////////////////////////// GESTIONE MESSAGGI //////////////////////////////////////////////////////////////
 // //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-int invia_messaggi_pendenti(char *richiedente, char *target, int dest_socket)
+uint32_t invia_messaggi_pendenti(char *richiedente, char *target, uint32_t dest_socket)
 {
-      int msg_num;
+      uint32_t msg_num;
       struct des_buffered_msg msg; // uso per fare il parsing dei messaggi nel file
       FILE *fptr = fopen("chat_buffer.txt", "rb+");
 
@@ -485,7 +485,7 @@ int invia_messaggi_pendenti(char *richiedente, char *target, int dest_socket)
       {
             if (strcmp(msg.receiver, richiedente) == 0 && strcmp(msg.sender, target) == 0)
             {
-                  int msg_len;
+                  uint32_t msg_len;
 
                   // invio dimensione del msg
                   msg_len = strlen(msg.message);
@@ -505,13 +505,13 @@ int invia_messaggi_pendenti(char *richiedente, char *target, int dest_socket)
       return 0;
 }
 
-int invia_messaggio(char *send_buffer, int receiver_socket)
+uint32_t invia_messaggio(char *send_buffer, uint32_t receiver_socket)
 {
-      int msg_len = strlen(send_buffer);
-      int ret;
+      uint32_t msg_len = strlen(send_buffer);
+      uint32_t ret;
 
       // dimensione
-      ret = send(receiver_socket, (void *)&msg_len, sizeof(int), 0);
+      ret = send(receiver_socket, (void *)&msg_len, sizeof(uint32_t), 0);
 
       // gestione disconnessione
       if (ret == 0)
@@ -534,10 +534,10 @@ int invia_messaggio(char *send_buffer, int receiver_socket)
       return ret;
 }
 
-int ricevi_messaggio(char *recv_buffer, int sender_socket)
+uint32_t ricevi_messaggio(char *recv_buffer, uint32_t sender_socket)
 {
-      int msg_len;
-      int ret;
+      uint32_t msg_len;
+      uint32_t ret;
 
       // dimensione
       ret = recv(sender_socket, (void *)&msg_len, sizeof(int), 0);
@@ -564,11 +564,11 @@ int ricevi_messaggio(char *recv_buffer, int sender_socket)
 }
 
 // invia un headser che ha la seguente struttura - |req_type options|
-int invia_header(int receiver_socket, char req_type, char *options)
+uint32_t invia_header(uint32_t receiver_socket, char req_type, char *options)
 {
       char buf[1024];
-      int msg_len;
-      int ret;
+      uint32_t msg_len;
+      uint32_t ret;
 
       memset(buf, 0, sizeof(buf));
       sprintf(buf, "%c %s", req_type, options);
@@ -599,11 +599,11 @@ int invia_header(int receiver_socket, char req_type, char *options)
 }
 
 // riceve i dati di un header proveniente dal socket sender_socket e ne fa il parsing sulla struttra header
-int ricevi_header(int sender_socket, struct msg_header *header)
+uint32_t ricevi_header(uint32_t sender_socket, struct msg_header *header)
 {
-      int msg_len;    // ci salvo la dimensione dell'header che sta arrivando
-      char buf[1024]; // buffer su cui ricevo l'header
-      int ret;
+      uint32_t msg_len; // ci salvo la dimensione dell'header che sta arrivando
+      char buf[1024];   // buffer su cui ricevo l'header
+      uint32_t ret;
 
       memset(buf, 0, sizeof(buf));
 
@@ -633,19 +633,19 @@ int ricevi_header(int sender_socket, struct msg_header *header)
 }
 
 // copia nella stringa "buffer" gli username degli utenti online separati dal carattere '\n'
-int copia_username_utenti_online(char *buffer)
+uint32_t copia_username_utenti_online(char *buffer)
 {
       FILE *fptr = fopen("clients_history.txt", "rb");
       struct HistoryRecord record;
       // tengo il conto di dove mi trovo nella stringa
-      int buf_index = 0;
+      uint32_t buf_index = 0;
 
       while (fread(&record, sizeof(record), 1, fptr))
       {
             if (record.timestamp_out == 0)
             {
                   // copia della stringa nel record in quella da spedire
-                  for (int i = 0; i < strlen(record.Username); i++, buf_index++)
+                  for (uint32_t i = 0; i < strlen(record.Username); i++, buf_index++)
                         buffer[buf_index] = record.Username[i];
                   // aggiungo il carattere di newline per distinguere le stringhe
                   buffer[buf_index++] = '\n';
@@ -657,10 +657,10 @@ int copia_username_utenti_online(char *buffer)
 }
 
 // invia il messaggio contenuto nel buffer a tutti i socket presenti nella lista puntata da head
-int invia_messaggio_gruppo(char *buffer, struct clientList *head)
+uint32_t invia_messaggio_gruppo(char *buffer, struct clientList *head)
 {
       struct clientList *pun;
-      int ret;
+      uint32_t ret;
 
       for (pun = head; pun != NULL; pun = pun->pointer)
       {
@@ -673,10 +673,10 @@ int invia_messaggio_gruppo(char *buffer, struct clientList *head)
 }
 
 // scrive il messaggio contenuto nella stringa "messaggio" nel file della chat di un utente my_username con dest_username
-int scrivi_file_chat(char *my_username, char *dest_username, char *messaggio, int user_side, int msg_state)
+uint32_t scrivi_file_chat(char *my_username, char *dest_username, char *messaggio, uint32_t user_side, uint32_t msg_state)
 {
       FILE *fptr;
-      int ret;
+      uint32_t ret;
       char file_path[100];
 
       /*
@@ -725,10 +725,10 @@ int scrivi_file_chat(char *my_username, char *dest_username, char *messaggio, in
 // carica la chat di my_username con l'utente user_target
 // chiamo la carica_chat quando inizio una chat con l'utente user_target per caricare la cronologia
 // ritorna il numero di byte letti
-int carica_chat(char *my_username, char *dest_username)
+uint32_t carica_chat(char *my_username, char *dest_username)
 {
       FILE *fptr;
-      int ret = 0;
+      uint32_t ret = 0;
       char toread;
 
       char file_path[100];
@@ -762,7 +762,7 @@ int carica_chat(char *my_username, char *dest_username)
 
 // prende in ingresso il socket di un utente e ne restituisce l'username associato
 // copiandolo nella variabile passata in ingresso
-void username_da_socket(int sender_socket, struct clientList *head, char *sender_username)
+void username_da_socket(uint32_t sender_socket, struct clientList *head, char *sender_username)
 {
 
       struct clientList *pun;
@@ -782,9 +782,9 @@ void username_da_socket(int sender_socket, struct clientList *head, char *sender
 // ///////////////////////////////////////// CLIENT HANDLERS  ///////////////////////////////////////////////////////////////
 // //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-int handler_comand_show(char my_username[], char target_username[], int server_socket)
+uint32_t handler_comand_show(char my_username[], char target_username[], uint32_t server_socket)
 {
-      int num_msg, ret;
+      uint32_t num_msg, ret;
       char buf[512];
 
       // invio richiesta di show al server
@@ -805,7 +805,7 @@ int handler_comand_show(char my_username[], char target_username[], int server_s
       }
       printf("LOG: il server mi ha detto che %s mi ha inviato %d messaggi pendenti\n", target_username, num_msg);
 
-      for (int i = 0; i < num_msg; i++)
+      for (uint32_t i = 0; i < num_msg; i++)
       {
             char recvbuf[1024];
 
@@ -820,7 +820,7 @@ int handler_comand_show(char my_username[], char target_username[], int server_s
       return num_msg;
 }
 
-int aggiorna_stato_messaggi(char *my_username, char *dest_username)
+uint32_t aggiorna_stato_messaggi(char *my_username, char *dest_username)
 {
 
       char file_path[100];
@@ -832,7 +832,7 @@ int aggiorna_stato_messaggi(char *my_username, char *dest_username)
       sprintf(file_path, "%s//%s.txt", my_username, dest_username);
 
       // soluzione con mapping dei file in memoria
-      int fd = open(file_path, O_RDWR, S_IRUSR | S_IWUSR);
+      uint32_t fd = open(file_path, O_RDWR, S_IRUSR | S_IWUSR);
 
       // mi prendo la dimensione del file
       if (fstat(fd, &file) == -1)
@@ -846,7 +846,7 @@ int aggiorna_stato_messaggi(char *my_username, char *dest_username)
       if (stringa_file == NULL)
             return -1;
 
-      for (int i = 0; i < file.st_size; i++)
+      for (uint32_t i = 0; i < file.st_size; i++)
             if (stringa_file[i] == '<')
                   stringa_file[i] = '*';
 
@@ -893,7 +893,7 @@ void prendi_istante_disconnessione(char *my_username, char *timestamp_to_get)
 }
 
 // ritorna 0 se il comando passato in ingresso ha la struttura share <filename>, -1 altrimenti
-int check_share_command(char *my_username, char *command_string)
+uint32_t check_share_command(char *my_username, char *command_string)
 {
       char cmd[20];
       char file_name[50];
@@ -927,10 +927,10 @@ int check_share_command(char *my_username, char *command_string)
 
 /*
 prende in ingresso il nome di un file (che deve essere presente nella directory "src" ) ed il socket a
-cui lo si vuole inviare, e lo invia al destinatario frammentandolo in diversi segmenti TCP se necessario
+cui lo si vuole inviare, e lo inviaƒ al destinatario frammentandolo in diversi segmenti TCP se necessario
 */
 
-int invia_file(char *my_username, char *file_name, int dest_socket)
+uint32_t invia_file(char *my_username, char *file_name, uint32_t dest_socket)
 {
       char file_path[100];
       struct stat file;
@@ -953,7 +953,7 @@ int invia_file(char *my_username, char *file_name, int dest_socket)
       // soluzione mediante mapping del file in memoria
       // uso come buffer di invio la porzione di memoria dove viene mappato il file della mmap
 
-      int fd = open(file_path, O_RDWR, S_IRUSR | S_IWUSR);
+      uint32_t fd = open(file_path, O_RDWR, S_IRUSR | S_IWUSR);
 
       if (fstat(fd, &file) == -1)
       {
@@ -961,10 +961,10 @@ int invia_file(char *my_username, char *file_name, int dest_socket)
             return -1;
       }
 
-      int dim_file = file.st_size;
+      uint32_t dim_file = file.st_size;
 
       // -------------- invio dimensione file ---------------
-      if (send(dest_socket, (void *)&dim_file, sizeof(int), 0) < 0)
+      if (send(dest_socket, (void *)&dim_file, sizeof(uint32_t), 0) < 0)
       {
             perror("LOG: Errore nell'invio della dimensione del file");
             return -1;
@@ -974,7 +974,7 @@ int invia_file(char *my_username, char *file_name, int dest_socket)
       file_send_buffer = (char *)mmap(NULL, file.st_size, PROT_WRITE | PROT_READ, MAP_SHARED, fd, 0);
 
       // ----------------- invio del file -------------------
-      int bytes_send, send_after;
+      uint32_t bytes_send, send_after;
 
       bytes_send = send(dest_socket, (void *)file_send_buffer, file.st_size, 0);
       if (bytes_send < 0)
@@ -1003,20 +1003,20 @@ int invia_file(char *my_username, char *file_name, int dest_socket)
       return bytes_send;
 }
 
-void alloca_dim_file(char *file_path, int dim_file)
+void alloca_dim_file(char *file_path, uint32_t dim_file)
 {
       FILE *ptr = fopen(file_path, "w");
-      for (int i = 0; i < dim_file; i++)
+      for (uint32_t i = 0; i < dim_file; i++)
       {
             fputc(' ', ptr);
       }
       fclose(ptr);
 }
 // questa funzione riceve un file inviato dal device connesso sul socket sender_socket e lo salva nella directory personale del device
-int ricevi_file(char *my_username, int sender_socket)
+uint32_t ricevi_file(char *my_username, uint32_t sender_socket)
 {
-      int dim_file;
-      int ret;
+      uint32_t dim_file;
+      uint32_t ret;
       char file_name[50];
       char file_path[100];
       char *file_receive_buffer;
@@ -1047,7 +1047,7 @@ int ricevi_file(char *my_username, int sender_socket)
 
       alloca_dim_file(file_path, dim_file);
 
-      int fd = open(file_path, O_RDWR | O_APPEND | O_CREAT, S_IRUSR | S_IWUSR);
+      uint32_t fd = open(file_path, O_RDWR | O_APPEND | O_CREAT, S_IRUSR | S_IWUSR);
 
       // mapping
       file_receive_buffer = (char *)mmap(NULL, dim_file, PROT_WRITE | PROT_READ, MAP_SHARED, fd, 0);
@@ -1058,7 +1058,7 @@ int ricevi_file(char *my_username, int sender_socket)
       }
 
       // ------------- ricezione file ---------------
-      int bytes_read, read_after;
+      uint32_t bytes_read, read_after;
       bytes_read = recv(sender_socket, (void *)file_receive_buffer, 25, 0);
 
       if (bytes_read < 0)
@@ -1099,9 +1099,9 @@ int socket_da_username(struct clientList *head, char *username)
 }
 
 // ritorna il numero di elementi presenti nella lista del tipo clientlist
-int conta_utenti_chat(struct clientList *head)
+uint32_t conta_utenti_chat(struct clientList *head)
 {
-      int i = 0;
+      uint32_t i = 0;
 
       if (head == NULL)
             return i;
@@ -1114,10 +1114,10 @@ int conta_utenti_chat(struct clientList *head)
 }
 
 // elimina tutti gli utenti dalla lista del tipo clientList, ritorna il numero di utenti eliminati
-int elimina_utenti_lista(struct clientList **head)
+uint32_t elimina_utenti_lista(struct clientList **head)
 {
       struct clientList *temp = *head;
-      int i = 0;
+      uint32_t i = 0;
 
       if (*head == NULL)
             return 0;
@@ -1134,9 +1134,9 @@ int elimina_utenti_lista(struct clientList **head)
 }
 
 // invia all'utente connesso su dest socket i nomi degli utenti della sua chat di gruppo
-int invia_nomi_utenti(struct clientList *head, int dest_socket)
+uint32_t invia_nomi_utenti(struct clientList *head, uint32_t dest_socket)
 {
-      int i = 0;
+      uint32_t i = 0;
 
       if (head == NULL)
             return i;
@@ -1155,7 +1155,7 @@ int invia_nomi_utenti(struct clientList *head, int dest_socket)
 //                      //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // crea un nuovo gruppo e lo inserisce nella lista di gruppi del servizio
-int aggiungi_gruppo(char user_creator[], char group_name[], int *next_group_id, struct des_group **head)
+uint32_t aggiungi_gruppo(char user_creator[], char group_name[], uint32_t *next_group_id, struct des_group **head)
 {
       struct des_group *new_group = (struct des_group *)malloc(sizeof(struct des_group));
 
@@ -1182,7 +1182,7 @@ int aggiungi_gruppo(char user_creator[], char group_name[], int *next_group_id, 
       return 0;
 }
 
-int aggiungi_utente_a_gruppo(char peer_user[], char nomegruppo[], struct des_group **head)
+uint32_t aggiungi_utente_a_gruppo(char peer_user[], char nomegruppo[], struct des_group **head)
 {
       if (*head == NULL)
       {
@@ -1219,7 +1219,7 @@ int aggiungi_utente_a_gruppo(char peer_user[], char nomegruppo[], struct des_gro
 }
 
 // ritorna il massimo timestamp nei record dei messaggi bufferizzati relativi alla coppia sender | receiver
-int cerca_timestamp_hanging(char buf_sender[], char buf_receiver[])
+uint32_t cerca_timestamp_hanging(char buf_sender[], char buf_receiver[])
 {
       FILE *fptr = fopen("chat_buffer.txt", "rb");
       struct des_buffered_msg buf_msg;
@@ -1243,7 +1243,7 @@ void aggiorna_hanging(char buf_sender[], char buf_receiver[])
 {
 
       // per la coppia di utenti |buf_sender|buf_receiver| devo andare a contare i messaggi pendenti e il timestamp del più recente
-      int num_msg = count_buffered(buf_receiver, buf_sender);
+      uint32_t num_msg = count_buffered(buf_receiver, buf_sender);
 
       // vado a cercare il timestamp più grande relativo alla "chiave" sender | receiver
 
@@ -1291,11 +1291,11 @@ void aggiorna_hanging(char buf_sender[], char buf_receiver[])
 }
 
 // si prende il nome del client che ha fatto la richiesta di hanging e conta i record nel file hanging_data che sono significativi da spedire (quelli con num_msg > 1)
-int count_hanging(char buf_receiver[])
+uint32_t count_hanging(char buf_receiver[])
 {
       FILE *fptr = fopen("hanging_data.txt", "rb");
       struct des_hanging_record record;
-      int msg_to_send = 0;
+      uint32_t msg_to_send = 0;
 
       while (fread(&record, sizeof(struct des_hanging_record), 1, fptr))
       {
@@ -1308,11 +1308,11 @@ int count_hanging(char buf_receiver[])
 }
 
 // spedisce i record hanging al richiedente
-int send_hanging_info(char buf_receiver[], int sender_socket)
+uint32_t send_hanging_info(char buf_receiver[], uint32_t sender_socket)
 {
 
       // devo mandare il numero di record hanging significativi
-      int msg_to_send = count_hanging(buf_receiver);
+      uint32_t msg_to_send = count_hanging(buf_receiver);
 
       if (send(sender_socket, (void *)&msg_to_send, sizeof(uint32_t), 0) < 0)
             perror("LOG: errore nell invio del numero di msg_hanging");
@@ -1326,7 +1326,7 @@ int send_hanging_info(char buf_receiver[], int sender_socket)
             if (strcmp(buf_receiver, record.receiver) == 0 && record.num_pending_msg > 0)
             {
                   // scrivo i valori nei parametri passati in ingresso
-                  int ret;
+                  uint32_t ret;
 
                   // mando il nome del sender
                   invia_messaggio(record.sender, sender_socket);
@@ -1349,19 +1349,19 @@ int send_hanging_info(char buf_receiver[], int sender_socket)
 }
 
 // riceve i messaggi dal server dopo una chiamata alla hanging
-void receive_hanging_info(int sender_socket)
+void receive_hanging_info(uint32_t sender_socket)
 {
-      int num_msg_hanging;
+      uint32_t num_msg_hanging;
 
       // server mi invia il numero di utenti che mi hanno inviato richieste pendenti
-      int ret = recv(sender_socket, (void *)&num_msg_hanging, sizeof(uint32_t), 0);
+      uint32_t ret = recv(sender_socket, (void *)&num_msg_hanging, sizeof(uint32_t), 0);
       if (ret < 0)
             perror("LOG: Errore nella ricezione del messaggio di hanging");
 
-      for (int k = 0; k < num_msg_hanging; k++)
+      for (uint32_t k = 0; k < num_msg_hanging; k++)
       {
             char hanging_sender[USERNAME_LEN];
-            int num_msg_pendenti = 0;
+            uint32_t num_msg_pendenti = 0;
             time_t max_timestamp = 0;
 
             ricevi_messaggio(hanging_sender, sender_socket);
@@ -1395,7 +1395,7 @@ void print_hanging()
       fclose(fptr);
 }
 
-int crea_rubrica(char my_user[])
+uint32_t crea_rubrica(char my_user[])
 {
       // crea il file della rubrica relativa a my_user
       char f_path[100];
@@ -1410,7 +1410,7 @@ int crea_rubrica(char my_user[])
 }
 
 // ritorna 0 se trova dst_user nella rubrica di my_user, -1 altrimenti
-int check_utente_rubrica(char my_user[], char dst_user[])
+uint32_t check_utente_rubrica(char my_user[], char dst_user[])
 {
       char f_path[100];
       char buf[USERNAME_LEN];

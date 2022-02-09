@@ -264,7 +264,7 @@ int main(int argc, const char **argv)
 								invia_header(i, 'C', "ON");
 
 							// invio il numero di porta
-							if (send(i, (void *)&port, sizeof(uint32_t), 0) < 0)
+							if (send(i, (void *)&port, sizeof(int), 0) < 0)
 							{
 								perror("LOG: errore nell'invio del numero di porta nella fase iniziale");
 								exit(1);
