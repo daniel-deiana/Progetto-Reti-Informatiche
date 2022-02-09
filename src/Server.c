@@ -91,16 +91,16 @@ int main(int argc, const char **argv)
 					if (strcmp(Command, "help") == 0)
 					{
 						// comando help
-						stampa_comandi_device();
+						stampa_comandi_server();
 					}
 					else if (strcmp(Command, "list") == 0)
 					{
 						// comando list
 						comando_list();
 					}
-					else if (strcmp(Command, "out") == 0)
+					else if (strcmp(Command, "esc") == 0)
 					{
-						// esco
+						// comando esc
 						exit(1);
 					}
 					else
@@ -127,7 +127,6 @@ int main(int argc, const char **argv)
 						// socket di comunicazione
 
 						struct msg_header service_hdr;
-						char portString[5];
 
 						// ricezione di una richiesta
 						if (ricevi_header(i, &service_hdr) == 0)

@@ -189,10 +189,16 @@ int main(int argc, const char **argv)
 						// ////////////////////////// comandi chat /////////////////////////////////
 						if (check_share_command(my_credentials.Username, inputstring) == 0)
 						{
-
-							// prima di fare tutti i controlli, vedo se è un comando del tipo share <filename> e se il file esiste
-							if (invia_file(my_credentials.Username, "documentazione.pdf", current_chatting_user->socket) < 0)
-								printf("LOG: invia_file ha ritornato un errore ");
+							if (is_in_group == 0)
+							{
+								invio_file_gruppo(my_credentials.Username, "documentazione.pdf", group_chat_sockets_head);
+							}
+							else
+							{
+								// prima di fare tutti i controlli, vedo se è un comando del tipo share <filename> e se il file esiste
+								if (invia_file(my_credentials.Username, "documentazione.pdf", current_chatting_user->socket) < 0)
+									printf("LOG: invia_file ha ritornato un errore ");
+							}
 						}
 						else if (inputstring[0] != '\\')
 						{
@@ -594,7 +600,8 @@ int main(int argc, const char **argv)
 							rimuovi_utente(&active_sockets_list_head, i, User_logged_out);
 							rimuovi_utente(&group_chat_sockets_head, i, User_logged_out);
 
-							printf("LOG: %s è uscito dalla chat di gruppo\n", User_logged_out);
+							if (is_in_group == 0)
+								printf("LOG: %s è uscito dalla chat di gruppo\n", User_logged_out);
 
 							continue;
 						}
@@ -709,6 +716,8 @@ int main(int argc, const char **argv)
 								inserisci_utente(&group_chat_sockets_head, buffer, socket_utente_chat);
 							}
 							// aggiorno il flag che mi dice se sto partecipando attualmente ad un gruppo
+							free(current_chatting_user);
+							current_chatting_user = NULL;
 							is_in_group = 0;
 						}
 						else if (strcmp(bufferChatMessage, "***FILE***") == 0)

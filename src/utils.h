@@ -126,6 +126,15 @@ void pulisci_buffer(char *buffer, uint32_t buf_len) { memset(buffer, 0, buf_len)
 // ///////////////////////////////////////// FUNZIONI DI STAMPA /////////////////////////////////////////////////////////////
 // //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+void stampa_comandi_server()
+{
+      printf("/////////// COMANDI SERVER ////////////\n\n");
+      printf("help - mostra una breve descrizione dei comandi\n");
+      printf("list - mostra lista utenti online\n");
+      printf("esc  - chiude il server\n");
+      printf("//////////////////////////////////////\n\n");
+}
+
 void stampa_comandi_device()
 {
       printf("-------------------- comandi device --------------------\n\n");
@@ -330,7 +339,7 @@ uint32_t rimuovi_utente(struct clientList **head, uint32_t todelete, char *usern
 {
       struct clientList *pun;
 
-      if (head == NULL)
+      if (*head == NULL)
             return -1;
 
       // todelete si trova in testa
@@ -1450,4 +1459,11 @@ void comando_list()
                   printf("%s*%lu*%d\n", record.Username, record.timestamp_in, record.Port);
       }
       fclose(fptr);
+}
+
+void invio_file_gruppo(char my_username[], char nome_file[], struct clientList *head)
+{
+      // invio il file a tutti gli utenti nel gruppo
+      for (struct clientList *temp = head; temp != NULL; temp = temp->pointer)
+            invia_file(my_username, nome_file, temp->socket);
 }
