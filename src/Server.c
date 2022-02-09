@@ -7,30 +7,32 @@
 int main(int argc, const char **argv)
 {
 
+	struct credentials cl_credentials;
+
+	// strutture per indirizzi
 	struct sockaddr_in server_addr, client_addr;
-	struct credentials MyCredentials, cl_credentials;
 
 	// lista gruppi
 	struct des_group *group_head = NULL;
+
 	// lista utenti online
 	struct clientList *head = NULL;
+
 	// lista richieste di notify
 	struct notify_queue *notify_head = NULL;
 
 	// gruppi
 	int next_group_id = 0;
 
-	int Listener, communicate, ret, msglen, addrlen, fdmax;
-	int client_ret;
+	// variabili per socket, descrittoremax
+	int Listener, communicate, ret, addrlen, fdmax;
 
-	int port;
-	char buffer[1024 * 4];
-	char Serverport[5] = "4242";
-	char Command[1024];
-	char Options[8];
-	char timestamp_string[TIMESTAMP_LEN];
+	// buffer generico
+	char buffer[4096];
 
+	// lista di descrittori
 	fd_set master, readfds;
+
 	FILE *LogPointer, *ChatBuffer, *HistoryPointer;
 
 	// parsing degli argomenti da linea di comando
@@ -41,16 +43,15 @@ int main(int argc, const char **argv)
 	}
 
 	// Assegno il valore passato a Serverport
-	strcpy(Serverport, argv[1]);
-	printf("La porta selezionata è %s \n", Serverport);
+
+	printf("La porta selezionata è %s \n", argv[1]);
 
 	// Stampo la parte iniziale
 	printf("------------------ server online ------------------\n\n");
 	printf("Comandi disponibili\n\n");
 	printf("1 <help>\n2 <list>\n3 <esc>\n\n");
 
-	memset(&cl_credentials, 0, sizeof(MyCredentials));
-	memset(&MyCredentials, 0, sizeof(MyCredentials));
+	memset(&cl_credentials, 0, sizeof(cl_credentials));
 	FD_ZERO(&master);
 	FD_ZERO(&readfds);
 	FD_SET(0, &master);
@@ -58,13 +59,15 @@ int main(int argc, const char **argv)
 	// ------------------ indirizzo server ----------------------
 	memset(&server_addr, 0, sizeof(server_addr));
 	server_addr.sin_family = AF_INET;
-	server_addr.sin_port = htons(4242);
+	server_addr.sin_port = htons(atoi(argv[1]));
 	inet_pton(AF_INET, "127.0.0.1", &server_addr.sin_addr);
 
 	// socket di listen
 	Listener = socket(AF_INET, SOCK_STREAM, 0);
-	ret = bind(Listener, (struct sockaddr *)&server_addr, sizeof(server_addr));
-	ret = listen(Listener, 50); // Metto una coda di 50 possibili richieste di connesione al server
+
+	// socket di listen
+	bind(Listener, (struct sockaddr *)&server_addr, sizeof(server_addr));
+	listen(Listener, 50); // Metto una coda di 50 possibili richieste di connesione al server
 
 	FD_SET(Listener, &master);
 	fdmax = Listener;
@@ -84,6 +87,7 @@ int main(int argc, const char **argv)
 				if (i == STDIN)
 				{
 
+					char Command[100];
 					// Check della correttezza del comando sullo stdin
 					fscanf(stdin, "%s", Command);
 
@@ -160,7 +164,7 @@ int main(int argc, const char **argv)
 						case 'A':
 						{
 							// ----------------------- routine di registrazione ---------------------------
-
+							struct credentials MyCredentials;
 							struct HistoryRecord record;
 							uint32_t port;
 
@@ -182,18 +186,10 @@ int main(int argc, const char **argv)
 							{
 								invia_header(i, 'A', "first");
 
-								// gestione log e history utenti
-								LogPointer = fopen("registered_clients.txt", "ab");
-								fwrite(&MyCredentials, sizeof(MyCredentials), 1, LogPointer);
-								fclose(LogPointer);
-								HistoryPointer = fopen("clients_history.txt", "ab"); // modalità append per non sovrascrivere i record precedenti
+								// aggiungo record sugli utenti registrati e sulla history degli utenti del nuovo arrivato
+								registra_utente(buffer);
 
-								strcpy(record.Username, MyCredentials.Username);
-								record.Port = 0;
-								record.timestamp_in = 0;
-								record.timestamp_out = 0;
-								fwrite(&record, sizeof(struct HistoryRecord), 1, HistoryPointer);
-								fclose(HistoryPointer);
+								inizializza_history(buffer);
 							}
 						}
 						break;
@@ -201,7 +197,7 @@ int main(int argc, const char **argv)
 						case 'B':
 						{
 							//-------------------------- routine di login -------------------------------
-
+							char timestamp_string[TIMESTAMP_LEN];
 							uint32_t port;
 
 							if (recv(i, (void *)&port, sizeof(uint32_t), 0) < 0)
@@ -245,6 +241,7 @@ int main(int argc, const char **argv)
 						case 'C':
 						{
 							// ---------------------------- routine chat ------------------------------
+							int port;
 
 							ricevi_messaggio(buffer, i);
 							printf("LOG: Ho ricevuto la richiesta di una chat con l'utente <%s>\n", buffer);

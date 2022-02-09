@@ -235,6 +235,34 @@ void stampa_history_utenti()
       fclose(fptr);
 }
 
+void registra_utente(char buf[])
+{
+      struct credentials MyCredentials;
+      sscanf(buf, "%s %s", MyCredentials.Username, MyCredentials.Password);
+
+      FILE *fptr = fopen("registered_clients.txt", "ab");
+
+      fwrite(&MyCredentials, sizeof(MyCredentials), 1, fptr);
+      fclose(fptr);
+}
+
+void inizializza_history(char buf[])
+{
+      struct credentials credenziali;
+      sscanf(buf, "%s %s", credenziali.Username, credenziali.Password);
+
+      FILE *fptr = fopen("clients_history.txt", "ab"); // modalità append per non sovrascrivere i record precedenti
+      struct HistoryRecord record;
+
+      strcpy(record.Username, credenziali.Username);
+      record.Port = 0;
+      record.timestamp_in = 0;
+      record.timestamp_out = 0;
+      fwrite(&record, sizeof(struct HistoryRecord), 1, fptr);
+
+      fclose(fptr);
+}
+
 void bufferizza_msg(struct des_buffered_msg *msg)
 {
       // SCRIVE NEL FILE DEI MESSAGGI BUFFERIZZATI
