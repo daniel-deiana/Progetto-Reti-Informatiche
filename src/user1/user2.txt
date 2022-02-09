@@ -1,4 +1,16 @@
---> out
- <*
---> clear
- <*
+--> ciao come stai
+ **
+--> ciao
+ **
+--> come va
+ **
+--> ciaoooo
+ **
+--> porco dio
+ **
+--> ciao a tutti
+ **
+--> ciao
+ **
+--> come va
+ **
