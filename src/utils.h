@@ -939,11 +939,16 @@ prende in ingresso il nome di un file (che deve essere presente nella directory 
 cui lo si vuole inviare, e lo inviaƒ al destinatario frammentandolo in diversi segmenti TCP se necessario
 */
 
-uint32_t invia_file(char *my_username, char *file_name, uint32_t dest_socket)
+uint32_t invia_file(char *my_username, char inputstring[], uint32_t dest_socket)
 {
       char file_path[100];
+      char file_name[100];
+      char cmd[10];
       struct stat file;
       char *file_send_buffer;
+
+      // prendo il nome del file dal comando
+      sscanf(inputstring, "%s %s", cmd, file_name);
 
       // path del file
       sprintf(file_path, "%s//%s", my_username, file_name);

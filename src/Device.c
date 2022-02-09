@@ -6,31 +6,39 @@
 
 int main(int argc, const char **argv)
 {
+
+	// lista per gli utenti attivi
 	struct clientList *active_sockets_list_head = NULL;
+
+	// lista degli utenti del gruppo corrente
 	struct clientList *group_chat_sockets_head = NULL;
+
+	// utente con cui sto chattando
 	struct clientList *current_chatting_user = NULL;
+
+	// stato dell'utente con cui sto chattando (ONLINE/OFFLINE)
 	int current_chatting_user_state = NO_MEAN;
 
+	// struttura dove mi salvo le credenziali passate nel login
 	struct credentials my_credentials;
+
+	// indirizzi per server, client, socket di listen
 	struct sockaddr_in server_addr, cl_addr, cl_listen_addr, gp_addr;
 
-	int sv_communicate, communicate, cl_socket, listener, ret, msglen, fdmax = 0;
+	// variabili dove salvo i valori dei socket, valore di ritorno, valore descrittore max
+	int sv_communicate, communicate, cl_socket, listener, ret, fdmax = 0;
 
-	// gruppi
+	// variabile che mi dice se mi trovo in un gruppo o no
 	int is_in_group = -1;
-	int last_group_id = -1;
-	char current_group[50];
 
-	char port[5];
-	char buffer[4096], LogInCommand[20];
+	// buffer generico
+	char buffer[4096];
 
-	char timestamp_string[TIMESTAMP_LEN];
+	// variabile dove salvo il nome del destinatario target (istruzioni \a user, chat user)
 	char destUsername[50];
-	char new_user[50];
 
-	// stringa per le conversioni dei numeri di porta
+	// set di descrittori per la select()
 	fd_set master, readfds;
-	FILE *RegistrationLog, *friends;
 
 	FD_ZERO(&master);
 	FD_ZERO(&readfds);
@@ -66,6 +74,10 @@ int main(int argc, const char **argv)
 
 	FD_SET(listener, &master);
 	fdmax = listener;
+
+	// //////////////////////////////////////////////////////////// FASE IN/SIGNUP ///////////////////////////////////////////////////////////
+	// ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	// comandi signup e in
 	int attempts = 0;
@@ -139,6 +151,7 @@ int main(int argc, const char **argv)
 			// controllo messaggio di login al server
 			if (strcmp(header.Options, "ok") == 0)
 			{
+				char timestamp_string[TIMESTAMP_LEN];
 
 				printf("Utente loggato\n");
 				inserisci_utente(&active_sockets_list_head, "server", sv_communicate);
@@ -152,6 +165,10 @@ int main(int argc, const char **argv)
 				printf("LOG: Hai inserito un username/password sbagliati\n");
 		}
 	}
+
+	// //////////////////////////////////////////////////////////// CORE CLIENT //////////////////////////////////////////////////////////////
+	// ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	// stampo comandi device
 	stampa_comandi_device();
@@ -189,20 +206,22 @@ int main(int argc, const char **argv)
 						// ////////////////////////// comandi chat /////////////////////////////////
 						if (check_share_command(my_credentials.Username, inputstring) == 0)
 						{
+							///////////////////////////// INVIO FILE ///////////////////////////////
+
 							if (is_in_group == 0)
 							{
-								invio_file_gruppo(my_credentials.Username, "documentazione.pdf", group_chat_sockets_head);
+								invio_file_gruppo(my_credentials.Username, inputstring, group_chat_sockets_head);
 							}
 							else
 							{
 								// prima di fare tutti i controlli, vedo se è un comando del tipo share <filename> e se il file esiste
-								if (invia_file(my_credentials.Username, "documentazione.pdf", current_chatting_user->socket) < 0)
+								if (invia_file(my_credentials.Username, inputstring, current_chatting_user->socket) < 0)
 									printf("LOG: invia_file ha ritornato un errore ");
 							}
 						}
 						else if (inputstring[0] != '\\')
 						{
-							// ----------------------- invio messaggio -----------------------------
+							// //////////////////////// INVIO MESSAGGIO //////////////////////////////
 
 							if (is_in_group == 0)
 							{
@@ -361,7 +380,6 @@ int main(int argc, const char **argv)
 
 							// setto il flag che mi dice se sto chattando con un solo utente o con un gruppo, e setto il nome del gruppo corrente
 							is_in_group = 0;
-							strcpy(current_group, group_name);
 						}
 					}
 					else
