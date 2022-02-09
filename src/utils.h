@@ -1436,3 +1436,18 @@ uint32_t check_utente_rubrica(char my_user[], char dst_user[])
       fclose(fptr);
       return -1;
 }
+
+void comando_list()
+{
+      FILE *fptr;
+      struct HistoryRecord record;
+
+      fptr = fopen("clients_history.txt", "rb");
+
+      while (fread(&record, sizeof(record), 1, fptr))
+      {
+            if (record.timestamp_out == 0)
+                  printf("%s*%lu*%d\n", record.Username, record.timestamp_in, record.Port);
+      }
+      fclose(fptr);
+}

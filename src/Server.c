@@ -86,33 +86,27 @@ int main(int argc, const char **argv)
 
 					// Check della correttezza del comando sullo stdin
 					fscanf(stdin, "%s", Command);
-					if (strlen(Command) > 1)
-					{
-						printf("Comando non esistente");
-						break;
-					}
-					if (Command[0] < '1' || Command[0] > '3')
-					{
-						printf("Hai inserito un indice relativo ad un comando non esistente/valido\n");
-						break;
-					}
 
 					// ------------------ switching comandi server -------------------
-					switch (Command[0])
+					if (strcmp(Command, "help") == 0)
 					{
-					case '1':
-						// show
-						break;
-					case '2':
-						// list
-						break;
-					case '3':
-						// esc
-						printf("------------------ chiusura del server ------------------\n");
-
-						close(Listener);
+						// comando help
+						stampa_comandi_device();
+					}
+					else if (strcmp(Command, "list") == 0)
+					{
+						// comando list
+						comando_list();
+					}
+					else if (strcmp(Command, "out") == 0)
+					{
+						// esco
 						exit(1);
-						break;
+					}
+					else
+					{
+						printf("comando non esistente\n");
+						continue;
 					}
 				}
 				else
