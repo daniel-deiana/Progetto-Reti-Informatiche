@@ -6,31 +6,39 @@
 
 int main(int argc, const char **argv)
 {
+
+	// lista per gli utenti attivi
 	struct clientList *active_sockets_list_head = NULL;
+
+	// lista degli utenti del gruppo corrente
 	struct clientList *group_chat_sockets_head = NULL;
+
+	// utente con cui sto chattando
 	struct clientList *current_chatting_user = NULL;
+
+	// stato dell'utente con cui sto chattando (ONLINE/OFFLINE)
 	int current_chatting_user_state = NO_MEAN;
 
+	// struttura dove mi salvo le credenziali passate nel login
 	struct credentials my_credentials;
+
+	// indirizzi per server, client, socket di listen
 	struct sockaddr_in server_addr, cl_addr, cl_listen_addr, gp_addr;
 
-	int sv_communicate, communicate, cl_socket, listener, ret, msglen, fdmax = 0;
+	// variabili dove salvo i valori dei socket, valore di ritorno, valore descrittore max
+	int sv_communicate, communicate, cl_socket, listener, ret, fdmax = 0;
 
-	// gruppi
+	// variabile che mi dice se mi trovo in un gruppo o no
 	int is_in_group = -1;
-	int last_group_id = -1;
-	char current_group[50];
 
-	char port[5];
-	char buffer[4096], LogInCommand[20];
+	// buffer generico
+	char buffer[4096];
 
-	char timestamp_string[TIMESTAMP_LEN];
+	// variabile dove salvo il nome del destinatario target (istruzioni \a user, chat user)
 	char destUsername[50];
-	char new_user[50];
 
-	// stringa per le conversioni dei numeri di porta
+	// set di descrittori per la select()
 	fd_set master, readfds;
-	FILE *RegistrationLog, *friends;
 
 	FD_ZERO(&master);
 	FD_ZERO(&readfds);
@@ -47,6 +55,7 @@ int main(int argc, const char **argv)
 	// aggiungo il socket di comunincazione con il server tra i monitorati dall select
 	FD_SET(STDIN, &master);
 
+	// controlli di correttezza sugli argomenti passati al programma
 	if (argc != 2)
 	{
 		perror("Il numero di parametri che ho inserito all'avvio è sbagliato");
@@ -67,6 +76,10 @@ int main(int argc, const char **argv)
 	FD_SET(listener, &master);
 	fdmax = listener;
 
+	// //////////////////////////////////////////////////////////// FASE IN/SIGNUP ///////////////////////////////////////////////////////////
+	// ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 	// comandi signup e in
 	int attempts = 0;
 
@@ -81,6 +94,9 @@ int main(int argc, const char **argv)
 		sscanf(commandString, "%s %s %s %s", cmd, first, second, third);
 		printf("stampo i comandi passati in input: first: %s, second: %s, third %s\n", first, second, third);
 
+		// se è la prima volta che faccio partire il programma provo a connettermi
+
+		// se la connect() va a buon file allora invio la mia richiesta/senno riprovo a connnettermi
 		if (attempts == 0)
 		{
 			server_addr.sin_port = htons(atoi(first));
@@ -94,21 +110,28 @@ int main(int argc, const char **argv)
 			attempts++;
 		}
 
+		// 2 comandi possibili in/signup
+
 		if (strcmp(cmd, "signup") == 0)
 		{
-			invia_header(sv_communicate, 'A', "reg");
+			invia_service_msg(sv_communicate, 'A', "reg");
 			sprintf(sendbuffer, "%s %s", second, third);
 			crea_rubrica(second);
 		}
 		else if (strcmp(cmd, "in") == 0)
 		{
-			invia_header(sv_communicate, 'B', "login");
+			invia_service_msg(sv_communicate, 'B', "login");
 			strcpy(my_credentials.Username, second);
 			strcpy(my_credentials.Password, third);
 			sprintf(sendbuffer, "%s %s", second, third);
 		}
+		else
+		{
+			printf("Comando errato ... riprovare\n");
+			continue;
+		}
 
-		// invia numero di porta
+		// invio numero di porta
 		uint32_t port = atoi(argv[1]);
 		if (send(sv_communicate, (void *)&port, sizeof(uint32_t), 0) < 0)
 		{
@@ -121,7 +144,7 @@ int main(int argc, const char **argv)
 		invia_messaggio(sendbuffer, sv_communicate);
 
 		// risposta del server
-		ricevi_header(sv_communicate, &header);
+		ricevi_service_msg(sv_communicate, &header);
 
 		if (header.RequestType == 'A')
 		{
@@ -139,6 +162,7 @@ int main(int argc, const char **argv)
 			// controllo messaggio di login al server
 			if (strcmp(header.Options, "ok") == 0)
 			{
+				char timestamp_string[TIMESTAMP_LEN];
 
 				printf("Utente loggato\n");
 				inserisci_utente(&active_sockets_list_head, "server", sv_communicate);
@@ -153,6 +177,10 @@ int main(int argc, const char **argv)
 		}
 	}
 
+	// //////////////////////////////////////////////////////////// CORE CLIENT //////////////////////////////////////////////////////////////
+	// ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 	// stampo comandi device
 	stampa_comandi_device();
 
@@ -160,20 +188,16 @@ int main(int argc, const char **argv)
 	// GESTIONE DEGLI INPUT DA STDIN E DEI SOCKET TRAMITE SELECT
 	for (;;)
 	{
-		// ri-inizalizzo la lista dei descrittori in lettura
 		readfds = master;
-		printf("sto per chiamare select\n");
 		select(fdmax + 1, &readfds, NULL, NULL, NULL);
 		for (int i = 0; i <= fdmax; i++)
 		{
-			// Devo ciclare fra i descrittori per servire quelli pronti
-
 			if (FD_ISSET(i, &readfds))
 			{
-				// Ho trovato un descrittore pronto
-				// Controllo il tipo del descrittore
+				// controllo se ho qualcosa di nuovo nello stdin
 				if (i == STDIN)
 				{
+
 					// HO UN NUOVO COMANDO NELLO STDIN
 					struct clientcmd cmd;
 					char inputstring[1024];
@@ -184,24 +208,35 @@ int main(int argc, const char **argv)
 						perror("Errore in lettura del comando\n");
 					fflush(stdin);
 
+					// se l'utente si trova in un gruppo o in una chat allora invio il messaggioo sullo stdin
 					if (is_in_group == 0 || current_chatting_user != NULL)
 					{
 						// ////////////////////////// comandi chat /////////////////////////////////
+
+						// controllo se l'utente ha scritto share <nome_file>
 						if (check_share_command(my_credentials.Username, inputstring) == 0)
 						{
 
-							// prima di fare tutti i controlli, vedo se è un comando del tipo share <filename> e se il file esiste
-							if (invia_file(my_credentials.Username, "documentazione.pdf", current_chatting_user->socket) < 0)
-								printf("LOG: invia_file ha ritornato un errore ");
+							///////////////////////////// INVIO FILE ///////////////////////////////
+
+							if (is_in_group == 0)
+							{
+								invio_file_gruppo(my_credentials.Username, inputstring, group_chat_sockets_head);
+							}
+							else
+							{
+								// prima di fare tutti i controlli, vedo se è un comando del tipo share <filename> e se il file esiste
+								if (invia_file(my_credentials.Username, inputstring, current_chatting_user->socket) < 0)
+									printf("LOG: invia_file ha ritornato un errore ");
+							}
 						}
 						else if (inputstring[0] != '\\')
 						{
-							// ----------------------- invio messaggio -----------------------------
+							// //////////////////////// INVIO MESSAGGIO //////////////////////////////
 
 							if (is_in_group == 0)
 							{
 								// INVIO DEL MESSAGGIO: CASO CHAT DI GRUPPO
-
 								invia_messaggio_gruppo(inputstring, group_chat_sockets_head);
 							}
 							else
@@ -210,10 +245,12 @@ int main(int argc, const char **argv)
 
 								if (current_chatting_user_state == OFFLINE)
 								{
+									// MESSAGGIO PENDENTE
+
 									// bufferizzo sul server, invio prima richiesta di buffer poi messaggio vero e proprio
 									char premessage[1024];
 
-									invia_header(sv_communicate, 'E', "tosend");
+									invia_service_msg(sv_communicate, 'E', "tosend");
 
 									pulisci_buffer(premessage, sizeof(premessage));
 
@@ -225,6 +262,8 @@ int main(int argc, const char **argv)
 								}
 								else if (current_chatting_user_state == ONLINE)
 								{
+									// MESSAGGIO INVIATO DIRETTAMENTE AL PEER
+
 									invia_messaggio(inputstring, current_chatting_user->socket);
 									scrivi_file_chat(my_credentials.Username, current_chatting_user->username, inputstring, SENDING, RECEIVED);
 								}
@@ -234,6 +273,7 @@ int main(int argc, const char **argv)
 						{
 							// -------------------- comando "\q + "INVIO" -------------------------
 
+							// TORNO ALLA SCHERMATA DEI COMANDI
 							stampa_lista_utenti(group_chat_sockets_head);
 
 							free(current_chatting_user);
@@ -242,22 +282,26 @@ int main(int argc, const char **argv)
 							is_in_group = -1;
 							elimina_utenti_lista(&group_chat_sockets_head);
 
+							printf("///////// Menu comandi ///////////\n");
+
 							break;
 						}
 						else if (inputstring[1] == 'u')
 						{
 							// -------------------- comando "\u + "INVIO" -------------------------
 
+							// creazione di un gruppo
+
 							// dico al server che voglio la lista degli utenti online
 							if (is_in_group < 0)
 							{
 								// vuol dire che questa è la prima volta che aggiungo un utente dopo essere entrato in chat con un altro,
 								// quindi creo un nuovo gruppo dove i primi partecipanti saremo io e l'utente con cui stavo chattando
-								invia_header(sv_communicate, 'U', "create");
+								invia_service_msg(sv_communicate, 'U', "create");
 							}
 							else
 								// sono gia in un gruppo e aggiungo un utente a quest ultimo
-								invia_header(sv_communicate, 'U', "add");
+								invia_service_msg(sv_communicate, 'U', "add");
 
 							// risposta server
 							ricevi_messaggio(buffer, sv_communicate);
@@ -355,7 +399,6 @@ int main(int argc, const char **argv)
 
 							// setto il flag che mi dice se sto chattando con un solo utente o con un gruppo, e setto il nome del gruppo corrente
 							is_in_group = 0;
-							strcpy(current_group, group_name);
 						}
 					}
 					else
@@ -364,11 +407,6 @@ int main(int argc, const char **argv)
 
 						fflush(stdin);
 						sscanf(inputstring, "%s %s", cmd.Command, cmd.Argument1);
-						if (check(cmd.Command) == -1)
-						{
-							printf("Comando non valido:\n");
-							break; // Ho passato un comando non valido
-						}
 
 						//  ////////////////////////// switching comandi /////////////////////////////
 
@@ -381,7 +419,7 @@ int main(int argc, const char **argv)
 							{
 								printf("doveva inviarmi dei messaggi\n");
 								// devo notificare il server che ho visualizzato i messaggi pendenti con la show
-								invia_header(sv_communicate, 'N', "notify");
+								invia_service_msg(sv_communicate, 'N', "notify");
 
 								char buf[256];
 
@@ -397,7 +435,7 @@ int main(int argc, const char **argv)
 						case 'h':
 						{
 							// ----------------------- comando hanging ----------------------------
-							invia_header(sv_communicate, 'H', "hang");
+							invia_service_msg(sv_communicate, 'H', "hang");
 
 							receive_hanging_info(sv_communicate);
 						}
@@ -434,7 +472,7 @@ int main(int argc, const char **argv)
 								break;
 							}
 
-							invia_header(sv_communicate, 'C', optionString);
+							invia_service_msg(sv_communicate, 'C', optionString);
 
 							strcpy(destUsername, cmd.Argument1);
 							sprintf(sendbuffer, "%s", cmd.Argument1);
@@ -443,7 +481,7 @@ int main(int argc, const char **argv)
 							invia_messaggio(sendbuffer, sv_communicate);
 
 							// risposta server: destinatario online/offline
-							ricevi_header(sv_communicate, &header);
+							ricevi_service_msg(sv_communicate, &header);
 
 							// ricevo il numero di porta dell'utente con cui voglio aprire una chat
 							int port;
@@ -518,7 +556,7 @@ int main(int argc, const char **argv)
 							{
 								printf("doveva inviarmi dei messaggi\n");
 								// devo notificare il server che ho visualizzato i messaggi pendenti con la show
-								invia_header(sv_communicate, 'N', "notify");
+								invia_service_msg(sv_communicate, 'N', "notify");
 
 								char buf[256];
 
@@ -594,7 +632,8 @@ int main(int argc, const char **argv)
 							rimuovi_utente(&active_sockets_list_head, i, User_logged_out);
 							rimuovi_utente(&group_chat_sockets_head, i, User_logged_out);
 
-							printf("LOG: %s è uscito dalla chat di gruppo\n", User_logged_out);
+							if (is_in_group == 0)
+								printf("LOG: %s è uscito dalla chat di gruppo\n", User_logged_out);
 
 							continue;
 						}
@@ -670,7 +709,7 @@ int main(int argc, const char **argv)
 
 									int port;
 									// devo creare una connessione con l'utente
-									invia_header(sv_communicate, 'P', "port_req");
+									invia_service_msg(sv_communicate, 'P', "port_req");
 
 									// invio il nome dell'utente di cui voglio sapere la porta
 									invia_messaggio(buffer, sv_communicate);
@@ -709,6 +748,8 @@ int main(int argc, const char **argv)
 								inserisci_utente(&group_chat_sockets_head, buffer, socket_utente_chat);
 							}
 							// aggiorno il flag che mi dice se sto partecipando attualmente ad un gruppo
+							free(current_chatting_user);
+							current_chatting_user = NULL;
 							is_in_group = 0;
 						}
 						else if (strcmp(bufferChatMessage, "***FILE***") == 0)

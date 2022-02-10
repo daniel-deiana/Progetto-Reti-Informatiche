@@ -18,24 +18,19 @@
 #define TIMESTAMP_LEN 26
 #define MAX_OPTIONS_LEN 128
 
-// -------------------------------
+// costanti per lo stato di un client
 #define ONLINE 1
 #define OFFLINE 0
-// -------------------------------
 
-// -------------------------------
+// costanti per lo stato di un messaggio da scrivere su file
 #define SENDING 0
 #define RECEIVING 1
-// -------------------------------
 
-// -------------------------------
+// costanti per lo stato di un messaggio da scrivere su file
 #define RECEIVED 2
 #define ONLY_SENDED 3
-// -------------------------------
 
-// -------------------------------
 #define NO_MEAN 4
-// -------------------------------
 
 // descrittore utilizzato per mantenere lo stato delle informazioni di hanging di ogni utente
 struct des_hanging_record
@@ -66,8 +61,8 @@ struct group_peer
 // identificatore richiesta di notifica da un utente ad un altro
 struct notify_queue
 {
-      char sender[50];
-      char target[50];
+      char sender[50]; // chi sta mandando la notify, l'utente che ha letto il/i messaggio/i
+      char target[50]; // chi deve ricevere la notifica di ricezione del mess.
       struct notify_queue *pointer;
 };
 
@@ -89,11 +84,12 @@ struct clientcmd
 // descrittore messaggio bufferizzato sul server
 struct des_buffered_msg
 {
-      char sender[50];        // mittente del messaggio
-      char receiver[50];      // destinatario del messaggio
-      char message[1024 * 4]; // prendendo in considerazione che telegram impone una dimensione massima per messaggio di 4096
-      time_t timestamp;       // un timestamp che mi dice quando è stato inviato il messaggio
+      char sender[50];    // mittente del messaggio
+      char receiver[50];  // destinatario del messaggio
+      char message[4096]; // prendendo in considerazione che telegram impone una dimensione massima per messaggio di 4096
+      time_t timestamp;   // un timestamp che mi dice quando è stato inviato il messaggio
 };
+
 // descrittore record di history di un utente (viene utilizzato per tenere traccia dei login e dei logout)
 struct HistoryRecord
 {
@@ -102,6 +98,7 @@ struct HistoryRecord
       time_t timestamp_in;
       time_t timestamp_out;
 };
+
 // descrittore credenziali di un utente username:password
 struct credentials
 {
@@ -113,7 +110,7 @@ struct credentials
 struct msg_header
 {
       char RequestType;
-      char Options[7];
+      char Options[128];
 };
 
 // //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -126,21 +123,31 @@ void pulisci_buffer(char *buffer, uint32_t buf_len) { memset(buffer, 0, buf_len)
 // ///////////////////////////////////////// FUNZIONI DI STAMPA /////////////////////////////////////////////////////////////
 // //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+void stampa_comandi_server()
+{
+      printf("/////////// COMANDI SERVER ////////////\n\n");
+      printf("help - mostra una breve descrizione dei comandi\n");
+      printf("list - mostra lista utenti online\n");
+      printf("esc  - chiude il server\n");
+      printf("//////////////////////////////////////\n\n");
+}
+
 void stampa_comandi_device()
 {
-      printf("-------------------- comandi device --------------------\n\n");
-      printf("1 <hanging>:\n");
-      printf("2 <show> <username>:\n");
-      printf("3 <chat> <username>:\n");
-      printf("4 <share> <file_name>: \n");
-      printf("5 <out>:\n");
-      printf("---------------------------------------------------------\n");
+      printf("/////////////////// COMANDI DEVICE ///////////////////\n\n");
+      printf("1 - shanging:\n");
+      printf("2 - show username:\n");
+      printf("3 - chat username:\n");
+      printf("4 - share file_name: \n");
+      printf("5 - out\n");
+      printf("/////////////////////////////////////////////////////\n");
 }
 
 // //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // ///////////////////////////////////////// GESTIONE FILES  ////////////////////////////////////////////////////////////////
 // //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+// dato uno username, se esiste il suo record nel file, ne restituisco la porta dove è connesso
 uint32_t porta_da_username(char *username)
 {
       uint32_t port = 0;
@@ -160,6 +167,7 @@ uint32_t porta_da_username(char *username)
       return port;
 }
 
+// cotrolla se uno user è online
 uint32_t check_username_online(char *Username)
 {
       // apro il file di history
@@ -180,6 +188,7 @@ uint32_t check_username_online(char *Username)
       return -1;
 }
 
+// aggiorna i valori della history quando il client fa login
 uint32_t aggiorna_history_utente(FILE *fileptr, char *Username, uint32_t port)
 {
       struct HistoryRecord record;
@@ -210,6 +219,7 @@ uint32_t aggiorna_history_utente(FILE *fileptr, char *Username, uint32_t port)
       return -1;
 }
 
+// stampo gli utenti del sevizio
 void stampa_history_utenti()
 {
       FILE *fptr;
@@ -226,6 +236,36 @@ void stampa_history_utenti()
       fclose(fptr);
 }
 
+void registra_utente(char buf[])
+{
+      struct credentials MyCredentials;
+      sscanf(buf, "%s %s", MyCredentials.Username, MyCredentials.Password);
+
+      FILE *fptr = fopen("registered_clients.txt", "ab");
+
+      fwrite(&MyCredentials, sizeof(MyCredentials), 1, fptr);
+      fclose(fptr);
+}
+
+// inizializza un utente nel file history
+void inizializza_history(char buf[])
+{
+      struct credentials credenziali;
+      sscanf(buf, "%s %s", credenziali.Username, credenziali.Password);
+
+      FILE *fptr = fopen("clients_history.txt", "ab"); // modalità append per non sovrascrivere i record precedenti
+      struct HistoryRecord record;
+
+      strcpy(record.Username, credenziali.Username);
+      record.Port = 0;
+      record.timestamp_in = 0;
+      record.timestamp_out = 0;
+      fwrite(&record, sizeof(struct HistoryRecord), 1, fptr);
+
+      fclose(fptr);
+}
+
+// scrive un messaggio sul file dei mess pendenti
 void bufferizza_msg(struct des_buffered_msg *msg)
 {
       // SCRIVE NEL FILE DEI MESSAGGI BUFFERIZZATI
@@ -253,6 +293,7 @@ void stampa_msg_bufferizzati()
       }
 }
 
+// conta i messaggi bufferizzati per dest da mitt
 uint32_t count_buffered(char *dest, char *mitt)
 {
 
@@ -269,14 +310,6 @@ uint32_t count_buffered(char *dest, char *mitt)
       }
       fclose(fptr);
       return nmsg;
-}
-
-uint32_t check(char *cmd)
-{
-      if ((strcmp("share", cmd) == 0) || (strcmp("hanging", cmd) == 0) || (strcmp("show", cmd) == 0) || (strcmp("chat", cmd) == 0) || (strcmp("out", cmd) == 0))
-            return 0;
-      else
-            return -1;
 }
 
 // Routine di logout: quando un utente si disconette aggiorna il campo timestamp_out al tempo corrente
@@ -330,7 +363,7 @@ uint32_t rimuovi_utente(struct clientList **head, uint32_t todelete, char *usern
 {
       struct clientList *pun;
 
-      if (head == NULL)
+      if (*head == NULL)
             return -1;
 
       // todelete si trova in testa
@@ -361,6 +394,8 @@ uint32_t rimuovi_utente(struct clientList **head, uint32_t todelete, char *usern
       temp->pointer = pun->pointer;
       return 0;
 }
+
+// stampa la lista degli utenti puntata da head
 void stampa_lista_utenti(struct clientList *head)
 {
       if (head == NULL)
@@ -374,6 +409,7 @@ void stampa_lista_utenti(struct clientList *head)
 // ///////////////////////////////////////// GESTIONE LISTA NOTIFY //////////////////////////////////////////////////////////
 // //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+// accoda la richiesta di notifica su una lista
 uint32_t notify_enqueue(struct notify_queue **head, char *sender, char *target)
 {
       struct notify_queue *node = (struct notify_queue *)malloc(sizeof(struct notify_queue));
@@ -393,6 +429,7 @@ uint32_t notify_enqueue(struct notify_queue **head, char *sender, char *target)
       return 0;
 }
 
+// elimina una richiesta di una notifica dalla lista di notify
 uint32_t notify_dequeue(struct notify_queue **head, char *sender, char *target)
 {
       struct notify_queue *pun;
@@ -426,10 +463,6 @@ uint32_t notify_dequeue(struct notify_queue **head, char *sender, char *target)
       temp->pointer = pun->pointer;
       return 0;
 }
-
-// //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // ritorna -1 se non trova user nel log dei registrati del server, 0 altrimenti
 uint32_t is_client_registered(char *username)
@@ -472,7 +505,6 @@ uint32_t invia_messaggi_pendenti(char *richiedente, char *target, uint32_t dest_
       FILE *fptr = fopen("chat_buffer.txt", "rb+");
 
       msg_num = count_buffered(richiedente, target);
-      printf("countBuffered ha restituito %d messaggi\n", msg_num);
 
       if (send(dest_socket, (void *)&msg_num, sizeof(int), 0) < 0)
       {
@@ -564,7 +596,7 @@ uint32_t ricevi_messaggio(char *recv_buffer, uint32_t sender_socket)
 }
 
 // invia un headser che ha la seguente struttura - |req_type options|
-uint32_t invia_header(uint32_t receiver_socket, char req_type, char *options)
+uint32_t invia_service_msg(uint32_t receiver_socket, char req_type, char *options)
 {
       char buf[1024];
       uint32_t msg_len;
@@ -599,7 +631,7 @@ uint32_t invia_header(uint32_t receiver_socket, char req_type, char *options)
 }
 
 // riceve i dati di un header proveniente dal socket sender_socket e ne fa il parsing sulla struttra header
-uint32_t ricevi_header(uint32_t sender_socket, struct msg_header *header)
+uint32_t ricevi_service_msg(uint32_t sender_socket, struct msg_header *header)
 {
       uint32_t msg_len; // ci salvo la dimensione dell'header che sta arrivando
       char buf[1024];   // buffer su cui ricevo l'header
@@ -788,7 +820,7 @@ uint32_t handler_comand_show(char my_username[], char target_username[], uint32_
       char buf[512];
 
       // invio richiesta di show al server
-      invia_header(server_socket, 'D', "toreq");
+      invia_service_msg(server_socket, 'D', "toreq");
 
       // serializzo buffer per l'invio
       pulisci_buffer(buf, sizeof(buf));
@@ -930,11 +962,16 @@ prende in ingresso il nome di un file (che deve essere presente nella directory 
 cui lo si vuole inviare, e lo inviaƒ al destinatario frammentandolo in diversi segmenti TCP se necessario
 */
 
-uint32_t invia_file(char *my_username, char *file_name, uint32_t dest_socket)
+uint32_t invia_file(char *my_username, char inputstring[], uint32_t dest_socket)
 {
       char file_path[100];
+      char file_name[100];
+      char cmd[10];
       struct stat file;
       char *file_send_buffer;
+
+      // prendo il nome del file dal comando
+      sscanf(inputstring, "%s %s", cmd, file_name);
 
       // path del file
       sprintf(file_path, "%s//%s", my_username, file_name);
@@ -1450,4 +1487,11 @@ void comando_list()
                   printf("%s*%lu*%d\n", record.Username, record.timestamp_in, record.Port);
       }
       fclose(fptr);
+}
+
+void invio_file_gruppo(char my_username[], char nome_file[], struct clientList *head)
+{
+      // invio il file a tutti gli utenti nel gruppo
+      for (struct clientList *temp = head; temp != NULL; temp = temp->pointer)
+            invia_file(my_username, nome_file, temp->socket);
 }
