@@ -124,7 +124,7 @@ int main(int argc, const char **argv)
 						fdmax = (communicate > fdmax) ? communicate : fdmax;
 						FD_SET(communicate, &master);
 
-						printf("Accettata richiesta di connesione da un client: \n");
+						printf("Nuova connessione TCP\n");
 					}
 					else
 					{
@@ -148,7 +148,7 @@ int main(int argc, const char **argv)
 							stampa_history_utenti();
 
 							// debug
-							printf("Ho chiuso la comunicazione con il socket: %d\n", i);
+							printf("LOG: connessione chiusa con %d\n", i);
 							continue;
 						}
 
@@ -175,10 +175,6 @@ int main(int argc, const char **argv)
 
 							// ricezione credenziali
 							ricevi_messaggio(buffer, i);
-
-							// debug
-							printf("Sto per registrare un utente che mi ha passato il seguente buffer: %s\n", buffer);
-
 							sscanf(buffer, "%s %s", MyCredentials.Username, MyCredentials.Password);
 
 							if (is_client_registered(MyCredentials.Username) == 0)
@@ -214,8 +210,6 @@ int main(int argc, const char **argv)
 
 							if (is_client_registered(cl_credentials.Username) == 0)
 							{
-								// debug
-								printf("LOG: Sto mandando l'ack positivo\n");
 
 								invia_header(i, 'B', "ok");
 
@@ -298,8 +292,7 @@ int main(int argc, const char **argv)
 							ricevi_messaggio(messagebuffer, i);
 
 							sscanf(messagebuffer, "%s %s %[^\t]", tobuffer.sender, tobuffer.receiver, tobuffer.message);
-							printf("LOG: ho ricevuto %d byte, sender: %s\nreceiver:%s \n", numbyte, tobuffer.sender, tobuffer.receiver);
-							printf("LOG: Il messaggio che ho ricevuto dal client è:%s \n", tobuffer.message);
+							printf("LOG: Ho un messaggio da bufferizzare: %s \n", tobuffer.message);
 
 							bufferizza_msg(&tobuffer);
 							aggiorna_hanging(tobuffer.sender, tobuffer.receiver);
