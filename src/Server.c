@@ -7,6 +7,7 @@
 int main(int argc, const char **argv)
 {
 
+	/* variabile dove appoggio i valori delle credenziali passate dal client durante una signup/in */
 	struct credentials cl_credentials;
 
 	// strutture per indirizzi
@@ -46,10 +47,8 @@ int main(int argc, const char **argv)
 
 	printf("La porta selezionata è %s \n", argv[1]);
 
-	// Stampo la parte iniziale
-	printf("------------------ server online ------------------\n\n");
-	printf("Comandi disponibili\n\n");
-	printf("1 <help>\n2 <list>\n3 <esc>\n\n");
+	printf("//////////////////// SERVER ONLINE ///////////////////////\n\n");
+	stampa_comandi_server();
 
 	memset(&cl_credentials, 0, sizeof(cl_credentials));
 	FD_ZERO(&master);
@@ -109,6 +108,7 @@ int main(int argc, const char **argv)
 					}
 					else
 					{
+						// comando non valido, torno sopra
 						printf("comando non esistente\n");
 						continue;
 					}
@@ -153,8 +153,8 @@ int main(int argc, const char **argv)
 						}
 
 						// debug
-						printf("Il tipo della richiesta è: %c\n", service_hdr.RequestType);
-						printf("Il contenuto del campo options è: %s\n", service_hdr.Options);
+						printf("LOG: tipo richiesta: %c\n", service_hdr.RequestType);
+						printf("LOG: campo option: %s\n", service_hdr.Options);
 
 						// pulizia buffer messaggi
 						memset(buffer, 0, sizeof(buffer));
@@ -163,7 +163,8 @@ int main(int argc, const char **argv)
 						{
 						case 'A':
 						{
-							// ----------------------- routine di registrazione ---------------------------
+							// /////////////////////////// routine di registrazione ///////////////////////////
+
 							struct credentials MyCredentials;
 							struct HistoryRecord record;
 							uint32_t port;
@@ -196,7 +197,8 @@ int main(int argc, const char **argv)
 
 						case 'B':
 						{
-							//-------------------------- routine di login -------------------------------
+							// /////////////////////////// routine di login ///////////////////////////
+
 							char timestamp_string[TIMESTAMP_LEN];
 							uint32_t port;
 

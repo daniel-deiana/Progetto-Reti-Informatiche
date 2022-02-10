@@ -55,6 +55,7 @@ int main(int argc, const char **argv)
 	// aggiungo il socket di comunincazione con il server tra i monitorati dall select
 	FD_SET(STDIN, &master);
 
+	// controlli di correttezza sugli argomenti passati al programma
 	if (argc != 2)
 	{
 		perror("Il numero di parametri che ho inserito all'avvio è sbagliato");
@@ -93,6 +94,9 @@ int main(int argc, const char **argv)
 		sscanf(commandString, "%s %s %s %s", cmd, first, second, third);
 		printf("stampo i comandi passati in input: first: %s, second: %s, third %s\n", first, second, third);
 
+		// se è la prima volta che faccio partire il programma provo a connettermi
+
+		// se la connect() va a buon file allora invio la mia richiesta/senno riprovo a connnettermi
 		if (attempts == 0)
 		{
 			server_addr.sin_port = htons(atoi(first));
@@ -105,6 +109,8 @@ int main(int argc, const char **argv)
 			printf("LOG: Connessione stabilita con il server\n");
 			attempts++;
 		}
+
+		// 2 comandi possibili in/signup
 
 		if (strcmp(cmd, "signup") == 0)
 		{
@@ -119,8 +125,13 @@ int main(int argc, const char **argv)
 			strcpy(my_credentials.Password, third);
 			sprintf(sendbuffer, "%s %s", second, third);
 		}
+		else
+		{
+			printf("Comando errato ... riprovare\n");
+			continue;
+		}
 
-		// invia numero di porta
+		// invio numero di porta
 		uint32_t port = atoi(argv[1]);
 		if (send(sv_communicate, (void *)&port, sizeof(uint32_t), 0) < 0)
 		{
@@ -177,20 +188,16 @@ int main(int argc, const char **argv)
 	// GESTIONE DEGLI INPUT DA STDIN E DEI SOCKET TRAMITE SELECT
 	for (;;)
 	{
-		// ri-inizalizzo la lista dei descrittori in lettura
 		readfds = master;
-		printf("sto per chiamare select\n");
 		select(fdmax + 1, &readfds, NULL, NULL, NULL);
 		for (int i = 0; i <= fdmax; i++)
 		{
-			// Devo ciclare fra i descrittori per servire quelli pronti
-
 			if (FD_ISSET(i, &readfds))
 			{
-				// Ho trovato un descrittore pronto
-				// Controllo il tipo del descrittore
+				// controllo se ho qualcosa di nuovo nello stdin
 				if (i == STDIN)
 				{
+
 					// HO UN NUOVO COMANDO NELLO STDIN
 					struct clientcmd cmd;
 					char inputstring[1024];
@@ -201,11 +208,15 @@ int main(int argc, const char **argv)
 						perror("Errore in lettura del comando\n");
 					fflush(stdin);
 
+					// se l'utente si trova in un gruppo o in una chat allora invio il messaggioo sullo stdin
 					if (is_in_group == 0 || current_chatting_user != NULL)
 					{
 						// ////////////////////////// comandi chat /////////////////////////////////
+
+						// controllo se l'utente ha scritto share <nome_file>
 						if (check_share_command(my_credentials.Username, inputstring) == 0)
 						{
+
 							///////////////////////////// INVIO FILE ///////////////////////////////
 
 							if (is_in_group == 0)
@@ -226,7 +237,6 @@ int main(int argc, const char **argv)
 							if (is_in_group == 0)
 							{
 								// INVIO DEL MESSAGGIO: CASO CHAT DI GRUPPO
-
 								invia_messaggio_gruppo(inputstring, group_chat_sockets_head);
 							}
 							else
@@ -235,6 +245,8 @@ int main(int argc, const char **argv)
 
 								if (current_chatting_user_state == OFFLINE)
 								{
+									// MESSAGGIO PENDENTE
+
 									// bufferizzo sul server, invio prima richiesta di buffer poi messaggio vero e proprio
 									char premessage[1024];
 
@@ -250,6 +262,8 @@ int main(int argc, const char **argv)
 								}
 								else if (current_chatting_user_state == ONLINE)
 								{
+									// MESSAGGIO INVIATO DIRETTAMENTE AL PEER
+
 									invia_messaggio(inputstring, current_chatting_user->socket);
 									scrivi_file_chat(my_credentials.Username, current_chatting_user->username, inputstring, SENDING, RECEIVED);
 								}
@@ -259,6 +273,7 @@ int main(int argc, const char **argv)
 						{
 							// -------------------- comando "\q + "INVIO" -------------------------
 
+							// TORNO ALLA SCHERMATA DEI COMANDI
 							stampa_lista_utenti(group_chat_sockets_head);
 
 							free(current_chatting_user);
@@ -267,11 +282,15 @@ int main(int argc, const char **argv)
 							is_in_group = -1;
 							elimina_utenti_lista(&group_chat_sockets_head);
 
+							printf("///////// Menu comandi ///////////\n");
+
 							break;
 						}
 						else if (inputstring[1] == 'u')
 						{
 							// -------------------- comando "\u + "INVIO" -------------------------
+
+							// creazione di un gruppo
 
 							// dico al server che voglio la lista degli utenti online
 							if (is_in_group < 0)
