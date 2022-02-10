@@ -23,10 +23,10 @@ int main(int argc, const char **argv)
 	struct notify_queue *notify_head = NULL;
 
 	// gruppi
-	int next_group_id = 0;
+	uint32_t next_group_id = 0;
 
 	// variabili per socket, descrittoremax
-	int Listener, communicate, ret, addrlen, fdmax;
+	uint32_t Listener, communicate, ret, addrlen, fdmax;
 
 	// buffer generico
 	char buffer[4096];
@@ -79,7 +79,7 @@ int main(int argc, const char **argv)
 		// gestione input da tastiera e da sockets tramite io multiplexing
 		select(fdmax + 1, &readfds, NULL, NULL, NULL);
 
-		for (int i = 0; i <= fdmax; i++)
+		for (uint32_t i = 0; i <= fdmax; i++)
 		{
 			if (FD_ISSET(i, &readfds))
 			{
@@ -132,8 +132,10 @@ int main(int argc, const char **argv)
 
 						struct msg_header service_hdr;
 
+						printf("///////////////////// HANDLING RICHIESTA ///////////////////\n");
+
 						// ricezione di una richiesta
-						if (ricevi_header(i, &service_hdr) == 0)
+						if (ricevi_service_msg(i, &service_hdr) == 0)
 						{
 							// chiusura della connessione TCP
 							char logout_user[50];
@@ -178,10 +180,10 @@ int main(int argc, const char **argv)
 							sscanf(buffer, "%s %s", MyCredentials.Username, MyCredentials.Password);
 
 							if (is_client_registered(MyCredentials.Username) == 0)
-								invia_header(i, 'A', "before");
+								invia_service_msg(i, 'A', "before");
 							else
 							{
-								invia_header(i, 'A', "first");
+								invia_service_msg(i, 'A', "first");
 
 								// aggiungo record sugli utenti registrati e sulla history degli utenti del nuovo arrivato
 								registra_utente(buffer);
@@ -211,7 +213,7 @@ int main(int argc, const char **argv)
 							if (is_client_registered(cl_credentials.Username) == 0)
 							{
 
-								invia_header(i, 'B', "ok");
+								invia_service_msg(i, 'B', "ok");
 
 								pulisci_buffer(timestamp_string, sizeof(timestamp_string));
 								ricevi_messaggio(timestamp_string, i);
@@ -229,7 +231,7 @@ int main(int argc, const char **argv)
 							{
 								// debug
 								printf("LOG: Non ho trovato le credenziali nel registro del server\n");
-								invia_header(i, 'B', "noreg");
+								invia_service_msg(i, 'B', "noreg");
 							}
 						}
 						break;
@@ -237,7 +239,7 @@ int main(int argc, const char **argv)
 						case 'C':
 						{
 							// ---------------------------- routine chat ------------------------------
-							int port;
+							uint32_t port;
 
 							ricevi_messaggio(buffer, i);
 							printf("LOG: Ho ricevuto la richiesta di una chat con l'utente <%s>\n", buffer);
@@ -245,9 +247,9 @@ int main(int argc, const char **argv)
 							port = check_username_online(buffer);
 
 							if (port == -1)
-								invia_header(i, 'C', "OFF");
+								invia_service_msg(i, 'C', "OFF");
 							else
-								invia_header(i, 'C', "ON");
+								invia_service_msg(i, 'C', "ON");
 
 							// invio il numero di porta
 							if (send(i, (void *)&port, sizeof(int), 0) < 0)
@@ -283,7 +285,7 @@ int main(int argc, const char **argv)
 
 							struct des_buffered_msg tobuffer;
 							char messagebuffer[4096];
-							int numbyte;
+							uint32_t numbyte;
 
 							memset(&tobuffer, 0, sizeof(tobuffer));
 
@@ -335,7 +337,7 @@ int main(int argc, const char **argv)
 						{
 							// ---------------------- routine chat di gruppo -----------------------
 
-							int porta;
+							uint32_t porta;
 							char group_name[50];
 
 							// invio sringa che contiene username utenti online
@@ -370,7 +372,7 @@ int main(int argc, const char **argv)
 
 							// spedisco il numero di porta dell'utente
 							porta = porta_da_username(user_to_add);
-							int ret = send(i, (void *)&porta, sizeof(uint32_t), 0);
+							uint32_t ret = send(i, (void *)&porta, sizeof(uint32_t), 0);
 						}
 						break;
 						case 'N':
@@ -394,11 +396,12 @@ int main(int argc, const char **argv)
 							ricevi_messaggio(buffer, i);
 
 							// mando la porta
-							int porta = check_username_online(buffer);
-							int ret = send(i, (void *)&porta, sizeof(uint32_t), 0);
+							uint32_t porta = check_username_online(buffer);
+							uint32_t ret = send(i, (void *)&porta, sizeof(uint32_t), 0);
 						}
 						break;
 						}
+						printf("///////////////// FINE HANDLING RICHIESTA /////////////////\n\n");
 					}
 				}
 			}

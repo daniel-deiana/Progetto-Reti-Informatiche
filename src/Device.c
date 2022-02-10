@@ -114,13 +114,13 @@ int main(int argc, const char **argv)
 
 		if (strcmp(cmd, "signup") == 0)
 		{
-			invia_header(sv_communicate, 'A', "reg");
+			invia_service_msg(sv_communicate, 'A', "reg");
 			sprintf(sendbuffer, "%s %s", second, third);
 			crea_rubrica(second);
 		}
 		else if (strcmp(cmd, "in") == 0)
 		{
-			invia_header(sv_communicate, 'B', "login");
+			invia_service_msg(sv_communicate, 'B', "login");
 			strcpy(my_credentials.Username, second);
 			strcpy(my_credentials.Password, third);
 			sprintf(sendbuffer, "%s %s", second, third);
@@ -144,7 +144,7 @@ int main(int argc, const char **argv)
 		invia_messaggio(sendbuffer, sv_communicate);
 
 		// risposta del server
-		ricevi_header(sv_communicate, &header);
+		ricevi_service_msg(sv_communicate, &header);
 
 		if (header.RequestType == 'A')
 		{
@@ -250,7 +250,7 @@ int main(int argc, const char **argv)
 									// bufferizzo sul server, invio prima richiesta di buffer poi messaggio vero e proprio
 									char premessage[1024];
 
-									invia_header(sv_communicate, 'E', "tosend");
+									invia_service_msg(sv_communicate, 'E', "tosend");
 
 									pulisci_buffer(premessage, sizeof(premessage));
 
@@ -297,11 +297,11 @@ int main(int argc, const char **argv)
 							{
 								// vuol dire che questa è la prima volta che aggiungo un utente dopo essere entrato in chat con un altro,
 								// quindi creo un nuovo gruppo dove i primi partecipanti saremo io e l'utente con cui stavo chattando
-								invia_header(sv_communicate, 'U', "create");
+								invia_service_msg(sv_communicate, 'U', "create");
 							}
 							else
 								// sono gia in un gruppo e aggiungo un utente a quest ultimo
-								invia_header(sv_communicate, 'U', "add");
+								invia_service_msg(sv_communicate, 'U', "add");
 
 							// risposta server
 							ricevi_messaggio(buffer, sv_communicate);
@@ -407,11 +407,6 @@ int main(int argc, const char **argv)
 
 						fflush(stdin);
 						sscanf(inputstring, "%s %s", cmd.Command, cmd.Argument1);
-						if (check(cmd.Command) == -1)
-						{
-							printf("Comando non valido:\n");
-							break; // Ho passato un comando non valido
-						}
 
 						//  ////////////////////////// switching comandi /////////////////////////////
 
@@ -424,7 +419,7 @@ int main(int argc, const char **argv)
 							{
 								printf("doveva inviarmi dei messaggi\n");
 								// devo notificare il server che ho visualizzato i messaggi pendenti con la show
-								invia_header(sv_communicate, 'N', "notify");
+								invia_service_msg(sv_communicate, 'N', "notify");
 
 								char buf[256];
 
@@ -440,7 +435,7 @@ int main(int argc, const char **argv)
 						case 'h':
 						{
 							// ----------------------- comando hanging ----------------------------
-							invia_header(sv_communicate, 'H', "hang");
+							invia_service_msg(sv_communicate, 'H', "hang");
 
 							receive_hanging_info(sv_communicate);
 						}
@@ -477,7 +472,7 @@ int main(int argc, const char **argv)
 								break;
 							}
 
-							invia_header(sv_communicate, 'C', optionString);
+							invia_service_msg(sv_communicate, 'C', optionString);
 
 							strcpy(destUsername, cmd.Argument1);
 							sprintf(sendbuffer, "%s", cmd.Argument1);
@@ -486,7 +481,7 @@ int main(int argc, const char **argv)
 							invia_messaggio(sendbuffer, sv_communicate);
 
 							// risposta server: destinatario online/offline
-							ricevi_header(sv_communicate, &header);
+							ricevi_service_msg(sv_communicate, &header);
 
 							// ricevo il numero di porta dell'utente con cui voglio aprire una chat
 							int port;
@@ -561,7 +556,7 @@ int main(int argc, const char **argv)
 							{
 								printf("doveva inviarmi dei messaggi\n");
 								// devo notificare il server che ho visualizzato i messaggi pendenti con la show
-								invia_header(sv_communicate, 'N', "notify");
+								invia_service_msg(sv_communicate, 'N', "notify");
 
 								char buf[256];
 
@@ -714,7 +709,7 @@ int main(int argc, const char **argv)
 
 									int port;
 									// devo creare una connessione con l'utente
-									invia_header(sv_communicate, 'P', "port_req");
+									invia_service_msg(sv_communicate, 'P', "port_req");
 
 									// invio il nome dell'utente di cui voglio sapere la porta
 									invia_messaggio(buffer, sv_communicate);

@@ -596,7 +596,7 @@ uint32_t ricevi_messaggio(char *recv_buffer, uint32_t sender_socket)
 }
 
 // invia un headser che ha la seguente struttura - |req_type options|
-uint32_t invia_header(uint32_t receiver_socket, char req_type, char *options)
+uint32_t invia_service_msg(uint32_t receiver_socket, char req_type, char *options)
 {
       char buf[1024];
       uint32_t msg_len;
@@ -820,7 +820,7 @@ uint32_t handler_comand_show(char my_username[], char target_username[], uint32_
       char buf[512];
 
       // invio richiesta di show al server
-      invia_header(server_socket, 'D', "toreq");
+      invia_service_msg(server_socket, 'D', "toreq");
 
       // serializzo buffer per l'invio
       pulisci_buffer(buf, sizeof(buf));
