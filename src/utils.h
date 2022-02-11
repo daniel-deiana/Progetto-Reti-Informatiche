@@ -189,11 +189,11 @@ uint32_t check_username_online(char *Username)
 }
 
 // aggiorna i valori della history quando il client fa login
-uint32_t aggiorna_history_utente(FILE *fileptr, char *Username, uint32_t port)
+uint32_t aggiorna_history_utente(char *Username, uint32_t port)
 {
       struct HistoryRecord record;
       time_t rawtime;
-      fileptr = fopen("clients_history.txt", "rb+");
+      FILE *fileptr = fopen("clients_history.txt", "rb+");
       while (fread(&record, sizeof(struct HistoryRecord), 1, fileptr))
       {
             if (strcmp(record.Username, Username) == 0)
@@ -504,9 +504,9 @@ uint32_t invia_messaggi_pendenti(char *richiedente, char *target, uint32_t dest_
       struct des_buffered_msg msg; // uso per fare il parsing dei messaggi nel file
       FILE *fptr = fopen("chat_buffer.txt", "rb+");
 
-      msg_num = count_buffered(richiedente, target);
+      msg_num = htons(count_buffered(richiedente, target));
 
-      if (send(dest_socket, (void *)&msg_num, sizeof(int), 0) < 0)
+      if (send(dest_socket, (void *)&msg_num, sizeof(uint32_t), 0) < 0)
       {
             perror("Nono sono riuscito a mandare il numero di messaggi pendenti\n");
             return -1;
@@ -517,15 +517,7 @@ uint32_t invia_messaggi_pendenti(char *richiedente, char *target, uint32_t dest_
       {
             if (strcmp(msg.receiver, richiedente) == 0 && strcmp(msg.sender, target) == 0)
             {
-                  uint32_t msg_len;
-
-                  // invio dimensione del msg
-                  msg_len = strlen(msg.message);
-                  if (send(dest_socket, (void *)&msg_len, sizeof(int), 0) < 0)
-                        perror("Non sono riuscito ad inviare la dimensione del messaggio\n");
-
-                  if (send(dest_socket, (void *)&msg.message, msg_len, 0) < 0)
-                        perror("Non sono riuscito ad inviare il messaggio bufferizzato\n");
+                  invia_messaggio(msg.message, dest_socket);
 
                   strcpy(msg.sender, "junk");
                   fseek(fptr, -1 * sizeof(struct des_buffered_msg), SEEK_CUR);
@@ -539,7 +531,7 @@ uint32_t invia_messaggi_pendenti(char *richiedente, char *target, uint32_t dest_
 
 uint32_t invia_messaggio(char *send_buffer, uint32_t receiver_socket)
 {
-      uint32_t msg_len = strlen(send_buffer);
+      uint32_t msg_len = htons(strlen(send_buffer));
       uint32_t ret;
 
       // dimensione
@@ -573,6 +565,7 @@ uint32_t ricevi_messaggio(char *recv_buffer, uint32_t sender_socket)
 
       // dimensione
       ret = recv(sender_socket, (void *)&msg_len, sizeof(int), 0);
+      msg_len = ntohs(msg_len);
 
       // gestione disconnessione
       if (ret == 0)
@@ -606,7 +599,7 @@ uint32_t invia_service_msg(uint32_t receiver_socket, char req_type, char *option
       sprintf(buf, "%c %s", req_type, options);
 
       // dimensione header
-      msg_len = strlen(buf);
+      msg_len = htons(strlen(buf));
       ret = send(receiver_socket, (void *)&msg_len, sizeof(int), 0);
 
       // gestione disconnessione
@@ -830,11 +823,13 @@ uint32_t handler_comand_show(char my_username[], char target_username[], uint32_
 
       // ricevo il numero di messaggi pendenti da aspettarmi
       ret = recv(server_socket, (void *)&num_msg, sizeof(int), 0);
+      num_msg = ntohs(num_msg);
       if (ret < 0)
       {
             printf("LOG: Non sono riuscito ad ottenere il numero di messaggi pendenti\n");
             return ret;
       }
+
       printf("LOG: il server mi ha detto che %s mi ha inviato %d messaggi pendenti\n", target_username, num_msg);
 
       for (uint32_t i = 0; i < num_msg; i++)
@@ -998,9 +993,10 @@ uint32_t invia_file(char *my_username, char inputstring[], uint32_t dest_socket)
             return -1;
       }
 
-      uint32_t dim_file = file.st_size;
+      uint32_t dim_file = htons(file.st_size);
 
       // -------------- invio dimensione file ---------------
+
       if (send(dest_socket, (void *)&dim_file, sizeof(uint32_t), 0) < 0)
       {
             perror("LOG: Errore nell'invio della dimensione del file");
@@ -1070,6 +1066,7 @@ uint32_t ricevi_file(char *my_username, uint32_t sender_socket)
       // ------------- ricezione dimensione file ------------
 
       ret = recv(sender_socket, (void *)&dim_file, sizeof(int), 0);
+      dim_file = ntohs(dim_file);
       if (ret < 0)
       {
             perror("LOG: Errore nella ricezione della dimensione del file");
