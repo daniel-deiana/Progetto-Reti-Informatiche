@@ -31,8 +31,6 @@ int main(int argc, const char **argv)
 	// buffer generico
 	char buffer[4096];
 
-	
-
 	// lista di descrittori
 	fd_set master, readfds;
 
@@ -330,7 +328,6 @@ int main(int argc, const char **argv)
 
 							// prendo il nome del client che mi ha fatto la richiesta
 							username_da_socket(i, head, buf_receiver);
-
 							print_hanging();
 							// prendo le informazioni della hanging
 							send_hanging_info(buf_receiver, i);

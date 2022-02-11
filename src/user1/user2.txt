@@ -12,3 +12,11 @@
  <*
 --> sono io daniel
  <*
+--> ciao
+ <*
+--> come va
+ <*
+--> sono daniel
+ <*
+--> sono io
+ <*

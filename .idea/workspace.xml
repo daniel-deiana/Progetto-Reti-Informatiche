@@ -15,23 +15,22 @@
   <component name="ChangeListManager">
     <list default="true" id="dbba149a-cf7b-41d3-a919-6331f5130d69" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cmake-build-debug/.cmake/api/v1/reply/index-2022-02-09T15-09-49-0523.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/cmake-build-debug/.ninja_deps" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/.ninja_deps" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cmake-build-debug/.ninja_log" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/.ninja_log" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/Progetto.dir/src/Device.c.o" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/Progetto.dir/src/Device.c.o" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/Progetto.dir/src/Server.c.o" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/Progetto.dir/src/Server.c.o" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cmake-build-debug/Progetto" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/Progetto" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/cmake-build-debug/Testing/Temporary/LastTest.log" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/Testing/Temporary/LastTest.log" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Device.c" beforeDir="false" afterPath="$PROJECT_DIR$/src/Device.c" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/Server.c" beforeDir="false" afterPath="$PROJECT_DIR$/src/Server.c" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/chat_buffer.txt" beforeDir="false" afterPath="$PROJECT_DIR$/src/chat_buffer.txt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/clients_history.txt" beforeDir="false" afterPath="$PROJECT_DIR$/src/clients_history.txt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/dev" beforeDir="false" afterPath="$PROJECT_DIR$/src/dev" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/hanging_data.txt" beforeDir="false" afterPath="$PROJECT_DIR$/src/hanging_data.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/registered_clients.txt" beforeDir="false" afterPath="$PROJECT_DIR$/src/registered_clients.txt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/serv" beforeDir="false" afterPath="$PROJECT_DIR$/src/serv" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/user1/user1_logout_info.txt" beforeDir="false" afterPath="$PROJECT_DIR$/src/user1/user1_logout_info.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/user1/user1_rubrica.txt" beforeDir="false" afterPath="$PROJECT_DIR$/src/user1/user1_rubrica.txt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/user1/user2.txt" beforeDir="false" afterPath="$PROJECT_DIR$/src/user1/user2.txt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/user2/user2_logout_info.txt" beforeDir="false" afterPath="$PROJECT_DIR$/src/user2/user2_logout_info.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/user2/user2_rubrica.txt" beforeDir="false" afterPath="$PROJECT_DIR$/src/user2/user2_rubrica.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/user3/user3_logout_info.txt" beforeDir="false" afterPath="$PROJECT_DIR$/src/user3/user3_logout_info.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/user3/user3_rubrica.txt" beforeDir="false" afterPath="$PROJECT_DIR$/src/user3/user3_rubrica.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/user4/user4_logout_info.txt" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/src/utils.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/utils.h" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -111,13 +110,18 @@
       <breakpoints>
         <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
           <url>file://$PROJECT_DIR$/src/server.c</url>
-          <line>267</line>
+          <line>265</line>
           <option name="timeStamp" value="57" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
           <url>file://$PROJECT_DIR$/src/server.c</url>
-          <line>336</line>
-          <option name="timeStamp" value="80" />
+          <line>332</line>
+          <option name="timeStamp" value="83" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/src/server.c</url>
+          <line>333</line>
+          <option name="timeStamp" value="85" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>
