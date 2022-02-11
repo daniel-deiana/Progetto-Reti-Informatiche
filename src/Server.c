@@ -398,7 +398,7 @@ int main(int argc, const char **argv)
 
 							// mando la porta
 							uint32_t porta = htons(check_username_online(buffer));
-							uint32_t ret = send(i, (void *)&porta, sizeof(uint32_t), 0);
+							int ret = send(i, (void *)&porta, sizeof(uint32_t), 0);
 						}
 						break;
 						}
