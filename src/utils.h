@@ -37,8 +37,8 @@ struct des_hanging_record
 {
       char sender[USERNAME_LEN];
       char receiver[USERNAME_LEN];
-      uint32_t max_timestamp;
-      uint32_t num_pending_msg;
+      uint64_t max_timestamp;
+      uint64_t num_pending_msg;
 };
 
 // descrittore per memorizzare le informazioni riguardanti i gruppi
@@ -87,7 +87,7 @@ struct des_buffered_msg
       char sender[50];    // mittente del messaggio
       char receiver[50];  // destinatario del messaggio
       char message[4096]; // prendendo in considerazione che telegram impone una dimensione massima per messaggio di 4096
-      time_t timestamp;   // un timestamp che mi dice quando è stato inviato il messaggio
+      uint64_t timestamp; // un timestamp che mi dice quando è stato inviato il messaggio
 };
 
 // descrittore record di history di un utente (viene utilizzato per tenere traccia dei login e dei logout)
@@ -268,10 +268,10 @@ void inizializza_history(char buf[])
 void bufferizza_msg(struct des_buffered_msg *msg)
 {
       // SCRIVE NEL FILE DEI MESSAGGI BUFFERIZZATI
-      time_t rawtime;
+      uint64_t rawtime;
       FILE *fileptr = fopen("chat_buffer.txt", "ab+");
       // setto il timestamp del messaggio
-      msg->timestamp = time(&rawtime);
+      msg->timestamp = time((time_t *)&rawtime);
       fwrite(msg, sizeof(struct des_buffered_msg), 1, fileptr);
       fclose(fileptr);
 }
@@ -284,7 +284,7 @@ void stampa_msg_bufferizzati()
       struct des_buffered_msg record;
       while (fread(&record, sizeof(record), 1, fptr))
       {
-            printf("sender:%s|receiver: %s|messaggio: %s|timestamp %ld\n",
+            printf("sender:%s|receiver: %s|messaggio: %s|timestamp %lu\n",
                    record.sender,
                    record.receiver,
                    record.message,
@@ -293,10 +293,10 @@ void stampa_msg_bufferizzati()
 }
 
 // conta i messaggi bufferizzati per dest da mitt
-uint32_t count_buffered(char *dest, char *mitt)
+uint64_t count_buffered(char *dest, char *mitt)
 {
 
-      uint32_t nmsg = 0;
+      uint64_t nmsg = 0;
       struct des_buffered_msg msg;
       FILE *fptr = fopen("chat_buffer.txt", "rb");
 
@@ -933,7 +933,6 @@ uint32_t check_share_command(char *my_username, char *command_string)
       pulisci_buffer(file_name, sizeof(file_name));
 
       sscanf(command_string, "%s %s\n", cmd, file_name);
-      printf("qua dentro");
 
       if (strcmp(cmd, "share") != 0)
             return -1;
@@ -1256,11 +1255,11 @@ uint32_t aggiungi_utente_a_gruppo(char peer_user[], char nomegruppo[], struct de
 }
 
 // ritorna il massimo timestamp nei record dei messaggi bufferizzati relativi alla coppia sender | receiver
-uint32_t cerca_timestamp_hanging(char buf_sender[], char buf_receiver[])
+uint64_t cerca_timestamp_hanging(char buf_sender[], char buf_receiver[])
 {
       FILE *fptr = fopen("chat_buffer.txt", "rb");
       struct des_buffered_msg buf_msg;
-      time_t max_timestamp = -1; // variabile di appoggio per il timestamp di valore massimo
+      uint64_t max_timestamp = 0; // variabile di appoggio per il timestamp di valore massimo
 
       while (fread(&buf_msg, sizeof(struct des_buffered_msg), 1, fptr))
       {
@@ -1280,11 +1279,11 @@ void aggiorna_hanging(char buf_sender[], char buf_receiver[])
 {
 
       // per la coppia di utenti |buf_sender|buf_receiver| devo andare a contare i messaggi pendenti e il timestamp del più recente
-      uint32_t num_msg = count_buffered(buf_receiver, buf_sender);
+      uint64_t num_msg = count_buffered(buf_receiver, buf_sender);
 
       // vado a cercare il timestamp più grande relativo alla "chiave" sender | receiver
 
-      time_t max_timestamp = cerca_timestamp_hanging(buf_sender, buf_receiver);
+      uint64_t max_timestamp = cerca_timestamp_hanging(buf_sender, buf_receiver);
 
       // aggiorno il campo del file hanging_data con i dati appena trovati
 
@@ -1369,22 +1368,22 @@ uint32_t send_hanging_info(char buf_receiver[], uint32_t sender_socket)
                   invia_messaggio(record.sender, sender_socket);
 
                   // mando il num_msg
-                  uint32_t e_len = htons(record.num_pending_msg);
-                  ret = send(sender_socket, (void *)&e_len, sizeof(uint32_t), 0);
+                  uint64_t e_len = htons(record.num_pending_msg);
+                  ret = send(sender_socket, (void *)&e_len, sizeof(uint64_t), 0);
                   if (ret < 0)
                         perror("LOG: Errore nell'invio del numero di msg_pendenti");
 
                   // mando max_timestamp
-                  e_len = htons(record.max_timestamp);
-                  ret = send(sender_socket, (void *)&e_len, sizeof(uint32_t), 0);
+                  uint64_t te_len = htons(record.max_timestamp);
+                  ret = send(sender_socket, (void *)&te_len, sizeof(uint64_t), 0);
                   if (ret < 0)
                         perror("LOG: Errore nell'invio del max_timestamp");
             }
       }
 
       fclose(fptr);
-      // non ho trovato un campo per quella coppia
-      return -1;
+
+      return 0;
 }
 
 // riceve i messaggi dal server dopo una chiamata alla hanging
@@ -1396,25 +1395,29 @@ void receive_hanging_info(uint32_t sender_socket)
       uint32_t ret = recv(sender_socket, (void *)&num_msg_hanging, sizeof(uint32_t), 0);
       if (ret < 0)
             perror("LOG: Errore nella ricezione del messaggio di hanging");
+      num_msg_hanging = ntohs(num_msg_hanging);
 
       for (uint32_t k = 0; k < num_msg_hanging; k++)
       {
             char hanging_sender[USERNAME_LEN];
-            uint32_t num_msg_pendenti = 0;
-            time_t max_timestamp = 0;
+            uint64_t num_msg_pendenti = 0;
+            uint64_t max_timestamp = 0;
 
             ricevi_messaggio(hanging_sender, sender_socket);
 
-            ret = recv(sender_socket, (void *)&num_msg_pendenti, sizeof(uint32_t), 0);
+            ret = recv(sender_socket, (void *)&num_msg_pendenti, sizeof(uint64_t), 0);
+            num_msg_pendenti = ntohs(num_msg_pendenti);
 
             ret = recv(sender_socket, (void *)&max_timestamp, sizeof(uint64_t), 0);
+            max_timestamp = ntohs(max_timestamp);
 
             // ts_converti_stringa(max_timestamp);
 
-            printf("username_sender: %s num_msg; %d max_timestamp %lu",
+            printf("username_sender: %s num_msg; %lu max_timestamp %lu\n",
                    hanging_sender,
                    num_msg_pendenti,
                    max_timestamp);
+            printf("ciao\n");
       }
 }
 
@@ -1425,7 +1428,7 @@ void print_hanging()
 
       while (fread(&record, sizeof(struct des_hanging_record), 1, fptr))
       {
-            printf("sender: %s receiver: %s msg_pendenti: %d max_ts: %d\n",
+            printf("sender: %s receiver: %s msg_pendenti: %lu max_ts: %lu\n",
                    record.sender,
                    record.receiver,
                    record.num_pending_msg,

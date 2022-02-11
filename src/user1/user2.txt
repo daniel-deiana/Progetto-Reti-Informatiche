@@ -1,0 +1,14 @@
+--> ciao come va
+ <*
+--> bufferizzato
+ <*
+--> come stai
+ <*
+--> sono daniel
+ <*
+--> ciao
+ <*
+--> ciao come stai
+ <*
+--> sono io daniel
+ <*

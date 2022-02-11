@@ -31,6 +31,8 @@ int main(int argc, const char **argv)
 	// buffer generico
 	char buffer[4096];
 
+	
+
 	// lista di descrittori
 	fd_set master, readfds;
 

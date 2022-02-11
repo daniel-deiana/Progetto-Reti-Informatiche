@@ -116,7 +116,7 @@ int main(int argc, const char **argv)
 		{
 			invia_service_msg(sv_communicate, 'A', "reg");
 			sprintf(sendbuffer, "%s %s", second, third);
-			crea_rubrica(second);
+			// crea_rubrica(second);
 		}
 		else if (strcmp(cmd, "in") == 0)
 		{
@@ -332,10 +332,11 @@ int main(int argc, const char **argv)
 							invia_messaggio(group_name, sv_communicate);
 
 							// ricevo numero di porta dell'utente che voglio aggiungere
-							int porta, ret;
+							uint32_t porta, ret;
 							ret = recv(sv_communicate, (void *)&porta, sizeof(uint32_t), 0);
 							if (ret < 0)
 								break;
+							porta = ntohs(porta);
 
 							int new_socket = socket_da_username(active_sockets_list_head, username);
 
