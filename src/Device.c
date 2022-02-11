@@ -1,5 +1,4 @@
 #include "utils.h"
-
 // //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // ///////////////////////////////////////// NET CLIENT /////////////////////////////////////////////////////////////////////
 // //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -132,7 +131,7 @@ int main(int argc, const char **argv)
 		}
 
 		// invio numero di porta
-		uint32_t port = atoi(argv[1]);
+		uint32_t port = htons(atoi(argv[1]));
 		if (send(sv_communicate, (void *)&port, sizeof(uint32_t), 0) < 0)
 		{
 			perror("LOG: errore nell'invio del numero di porta nella fase iniziale");
@@ -314,8 +313,8 @@ int main(int argc, const char **argv)
 							pulisci_buffer(group_name, sizeof(group_name));
 
 						riprova:
-							scanf("%c %s", &cmd, username);
 							fflush(stdin);
+							scanf("%c %s", &cmd, username);
 
 							if (cmd != 'a')
 								goto riprova;
@@ -332,10 +331,11 @@ int main(int argc, const char **argv)
 							invia_messaggio(group_name, sv_communicate);
 
 							// ricevo numero di porta dell'utente che voglio aggiungere
-							int porta, ret;
+							uint32_t porta, ret;
 							ret = recv(sv_communicate, (void *)&porta, sizeof(uint32_t), 0);
 							if (ret < 0)
 								break;
+							porta = ntohs(porta);
 
 							int new_socket = socket_da_username(active_sockets_list_head, username);
 
@@ -386,7 +386,7 @@ int main(int argc, const char **argv)
 							invia_messaggio(group_name, new_socket);
 
 							// invio il numero di utenti
-							int num_utenti = conta_utenti_chat(group_chat_sockets_head);
+							uint32_t num_utenti = htons(conta_utenti_chat(group_chat_sockets_head));
 							ret = send(new_socket, (void *)&num_utenti, sizeof(int), 0);
 							if (ret < 0)
 								perror("LOG: Errore nell'invio del numero di utenti al nuovo utente del gruppo");
@@ -414,7 +414,8 @@ int main(int argc, const char **argv)
 						{
 						case 's':
 						{
-							// ------------------------ comando show -----------------------------
+							// /////////////////////////// comando show ////////////////////////////////
+
 							if (handler_comand_show(my_credentials.Username, cmd.Argument1, sv_communicate) > 0)
 							{
 								printf("doveva inviarmi dei messaggi\n");
@@ -434,7 +435,7 @@ int main(int argc, const char **argv)
 
 						case 'h':
 						{
-							// ----------------------- comando hanging ----------------------------
+							// //////////////////////////// comando hanging /////////////////////////////
 							invia_service_msg(sv_communicate, 'H', "hang");
 
 							receive_hanging_info(sv_communicate);
@@ -443,7 +444,7 @@ int main(int argc, const char **argv)
 
 						case 'o':
 						{
-							// -----------------------  comando out  -------------------------------
+							// ////////////////////////////  comando out  ////////////////////////////////////
 
 							// chiudo le comunicazioni con tutti i socket
 
@@ -458,11 +459,10 @@ int main(int argc, const char **argv)
 
 						case 'c':
 						{
-							// -----------------------  comando chat  -----------------------------
+							// ///////////////////////////// comando chat  //////////////////////////////////////
 							struct msg_header header;
 
 							char notify_response_buf[50];
-							char optionString[8] = "NULLO";
 							char sendbuffer[1024];
 
 							// controllo se possiedo il destinatario nella mia rubrica personale
@@ -472,7 +472,7 @@ int main(int argc, const char **argv)
 								break;
 							}
 
-							invia_service_msg(sv_communicate, 'C', optionString);
+							invia_service_msg(sv_communicate, 'C', "chat");
 
 							strcpy(destUsername, cmd.Argument1);
 							sprintf(sendbuffer, "%s", cmd.Argument1);
@@ -484,11 +484,12 @@ int main(int argc, const char **argv)
 							ricevi_service_msg(sv_communicate, &header);
 
 							// ricevo il numero di porta dell'utente con cui voglio aprire una chat
-							int port;
+							uint32_t port;
 
 							// ricezione numero di porta
-							if (recv(sv_communicate, (void *)&port, sizeof(int), 0) < 0)
+							if (recv(sv_communicate, (void *)&port, sizeof(uint32_t), 0) < 0)
 								perror("LOG: errore nella ricezione del numero di porta");
+							port = ntohs(port);
 
 							printf("il server mi ha mandato un header con la porta del dest che è la seguente\nPorta:%d\n", port);
 
@@ -673,7 +674,7 @@ int main(int argc, const char **argv)
 							pulisci_buffer(bufferChatMessage, sizeof(bufferChatMessage));
 
 							// sono stato aggiunto ad un gruppo e devo vedere se sono gia connesso con gli utenti
-							int num_utenti;
+							uint32_t num_utenti;
 							char group_name[50];
 
 							// inserisco il creatore del gruppo fra gli utenti della chat
@@ -685,12 +686,13 @@ int main(int argc, const char **argv)
 
 							printf("LOG: mi hanno aggiunto in un gruppo, nome: %s", group_name);
 
-							int ret = recv(i, (void *)&num_utenti, sizeof(int), 0);
+							int ret = recv(i, (void *)&num_utenti, sizeof(int32_t), 0);
 							if (ret < 0)
 							{
 								perror("LOG: Errore nella ricezione del numero di utenti");
 								break;
 							}
+							num_utenti = ntohs(num_utenti);
 
 							// ricevo gli username degli utenti
 							for (int k = 0; k < num_utenti; k++)
@@ -707,7 +709,7 @@ int main(int argc, const char **argv)
 								{
 									printf("aggiungo un estraneo\n");
 
-									int port;
+									uint32_t port;
 									// devo creare una connessione con l'utente
 									invia_service_msg(sv_communicate, 'P', "port_req");
 
@@ -715,12 +717,13 @@ int main(int argc, const char **argv)
 									invia_messaggio(buffer, sv_communicate);
 
 									// ricevo il numero di porta
-									ret = recv(sv_communicate, (void *)&port, sizeof(int), 0);
+									ret = recv(sv_communicate, (void *)&port, sizeof(uint32_t), 0);
 									if (ret < 0)
 									{
 										perror("LOG: errore nella ricezione del numero di porta del partecipante alla chat");
 										break;
 									}
+									port = ntohs(port);
 
 									if (port < 0)
 										continue;

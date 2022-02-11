@@ -1,7 +1,8 @@
 # ninja log v5
 0	180	1643210387114325786	CMakeFiles/Progetto.dir/src/Device.c.o	565378dbc05c10ab
-220	300	1643322121160156333	Progetto	f02b4d753b21b6c6
-2	219	1643322121077729405	CMakeFiles/Progetto.dir/src/server.c.o	2ee9d2cde26c402e
+322	412	1644603948116930595	Progetto	f02b4d753b21b6c6
+0	321	1644603948022230180	CMakeFiles/Progetto.dir/src/server.c.o	2ee9d2cde26c402e
 0	169	1643321714218804393	CMakeFiles/Progetto.dir/src/Server.c.o	c3586d40c6c311c9
-0	361	1644419418366882920	CMakeFiles/Progetto.dir/src/device.c.o	24dcf5809fbc03ff
-362	451	1644419418461742550	Progetto	9073ee93942938f3
+1	232	1644603680103563036	CMakeFiles/Progetto.dir/src/device.c.o	24dcf5809fbc03ff
+0	273	1644604612801761075	CMakeFiles/Progetto.dir/src/device.c.o	24dcf5809fbc03ff
+275	365	1644604612895507090	Progetto	9073ee93942938f3
