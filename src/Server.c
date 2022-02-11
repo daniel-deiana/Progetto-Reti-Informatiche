@@ -34,8 +34,6 @@ int main(int argc, const char **argv)
 	// lista di descrittori
 	fd_set master, readfds;
 
-	FILE *LogPointer, *ChatBuffer, *HistoryPointer;
-
 	// parsing degli argomenti da linea di comando
 	if (argc != 2)
 	{
@@ -66,7 +64,7 @@ int main(int argc, const char **argv)
 
 	// socket di listen
 	bind(Listener, (struct sockaddr *)&server_addr, sizeof(server_addr));
-	listen(Listener, 50); // Metto una coda di 50 possibili richieste di connesione al server
+	listen(Listener, 50);
 
 	FD_SET(Listener, &master);
 	fdmax = Listener;
@@ -121,6 +119,7 @@ int main(int argc, const char **argv)
 
 						addrlen = sizeof(client_addr);
 						communicate = accept(i, (struct sockaddr *)&client_addr, (socklen_t *)&addrlen);
+
 						fdmax = (communicate > fdmax) ? communicate : fdmax;
 						FD_SET(communicate, &master);
 
@@ -174,6 +173,7 @@ int main(int argc, const char **argv)
 							// ricezione numero di porta
 							if (recv(i, (void *)&port, sizeof(uint32_t), 0) < 0)
 								perror("LOG: errore nella ricezione del numero di porta");
+							port = ntohs(port);
 
 							// ricezione credenziali
 							ricevi_messaggio(buffer, i);
@@ -202,7 +202,7 @@ int main(int argc, const char **argv)
 
 							if (recv(i, (void *)&port, sizeof(uint32_t), 0) < 0)
 								perror("LOG: errore nella ricezione del numero di porta");
-
+							port = ntohs(port);
 							// client mi sta mandando credenziali di login
 							ricevi_messaggio(buffer, i);
 
@@ -220,7 +220,7 @@ int main(int argc, const char **argv)
 
 								printf("LOG: timestamp ultima disconnessione di %s : %s \n", cl_credentials.Username, timestamp_string);
 
-								aggiorna_history_utente(HistoryPointer, cl_credentials.Username, port);
+								aggiorna_history_utente(cl_credentials.Username, port);
 								stampa_history_utenti();
 
 								// gestione lista utenti online
@@ -252,7 +252,8 @@ int main(int argc, const char **argv)
 								invia_service_msg(i, 'C', "ON");
 
 							// invio il numero di porta
-							if (send(i, (void *)&port, sizeof(int), 0) < 0)
+							port = htons(port);
+							if (send(i, (void *)&port, sizeof(uint32_t), 0) < 0)
 							{
 								perror("LOG: errore nell'invio del numero di porta nella fase iniziale");
 								exit(1);
@@ -371,7 +372,7 @@ int main(int argc, const char **argv)
 							aggiungi_utente_a_gruppo(user_to_add, group_name, &group_head);
 
 							// spedisco il numero di porta dell'utente
-							porta = porta_da_username(user_to_add);
+							porta = htons(porta_da_username(user_to_add));
 							uint32_t ret = send(i, (void *)&porta, sizeof(uint32_t), 0);
 						}
 						break;
@@ -396,7 +397,7 @@ int main(int argc, const char **argv)
 							ricevi_messaggio(buffer, i);
 
 							// mando la porta
-							uint32_t porta = check_username_online(buffer);
+							uint32_t porta = htons(check_username_online(buffer));
 							uint32_t ret = send(i, (void *)&porta, sizeof(uint32_t), 0);
 						}
 						break;
