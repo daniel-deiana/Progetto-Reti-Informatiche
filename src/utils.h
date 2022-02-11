@@ -242,7 +242,6 @@ void registra_utente(char buf[])
       sscanf(buf, "%s %s", MyCredentials.Username, MyCredentials.Password);
 
       FILE *fptr = fopen("registered_clients.txt", "ab");
-
       fwrite(&MyCredentials, sizeof(MyCredentials), 1, fptr);
       fclose(fptr);
 }
@@ -498,44 +497,14 @@ void chiudi_connesioni_attive(struct clientList **head)
 // ///////////////////////////////////////// GESTIONE MESSAGGI //////////////////////////////////////////////////////////////
 // //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-uint32_t invia_messaggi_pendenti(char *richiedente, char *target, uint32_t dest_socket)
-{
-      uint32_t msg_num;
-      struct des_buffered_msg msg; // uso per fare il parsing dei messaggi nel file
-      FILE *fptr = fopen("chat_buffer.txt", "rb+");
-
-      msg_num = htons(count_buffered(richiedente, target));
-
-      if (send(dest_socket, (void *)&msg_num, sizeof(uint32_t), 0) < 0)
-      {
-            perror("Nono sono riuscito a mandare il numero di messaggi pendenti\n");
-            return -1;
-      }
-
-      // scorro i messaggi da target verso richiedente e li invio al richiedente
-      while (fread(&msg, sizeof(struct des_buffered_msg), 1, fptr))
-      {
-            if (strcmp(msg.receiver, richiedente) == 0 && strcmp(msg.sender, target) == 0)
-            {
-                  invia_messaggio(msg.message, dest_socket);
-
-                  strcpy(msg.sender, "junk");
-                  fseek(fptr, -1 * sizeof(struct des_buffered_msg), SEEK_CUR);
-                  fwrite(&msg, sizeof(struct des_buffered_msg), 1, fptr);
-            }
-      }
-
-      fclose(fptr);
-      return 0;
-}
-
 uint32_t invia_messaggio(char *send_buffer, uint32_t receiver_socket)
 {
-      uint32_t msg_len = htons(strlen(send_buffer));
+      uint32_t msg_len = strlen(send_buffer);
       uint32_t ret;
 
       // dimensione
-      ret = send(receiver_socket, (void *)&msg_len, sizeof(uint32_t), 0);
+      uint32_t e_len = htons(msg_len);
+      ret = send(receiver_socket, (void *)&e_len, sizeof(uint32_t), 0);
 
       // gestione disconnessione
       if (ret == 0)
@@ -558,13 +527,44 @@ uint32_t invia_messaggio(char *send_buffer, uint32_t receiver_socket)
       return ret;
 }
 
+uint32_t invia_messaggi_pendenti(char *richiedente, char *target, uint32_t dest_socket)
+{
+      uint32_t msg_num;
+      struct des_buffered_msg msg; // uso per fare il parsing dei messaggi nel file
+      FILE *fptr = fopen("chat_buffer.txt", "rb+");
+
+      uint32_t e_len = htons(count_buffered(richiedente, target));
+
+      if (send(dest_socket, (void *)&e_len, sizeof(uint32_t), 0) < 0)
+      {
+            perror("Nono sono riuscito a mandare il numero di messaggi pendenti\n");
+            return -1;
+      }
+
+      // scorro i messaggi da target verso richiedente e li invio al richiedente
+      while (fread(&msg, sizeof(struct des_buffered_msg), 1, fptr))
+      {
+            if (strcmp(msg.receiver, richiedente) == 0 && strcmp(msg.sender, target) == 0)
+            {
+                  invia_messaggio(msg.message, dest_socket);
+
+                  strcpy(msg.sender, "junk");
+                  fseek(fptr, -1 * sizeof(struct des_buffered_msg), SEEK_CUR);
+                  fwrite(&msg, sizeof(struct des_buffered_msg), 1, fptr);
+            }
+      }
+
+      fclose(fptr);
+      return 0;
+}
+
 uint32_t ricevi_messaggio(char *recv_buffer, uint32_t sender_socket)
 {
       uint32_t msg_len;
       uint32_t ret;
 
       // dimensione
-      ret = recv(sender_socket, (void *)&msg_len, sizeof(int), 0);
+      ret = recv(sender_socket, (void *)&msg_len, sizeof(uint32_t), 0);
       msg_len = ntohs(msg_len);
 
       // gestione disconnessione
@@ -599,8 +599,10 @@ uint32_t invia_service_msg(uint32_t receiver_socket, char req_type, char *option
       sprintf(buf, "%c %s", req_type, options);
 
       // dimensione header
-      msg_len = htons(strlen(buf));
-      ret = send(receiver_socket, (void *)&msg_len, sizeof(int), 0);
+      msg_len = strlen(buf);
+
+      uint32_t e_len = htons(msg_len);
+      ret = send(receiver_socket, (void *)&e_len, sizeof(uint32_t), 0);
 
       // gestione disconnessione
       if (ret == 0)
@@ -633,8 +635,8 @@ uint32_t ricevi_service_msg(uint32_t sender_socket, struct msg_header *header)
       memset(buf, 0, sizeof(buf));
 
       // dimensione
-      ret = recv(sender_socket, (void *)&msg_len, sizeof(int), 0);
-
+      ret = recv(sender_socket, (void *)&msg_len, sizeof(uint32_t), 0);
+      msg_len = ntohs(msg_len);
       // gestione disconnessione
       if (ret == 0)
             return ret;
@@ -1346,7 +1348,7 @@ uint32_t send_hanging_info(char buf_receiver[], uint32_t sender_socket)
 {
 
       // devo mandare il numero di record hanging significativi
-      uint32_t msg_to_send = count_hanging(buf_receiver);
+      uint32_t msg_to_send = htons(count_hanging(buf_receiver));
 
       if (send(sender_socket, (void *)&msg_to_send, sizeof(uint32_t), 0) < 0)
             perror("LOG: errore nell invio del numero di msg_hanging");
@@ -1366,12 +1368,14 @@ uint32_t send_hanging_info(char buf_receiver[], uint32_t sender_socket)
                   invia_messaggio(record.sender, sender_socket);
 
                   // mando il num_msg
-                  ret = send(sender_socket, (void *)&record.num_pending_msg, sizeof(uint32_t), 0);
+                  uint32_t e_len = htons(record.num_pending_msg);
+                  ret = send(sender_socket, (void *)&e_len, sizeof(uint32_t), 0);
                   if (ret < 0)
                         perror("LOG: Errore nell'invio del numero di msg_pendenti");
 
                   // mando max_timestamp
-                  ret = send(sender_socket, (void *)&record.max_timestamp, sizeof(uint32_t), 0);
+                  e_len = htons(record.max_timestamp);
+                  ret = send(sender_socket, (void *)&e_len, sizeof(uint32_t), 0);
                   if (ret < 0)
                         perror("LOG: Errore nell'invio del max_timestamp");
             }
