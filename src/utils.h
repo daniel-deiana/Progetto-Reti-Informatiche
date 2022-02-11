@@ -1412,12 +1412,11 @@ void receive_hanging_info(uint32_t sender_socket)
             max_timestamp = ntohs(max_timestamp);
 
             // ts_converti_stringa(max_timestamp);
-
+            printf("ciao\n");
             printf("username_sender: %s num_msg; %lu max_timestamp %lu\n",
                    hanging_sender,
                    num_msg_pendenti,
                    max_timestamp);
-            printf("ciao\n");
       }
 }
 
