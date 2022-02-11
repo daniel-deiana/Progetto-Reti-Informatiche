@@ -3,11 +3,11 @@
 all: serv dev
 # make rule per il client
 
-dev: device.c
-	gcc device.c -o dev
+dev: device.c utils.h
+	gcc -std=c99 device.c  -o dev
 
-serv: server.c
-	gcc server.c -o serv
+serv: server.c utils.h
+	gcc -std=c99 server.c  -o serv
 # pulizia dei file della compilazione (eseguito con ‘make clean’ da terminale)
 clean:
-	rm *o client server
+	rm *o dev serv

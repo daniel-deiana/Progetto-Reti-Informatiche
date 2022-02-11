@@ -994,10 +994,9 @@ uint32_t invia_file(char *my_username, char inputstring[], uint32_t dest_socket)
             return -1;
       }
 
-      uint32_t dim_file = htons(file.st_size);
+      uint32_t dim_file = file.st_size;
 
       // -------------- invio dimensione file ---------------
-
       if (send(dest_socket, (void *)&dim_file, sizeof(uint32_t), 0) < 0)
       {
             perror("LOG: Errore nell'invio della dimensione del file");
@@ -1066,8 +1065,7 @@ uint32_t ricevi_file(char *my_username, uint32_t sender_socket)
 
       // ------------- ricezione dimensione file ------------
 
-      ret = recv(sender_socket, (void *)&dim_file, sizeof(int), 0);
-      dim_file = ntohs(dim_file);
+      ret = recv(sender_socket, (void *)&dim_file, sizeof(uint32_t), 0);
       if (ret < 0)
       {
             perror("LOG: Errore nella ricezione della dimensione del file");
@@ -1094,7 +1092,7 @@ uint32_t ricevi_file(char *my_username, uint32_t sender_socket)
 
       // ------------- ricezione file ---------------
       uint32_t bytes_read, read_after;
-      bytes_read = recv(sender_socket, (void *)file_receive_buffer, 25, 0);
+      bytes_read = recv(sender_socket, (void *)file_receive_buffer, dim_file, 0);
 
       if (bytes_read < 0)
       {
@@ -1374,9 +1372,7 @@ uint32_t send_hanging_info(char buf_receiver[], uint32_t sender_socket)
                         perror("LOG: Errore nell'invio del numero di msg_pendenti");
 
                   // mando max_timestamp
-
-                  record.max_timestamp = htons(record.max_timestamp)
-                      ret = send(sender_socket, (void *)record.max_timestamp, sizeof(time_t), 0);
+                  ret = send(sender_socket, (void *)&record.max_timestamp, sizeof(time_t), 0);
                   if (ret < 0)
                         perror("LOG: Errore nell'invio del max_timestamp");
             }
@@ -1409,9 +1405,7 @@ void receive_hanging_info(uint32_t sender_socket)
             ret = recv(sender_socket, (void *)&num_msg_pendenti, sizeof(uint64_t), 0);
             num_msg_pendenti = ntohs(num_msg_pendenti);
 
-            printf("ricevendo...\n");
             ret = recv(sender_socket, (void *)&max_timestamp, sizeof(time_t), 0);
-            max_timestamp = ntohs(max_timestamp);
 
             // ts_converti_stringa(max_timestamp);
             printf("username_sender: %s num_msg; %qu max_timestamp %lu\n",
@@ -1434,7 +1428,6 @@ void print_hanging()
                    record.num_pending_msg,
                    record.max_timestamp);
       }
-      printf("ciao\n");
       fclose(fptr);
 }
 

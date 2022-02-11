@@ -15,21 +15,14 @@
   <component name="ChangeListManager">
     <list default="true" id="dbba149a-cf7b-41d3-a919-6331f5130d69" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmake-build-debug/.cmake/api/v1/reply/index-2022-02-09T15-09-49-0523.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmake-build-debug/.ninja_deps" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/.ninja_deps" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmake-build-debug/.ninja_log" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/.ninja_log" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/Progetto.dir/src/Device.c.o" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/Progetto.dir/src/Device.c.o" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/Progetto.dir/src/Server.c.o" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/Progetto.dir/src/Server.c.o" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmake-build-debug/Progetto" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/Progetto" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/cmake-build-debug/Testing/Temporary/LastTest.log" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/Testing/Temporary/LastTest.log" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Server.c" beforeDir="false" afterPath="$PROJECT_DIR$/src/Server.c" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/chat_buffer.txt" beforeDir="false" afterPath="$PROJECT_DIR$/src/chat_buffer.txt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/clients_history.txt" beforeDir="false" afterPath="$PROJECT_DIR$/src/clients_history.txt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/dev" beforeDir="false" afterPath="$PROJECT_DIR$/src/dev" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/hanging_data.txt" beforeDir="false" afterPath="$PROJECT_DIR$/src/hanging_data.txt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/serv" beforeDir="false" afterPath="$PROJECT_DIR$/src/serv" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/user1/user1_logout_info.txt" beforeDir="false" afterPath="$PROJECT_DIR$/src/user1/user1_logout_info.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/user1/user2.txt" beforeDir="false" afterPath="$PROJECT_DIR$/src/user1/user2.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/user2/user1.txt" beforeDir="false" afterPath="$PROJECT_DIR$/src/user2/user1.txt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/user2/user2_logout_info.txt" beforeDir="false" afterPath="$PROJECT_DIR$/src/user2/user2_logout_info.txt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/utils.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/utils.h" afterDir="false" />
     </list>
@@ -93,13 +86,6 @@
       <recent name="$PROJECT_DIR$/src" />
     </key>
   </component>
-  <component name="RunManager">
-    <configuration default="true" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" PASS_PARENT_ENVS_2="true">
-      <method v="2">
-        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
-      </method>
-    </configuration>
-  </component>
   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
   <component name="VcsManagerConfiguration">
     <MESSAGE value="Creazione repository" />
@@ -110,17 +96,17 @@
       <breakpoints>
         <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
           <url>file://$PROJECT_DIR$/src/server.c</url>
-          <line>265</line>
+          <line>264</line>
           <option name="timeStamp" value="57" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
           <url>file://$PROJECT_DIR$/src/server.c</url>
-          <line>332</line>
+          <line>331</line>
           <option name="timeStamp" value="83" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
           <url>file://$PROJECT_DIR$/src/server.c</url>
-          <line>333</line>
+          <line>332</line>
           <option name="timeStamp" value="85" />
         </line-breakpoint>
       </breakpoints>
